@@ -1,0 +1,53 @@
+<IfModule mod_rewrite.c>
+Options +FollowSymlinks
+    <IfModule mod_negotiation.c>
+        Options -MultiViews -Indexes
+    </IfModule>
+
+    RewriteEngine On
+
+    # Force HTTPS
+    RewriteCond %{HTTPS} off
+    RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+
+    # Handle Authorization Header
+    RewriteCond %{HTTP:Authorization} .
+    RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+
+    # Handle X-XSRF-Token Header
+    RewriteCond %{HTTP:x-xsrf-token} .
+    RewriteRule .* - [E=HTTP_X_XSRF_TOKEN:%{HTTP:X-XSRF-Token}]
+
+    # Redirect Trailing Slashes If Not A Folder...
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteCond %{REQUEST_URI} (.+)/$
+    RewriteRule ^ %1 [L,R=301]
+
+    # --- API Routes: Send to Laravel's index.php ---
+    RewriteRule ^api/.*$ index.php [L]
+
+    # --- Webhook Routes: Send to Laravel's index.php ---
+    RewriteRule ^webhooks/ index.php [L]
+
+    # --- Laravel Health Check ---
+    RewriteRule ^up$ index.php [L]
+
+    # Exact route for Google OAuth initiation
+    RewriteRule ^auth/google$ index.php [L]
+    # Route for Google OAuth callback – let Laravel handle it ONLY if it has a code or error parameter
+    RewriteCond %{QUERY_STRING} (code=|error=)
+    RewriteRule ^auth/google/callback$ index.php [L]
+
+    # --- Serve existing files/directories as-is ---
+    # Serve storage assets directly
+    RewriteCond %{REQUEST_URI} ^/storage/ [NC]
+    RewriteRule ^ - [L]
+
+    RewriteCond %{REQUEST_FILENAME} -f [OR]
+    RewriteCond %{REQUEST_FILENAME} -d
+    RewriteRule ^ - [L]
+
+    # --- Everything else: Serve the React SPA ---
+    # If frontend dist is deployed into public/ directly:
+    RewriteRule ^ index.html [L]
+</IfModule>

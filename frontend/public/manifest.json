@@ -1,0 +1,42 @@
+{
+  "name": "OGADriver",
+  "short_name": "OGADriver",
+  "description": "Professional Driver Hiring Platform",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0f172a",
+  "theme_color": "#10b981",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["business", "transportation"],
+  "screenshots": [],
+  "shortcuts": [
+    {
+      "name": "Find Drivers",
+      "short_name": "Drivers",
+      "description": "Browse available drivers",
+      "url": "/driver",
+      "icons": [{ "src": "/icon-192x192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Find Jobs",
+      "short_name": "Jobs",
+      "description": "Browse available jobs",
+      "url": "/hirer",
+      "icons": [{ "src": "/icon-192x192.png", "sizes": "192x192" }]
+    }
+  ]
+}
