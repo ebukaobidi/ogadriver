@@ -1,0 +1,1034 @@
+import React, { useState, useEffect } from 'react';
+import { Routes, Route, Navigate, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
+import ErrorBoundary from '../components/ErrorBoundary';
+import { authService } from '../api/auth';
+import { driverService } from '../api/drivers';
+import api from '../api/axios';
+import { scanLicenseImage } from '../utils/ocrScanner';
+import { safeArray } from '../utils/safeArray';
+import {
+  ShieldCheck,
+  LogOut,
+  Briefcase,
+  Menu,
+  X,
+  FileCheck,
+  Star,
+  Car,
+  CreditCard,
+  Gamepad2,
+  User,
+  MoreHorizontal,
+  MoreVertical,
+  Save,
+  Calendar,
+  Gift,
+  Home,
+  BookOpen,
+  Zap,
+Settings,
+GraduationCap,
+ArrowLeft } from 'lucide-react';
+import { NotificationBell, useNotifications } from '../components/NotificationSystem';
+import { MessagingButton } from '../components/MessagingSystem';
+import RoadSimulator from '../components/RoadSimulator';
+import AvailabilityCalendar from '../components/Calendar/AvailabilityCalendar';
+
+import DriverProposalsTab from '../components/driver/DriverProposalsTab';
+import DriverComplianceTab from '../components/driver/DriverComplianceTab';
+import DriverSubscriptionsTab from '../components/driver/DriverSubscriptionsTab';
+import DriverRatingsTab from '../components/driver/DriverRatingsTab';
+import DriverAccountHubTab from '../components/driver/DriverAccountHubTab';
+import DriverNearbyRidesTab from '../components/driver/DriverNearbyRidesTab';
+import SurgeMap from '../components/driver/SurgeMap';
+import DriverTrainingTab from '../components/driver/DriverTrainingTab';
+import IdentityBadgeScreen from '../components/driver/IdentityBadgeScreen';
+import IncomingRideOverlay from '../components/driver/IncomingRideOverlay';
+import { useDriverData } from '../hooks/useDriverData';
+import { useDriverProfile } from '../hooks/useDriverProfile';
+
+function DriverPortal() {
+  const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const { addNotification } = useNotifications();
+
+  // Use custom hooks for data management
+  const {
+    driver,
+    proposals,
+    activeContracts,
+    ratings,
+    loading,
+    verificationProgress,
+    dispatchStatus,
+    trialStatus,
+    setDriver,
+    setProposals,
+    setActiveContracts,
+    loadDriverData
+  } = useDriverData();
+
+
+  const [loadingMessage, setLoadingMessage] = useState('Establishing Secure Uplink...');
+  const [user, setUser] = useState(authService.getUser() || null);
+  const profileHook = useDriverProfile(user, driver);
+  const location = useLocation();
+  const getActiveTab = () => {
+    const path = location.pathname.replace('/driver', '').replace('/', '');
+    return path || 'surge';
+  };
+  const activeTab = getActiveTab();
+  const setActiveTab = (tab) => navigate(`/driver/${tab}`);
+  const [previewImage, setPreviewImage] = useState(null);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [processingId, setProcessingId] = useState(null);
+  const [subscriptionStatus, setSubscriptionStatus] = useState('loading');
+  const [activePlan, setActivePlan] = useState(null);
+
+  // Incoming Ride Overlay State
+  const [incomingRide, setIncomingRide] = useState(null);
+  const [declinedRideIds, setDeclinedRideIds] = useState([]);
+
+  // Poll for incoming open rides when driver is online
+  const incomingRideRef = React.useRef(null);
+  useEffect(() => {
+    if (!driver || !driver.is_online) {
+      setIncomingRide(null);
+      incomingRideRef.current = null;
+      return;
+    }
+    const checkIncoming = async () => {
+      try {
+        const res = await api.get('/marketplace/open-rides');
+        const openList = res.data?.data?.data || res.data?.data || res.data || [];
+        if (Array.isArray(openList) && openList.length > 0) {
+          const firstNew = openList.find(r => r && r.id && !declinedRideIds.includes(r.id));
+          if (firstNew && (!incomingRideRef.current || incomingRideRef.current.id !== firstNew.id)) {
+            incomingRideRef.current = firstNew;
+            setIncomingRide(firstNew);
+          }
+        }
+      } catch (e) {}
+    };
+
+    checkIncoming();
+    const interval = setInterval(checkIncoming, 6000);
+    return () => clearInterval(interval);
+  }, [driver?.is_online, driver?.id, declinedRideIds]);
+
+  const handleDeclineRideOverlay = (rideId) => {
+    setDeclinedRideIds(prev => [...prev, rideId]);
+    setIncomingRide(null);
+  };
+
+  const handleAcceptRideOverlay = async (ride) => {
+    try {
+      await api.post(`/rides/${ride.id}/bid`, { amount: ride.agreed_rate || ride.fare || 3500 });
+      setIncomingRide(null);
+      setActiveTab('surge');
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  // Vetting specific state
+  const [vettingStep, setVettingStep] = useState(1);
+  const [kycData, setKycData] = useState({ nin: '', bvn: '', address: '' });
+
+  // Location States
+  const [dbStates, setDbStates] = useState([]);
+  const [dbCitiesResidence, setDbCitiesResidence] = useState([]);
+  const [dbCitiesPref, setDbCitiesPref] = useState([]);
+
+  const [subscriptionEndsAt, setSubscriptionEndsAt] = useState(null);
+  const [transactions, setTransactions] = useState([]);
+
+  // File Upload States
+  const [uploadedFiles, setUploadedFiles] = useState({
+     licenseFront: false,
+     licenseBack: false,
+     lasdriCard: false,
+     policeClearance: false,
+     guaAForm: false,
+     guarantorA_id: false,
+     guarantorA_passport: false,
+     guarantorA_selfie: false,
+     guaBForm: false,
+     guarantorB_id: false,
+     guarantorB_passport: false,
+     guarantorB_selfie: false
+  });
+
+  // Automatic Background Geolocation Ping for Online Drivers
+  useEffect(() => {
+    if (!driver || !driver.is_online || !navigator.geolocation) return;
+
+    const isBatterySaver = localStorage.getItem('battery_saver') === 'true';
+    const intervalMs = isBatterySaver ? 60000 : 15000;
+
+    const sendLocation = () => {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          api.post(`/drivers/${driver.id}/location`, {
+            latitude: pos.coords.latitude,
+            longitude: pos.coords.longitude,
+            status: 'online'
+          }).catch(() => {});
+        },
+        () => {},
+        { enableHighAccuracy: !isBatterySaver, timeout: 8000 }
+      );
+    };
+
+    sendLocation();
+    const timer = setInterval(sendLocation, intervalMs);
+    return () => clearInterval(timer);
+  }, [driver?.is_online, driver?.id]);
+
+  // Helper to resize images to max 1200px width/height and 0.7 quality to save bandwidth
+  const resizeImage = (file) => {
+    return new Promise((resolve) => {
+      if (!file.type.startsWith('image/')) {
+        resolve(file); // Don't resize PDFs or non-images
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const img = new Image();
+        img.onload = () => {
+          const MAX_WIDTH = 1200;
+          const MAX_HEIGHT = 1200;
+          let width = img.width;
+          let height = img.height;
+
+          if (width > height) {
+            if (width > MAX_WIDTH) {
+              height = Math.round((height * MAX_WIDTH) / width);
+              width = MAX_WIDTH;
+            }
+          } else {
+            if (height > MAX_HEIGHT) {
+              width = Math.round((width * MAX_HEIGHT) / height);
+              height = MAX_HEIGHT;
+            }
+          }
+
+          const canvas = document.createElement('canvas');
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, width, height);
+
+          canvas.toBlob(
+            (blob) => {
+              if (blob) {
+                resolve(new File([blob], file.name, { type: 'image/jpeg', lastModified: Date.now() }));
+              } else {
+                resolve(file); // fallback
+              }
+            },
+            'image/jpeg',
+            0.7
+          );
+        };
+        img.onerror = () => resolve(file); // fallback
+        img.src = e.target.result;
+      };
+      reader.onerror = () => resolve(file);
+      reader.readAsDataURL(file);
+    });
+  };
+
+  const handleFileUpload = (fileKey, documentType) => {
+     // Create a file input element dynamically
+     const input = document.createElement('input');
+     input.type = 'file';
+     
+     if (fileKey === 'licenseFront' || fileKey === 'licenseBack') {
+       input.accept = 'image/*';
+       input.capture = 'environment';
+     } else {
+       input.accept = '.pdf,.jpg,.jpeg,.png';
+     }
+
+     input.onchange = async (e) => {
+        let file = e.target.files[0];
+        if (!file) return;
+
+        setProcessingId(fileKey);
+        try {
+           // Resize the file before upload to save time and bandwidth
+           file = await resizeImage(file);
+           
+           let currentUser = authService.getUser();
+
+           // Refresh user data if driver_id is missing
+           if (currentUser && currentUser.role === 'driver' && !currentUser.driver_id) {
+             try {
+                 const res = await api.get(`/auth/me`);
+                 if (res.data.user) {
+                     currentUser = res.data.user;
+                     localStorage.setItem('user', JSON.stringify(currentUser));
+                     setUser(currentUser);
+                 }
+             } catch(e) {
+                 console.error("Failed to refresh user data", e);
+                 alert('Failed to get your driver ID. Please log out and log in again.');
+                 return;
+             }
+           }
+
+           if (!currentUser || !currentUser.driver_id) {
+             alert('Driver ID not found. Please log out and log in again.');
+             return;
+           }
+
+            let licenseExpiryYmd = null;
+            if (fileKey === 'licenseFront' || fileKey === 'licenseBack') {
+              // Intelligent OCR Pre-Scan: must look like a license AND not be expired
+              const scanResult = await scanLicenseImage(file);
+              if (!scanResult.success) {
+                alert(`âš ï¸ OCR VERIFICATION FAILED: Could not read the image (${scanResult.error || 'unknown error'}). Use a clear photo of your driver's license.`);
+                setProcessingId(null);
+                return;
+              }
+              if (scanResult.rejectionReason === 'not_license' || !scanResult.isLicense) {
+                alert(`âš ï¸ OCR VERIFICATION FAILED: This does not appear to be a driver's license. Please upload a clear photo of the front/back of your FRSC driver's license.`);
+                setProcessingId(null);
+                return;
+              }
+              if (scanResult.rejectionReason === 'no_expiry' || !scanResult.extractedDate) {
+                alert(`âš ï¸ OCR VERIFICATION FAILED: Could not find an expiry date on the license. Ensure the EXP/VALID date is visible and try again.`);
+                setProcessingId(null);
+                return;
+              }
+              if (scanResult.isExpired || scanResult.rejectionReason === 'expired') {
+                const dateStr = scanResult.rawDateString || scanResult.extractedDate?.toLocaleDateString() || 'past date';
+                alert(`âš ï¸ OCR VERIFICATION FAILED: The uploaded Driver's License appears expired (${dateStr}). You must upload a valid, unexpired driver's license.`);
+                setProcessingId(null);
+                return;
+              }
+              if (scanResult.rejectionReason === 'low_confidence' || !scanResult.looksValid) {
+                alert(`âš ï¸ OCR VERIFICATION FAILED: Image quality is too low to verify the license. Retake a sharper, well-lit photo.`);
+                setProcessingId(null);
+                return;
+              }
+              licenseExpiryYmd = scanResult.expiryYmd;
+            }
+
+            const formData = new FormData();
+            formData.append('file', file);
+            // Maps fileKey to expected document_type
+            const docMap = {
+               'licenseFront': 'drivers_license',
+               'licenseBack': 'drivers_license',
+               'lasdriCard': 'lasdri_card',
+               'policeClearance': 'police_clearance',
+               'guaAForm': 'guarantor_form_a',
+               'guaBForm': 'guarantor_form_b',
+               'guarantorA_id': 'guarantor_form_a',
+               'guarantorA_passport': 'guarantor_form_a',
+               'guarantorA_selfie': 'guarantor_form_a',
+               'guarantorB_id': 'guarantor_form_b',
+               'guarantorB_passport': 'guarantor_form_b',
+               'guarantorB_selfie': 'guarantor_form_b'
+            };
+            formData.append('document_type', docMap[fileKey] || documentType || 'other');
+
+            // Prefer OCR-detected license expiry; otherwise default 1 year for other docs
+            const expiry =
+              licenseExpiryYmd ||
+              new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+            formData.append('expiry_date', expiry);
+
+            console.log('Uploading file for driver ID:', currentUser.driver_id);
+            await driverService.uploadDocument(currentUser.driver_id, formData);
+
+            setUploadedFiles(prev => ({ ...prev, [fileKey]: true }));
+            alert('File verified and uploaded successfully!');
+           // Reload verification status after upload
+           loadVerificationStatus();
+        } catch (err) {
+           console.error('File upload failed:', err);
+           alert('Failed to upload file: ' + (err.response && err.response.data && err.response.data.message ? err.response.data.message : err.message));
+        } finally {
+           setProcessingId(null);
+        }
+     };
+
+     input.click();
+  };
+
+  const loadVerificationStatus = async () => {
+    try {
+      const res = await api.get('/drivers/verification-status');
+      if (res.data.success) {
+        setVerificationProgress(res.data.data.verification);
+        setDispatchStatus(res.data.data.dispatch);
+        setTrialStatus(res.data.data.trial);
+      }
+    } catch (err) {
+      console.error('Failed to load verification status:', err);
+    }
+  };
+
+  const handleAvatarUpload = (type = 'primary') => {
+     const input = document.createElement('input');
+     input.type = 'file';
+     input.accept = '.jpg,.jpeg,.png';
+
+     input.onchange = async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        setProcessingId(`avatar_${type}`);
+        try {
+           const formData = new FormData();
+           formData.append('avatar', file);
+           formData.append('type', type);
+
+           await authService.uploadAvatar(formData);
+
+           // Reload driver data
+           loadDriverDataLocal();
+
+           alert('Avatar updated successfully!');
+        } catch (err) {
+           console.error('Avatar upload failed:', err);
+           alert('Failed to upload avatar. Please try again.');
+        } finally {
+           setProcessingId(null);
+        }
+     };
+
+     input.click();
+  };
+
+  useEffect(() => {
+    loadDriverData();
+  }, []);
+
+  useEffect(() => {
+    const loadStates = async () => {
+      try {
+        const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
+        const countryId = currentUser.country_id || 1;
+        const res = await api.get(`/states/${countryId}`);
+        setDbStates(safeArray(res.data));
+      } catch (e) {
+        console.error('Failed to load states:', e);
+      }
+    };
+    loadStates();
+  }, []);
+
+  useEffect(() => {
+    if (profileHook.residenceStateId) {
+      const loadCities = async () => {
+        const res = await api.get(`/cities/${profileHook.residenceStateId}`);
+        setDbCitiesResidence(safeArray(res.data));
+      };
+      loadCities();
+    }
+  }, [profileHook.residenceStateId]);
+
+  useEffect(() => {
+    if (profileHook.prefStateId) {
+      const loadCities = async () => {
+        const res = await api.get(`/cities/${profileHook.prefStateId}`);
+        setDbCitiesPref(safeArray(res.data));
+      };
+      loadCities();
+    }
+  }, [profileHook.prefStateId]);
+
+  useEffect(() => {
+    const tab = searchParams.get('tab');
+    if (tab) {
+      setActiveTab(tab);
+    }
+
+    const payment = searchParams.get('payment');
+    const reference = searchParams.get('reference');
+
+    if (payment === 'success') {
+      setActiveTab('billing');
+      const verifyPayment = async () => {
+        try {
+          if (reference) {
+            await api.post('/payments/verify', { reference });
+          }
+          const subRes = await api.get('/subscription');
+          if (subRes.data.success) {
+            setSubscriptionStatus(subRes.data.status);
+            setSubscriptionEndsAt(subRes.data.expires_at);
+            setActivePlan(subRes.data.active_plan);
+          }
+          const walletRes = await api.get('/wallet');
+          if (walletRes.data.success) {
+            setTransactions(walletRes.data.transactions || []);
+            setDriver((prev) => prev ? { ...prev, wallet: walletRes.data.wallet } : prev);
+          }
+        } catch (err) {
+          console.error('Payment verification failed', err);
+        } finally {
+          setSearchParams({}, { replace: true });
+        }
+      };
+      verifyPayment();
+    } else if (payment === 'failed') {
+      setActiveTab('billing');
+      setSearchParams({}, { replace: true });
+    }
+  }, [searchParams]);
+
+  // Cycle through loading messages
+  useEffect(() => {
+    if (loading) {
+      let messageIndex = 0;
+      const interval = setInterval(() => {
+        messageIndex = (messageIndex + 1) % loadingMessages.length;
+        setLoadingMessage(loadingMessages[messageIndex]);
+      }, 1500); // Change message every 1.5 seconds
+
+      return () => clearInterval(interval);
+    }
+  }, [loading]);
+
+  useEffect(() => {
+    if (profileHook.residenceStateId) {
+      // Check cache first
+      const cacheKey = `cities_${profileHook.residenceStateId}`;
+      const cachedData = localStorage.getItem(cacheKey);
+      const cacheTime = localStorage.getItem(`${cacheKey}_time`);
+      const isCacheValid = cacheTime && (Date.now() - parseInt(cacheTime)) < 3600000; // 1 hour cache
+
+      if (cachedData && isCacheValid) {
+        setDbCitiesResidence(safeArray(JSON.parse(cachedData)));
+      } else {
+        api.get(`/cities/${profileHook.residenceStateId}`)
+          .then(res => {
+            const list = safeArray(res.data);
+            setDbCitiesResidence(list);
+            localStorage.setItem(cacheKey, JSON.stringify(list));
+            localStorage.setItem(`${cacheKey}_time`, Date.now().toString());
+          })
+          .catch(err => console.error(err));
+      }
+    } else {
+      setDbCitiesResidence([]);
+    }
+  }, [profileHook.residenceStateId]);
+
+  useEffect(() => {
+    if (profileHook.prefStateId) {
+      // Check cache first
+      const cacheKey = `cities_${profileHook.prefStateId}`;
+      const cachedData = localStorage.getItem(cacheKey);
+      const cacheTime = localStorage.getItem(`${cacheKey}_time`);
+      const isCacheValid = cacheTime && (Date.now() - parseInt(cacheTime)) < 3600000; // 1 hour cache
+
+      if (cachedData && isCacheValid) {
+        setDbCitiesPref(safeArray(JSON.parse(cachedData)));
+      } else {
+        api.get(`/cities/${profileHook.prefStateId}`)
+          .then(res => {
+            const list = safeArray(res.data);
+            setDbCitiesPref(list);
+            localStorage.setItem(cacheKey, JSON.stringify(list));
+            localStorage.setItem(`${cacheKey}_time`, Date.now().toString());
+          })
+          .catch(err => console.error(err));
+      }
+    } else {
+      setDbCitiesPref([]);
+    }
+  }, [profileHook.prefStateId]);
+
+  const loadDriverDataLocal = async () => {
+    try {
+      setLoading(true);
+      let currentUser = authService.getUser();
+
+      // Self-heal if missing driver_id (from older logins)
+      if (currentUser && currentUser.role === 'driver' && !currentUser.driver_id) {
+         try {
+             const res = await api.get(`/auth/me`);
+             if (res.data.user) {
+                 currentUser = res.data.user;
+                 localStorage.setItem('user', JSON.stringify(currentUser));
+                 setUser(currentUser);
+             }
+         } catch(e) {
+             console.error("Failed to refresh user data", e);
+         }
+      }
+
+      if (currentUser && currentUser.driver_id) {
+        // Load all critical data in parallel for fastest initial load
+        const [driverData, bookingsRes, verificationRes] = await Promise.all([
+          driverService.getDriver(currentUser.driver_id),
+          driverService.getActiveContracts(currentUser.driver_id),
+          api.get('/drivers/verification-status').catch(() => null)
+        ]);
+
+        const d = driverData?.data || driverData || {};
+        const allBookings = safeArray(bookingsRes);
+
+        setProposals(allBookings.filter(b => b.status === 'pending'));
+        setActiveContracts(allBookings.filter(b => b.status === 'accepted' || b.status === 'in_progress'));
+        setDriver({
+          ...d,
+          is_engaged: allBookings.some(b => b.status === 'accepted' || b.status === 'in_progress'),
+        });
+        setUser(d.user || currentUser);
+
+        // Sync uploaded documents from backend into state
+        if (d.documents && Array.isArray(d.documents)) {
+          const docMapState = {
+             licenseFront: false,
+             licenseBack: false,
+             lasdriCard: false,
+             policeClearance: false,
+             guaAForm: false,
+             guarantorA_id: false,
+             guarantorA_passport: false,
+             guarantorA_selfie: false,
+             guaBForm: false,
+             guarantorB_id: false,
+             guarantorB_passport: false,
+             guarantorB_selfie: false
+          };
+          d.documents.forEach(doc => {
+            if (doc.document_type === 'drivers_license') {
+              docMapState.licenseFront = true;
+              docMapState.licenseBack = true;
+            } else if (doc.document_type === 'lasdri_card') {
+              docMapState.lasdriCard = true;
+            } else if (doc.document_type === 'police_clearance') {
+              docMapState.policeClearance = true;
+            } else if (doc.document_type === 'guarantor_form_a') {
+              docMapState.guaAForm = true;
+              docMapState.guarantorA_id = true;
+              docMapState.guarantorA_passport = true;
+              docMapState.guarantorA_selfie = true;
+            } else if (doc.document_type === 'guarantor_form_b') {
+              docMapState.guaBForm = true;
+              docMapState.guarantorB_id = true;
+              docMapState.guarantorB_passport = true;
+              docMapState.guarantorB_selfie = true;
+            }
+          });
+          setUploadedFiles(docMapState);
+        }
+
+        // Set verification status immediately
+        if (verificationRes && verificationRes.data.success) {
+          setVerificationProgress(verificationRes.data.data.verification);
+          setDispatchStatus(verificationRes.data.data.dispatch);
+          setTrialStatus(verificationRes.data.data.trial);
+        }
+
+        // Initialize state variables for profile editing
+        profileHook.setResidenceStateId(d.state_id || '');
+        profileHook.setResidenceCityId(d.city_id || '');
+        profileHook.setPrefCityIds(Array.isArray(d.preferred_locations) ? d.preferred_locations : []);
+        profileHook.setPrefStateId(d.preferred_state_id || '');
+        profileHook.setGender(d.user?.gender || '');
+        profileHook.setDateOfBirth(d.user?.date_of_birth || '');
+        profileHook.setEmail(d.user?.email || currentUser.email || '');
+        profileHook.setPhone(d.user?.phone || currentUser.phone || '');
+        profileHook.setNickname(d.user?.nickname || '');
+        profileHook.setVehicleCerts(Array.isArray(d.vehicle_certifications) ? d.vehicle_certifications : []);
+        profileHook.setEmploymentTypes(Array.isArray(d.employment_types) ? d.employment_types : []);
+        profileHook.setLanguages(Array.isArray(d.languages) ? d.languages : []);
+        profileHook.setAccommodationNeeded(Boolean(d.accommodation_needed));
+        profileHook.setAccommodationNotes(d.accommodation_notes || '');
+        profileHook.setDailyRate(d.vehicle?.expected_daily_rate ?? '');
+        profileHook.setMonthlyRate(d.vehicle?.expected_monthly_rate ?? '');
+        profileHook.setServiceMode(
+          d.service_mode
+          || (d.has_vehicle === true ? 'driver_with_vehicle' : d.has_vehicle === false ? 'driver_only' : '')
+        );
+        profileHook.setVehicleMake(d.vehicle?.make || '');
+        profileHook.setVehicleModel(d.vehicle?.model || '');
+        profileHook.setVehicleYear(d.vehicle?.year || '');
+        profileHook.setVehicleColor(d.vehicle?.color || '');
+        profileHook.setLicensePlate(d.vehicle?.plate_number || '');
+
+        // Initialize KYC and Guarantor States
+        setKycData({
+            nin: d.nin || '',
+            bvn: d.bvn || '',
+            address: d.residence_address || '',
+            guarantorA_name: d.guarantor_a_name || '',
+            guarantorA_phone: d.guarantor_a_phone || '',
+            guarantorA_address: d.guarantor_a_address || '',
+            guarantorA_occupation: d.guarantor_a_occupation || '',
+            guarantorA_company: d.guarantor_a_company || '',
+            guarantorB_name: d.guarantor_b_name || '',
+            guarantorB_phone: d.guarantor_b_phone || '',
+            guarantorB_address: d.guarantor_b_address || '',
+            guarantorB_occupation: d.guarantor_b_occupation || '',
+            guarantorB_company: d.guarantor_b_company || '',
+        });
+
+        // Load states with caching
+        const countryId = d && d.user && d.user.country_id ? d.user.country_id : 1;
+        const statesCacheKey = `states_${countryId}`;
+        const cachedStates = localStorage.getItem(statesCacheKey);
+        const statesCacheTime = localStorage.getItem(`${statesCacheKey}_time`);
+        const isStatesCacheValid = statesCacheTime && (Date.now() - parseInt(statesCacheTime)) < 86400000; // 24 hour cache for states
+
+        if (cachedStates && isStatesCacheValid) {
+          setDbStates(safeArray(JSON.parse(cachedStates)));
+        } else {
+          api.get(`/states/${countryId}`)
+            .then(res => {
+              const list = safeArray(res.data);
+              setDbStates(list);
+              localStorage.setItem(statesCacheKey, JSON.stringify(list));
+              localStorage.setItem(`${statesCacheKey}_time`, Date.now().toString());
+            })
+            .catch(err => console.error(err));
+        }
+
+        // Load non-critical data in parallel after critical data is shown
+        Promise.all([
+          driverService.getReviews(currentUser.driver_id).then(reviewsRes => {
+            setRatings(safeArray(reviewsRes.data));
+          }),
+          api.get('/subscription').then(subRes => {
+            if (subRes.data.success) {
+              setSubscriptionStatus(subRes.data.status);
+              setSubscriptionEndsAt(subRes.data.expires_at);
+              setActivePlan(subRes.data.active_plan);
+            }
+          }),
+          api.get('/wallet').then(walletRes => {
+            if (walletRes.data.success) {
+              d.wallet = walletRes.data.wallet;
+              setTransactions(safeArray(walletRes.data.transactions));
+            }
+          })
+        ]).catch(err => {
+          console.warn('Non-critical data fetch failed', err);
+        });
+      }
+    } catch (err) {
+      console.error('Failed to load driver data:', err);
+      if (err.response && err.response.status === 401) {
+        navigate('/login');
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleLogout = () => {
+    authService.logout();
+  };
+
+  const handleSubscriptionUpdated = ({ status, expires_at, active_plan }) => {
+    if (status) setSubscriptionStatus(status);
+    if (expires_at !== undefined) setSubscriptionEndsAt(expires_at);
+    if (active_plan !== undefined) setActivePlan(active_plan);
+  };
+
+  const handleAcceptProposal = async (proposal) => {
+    setProcessingId(proposal.id);
+    try {
+      await api.post(`/bookings/${proposal.id}/accept`);
+
+      // Remove from proposals
+      setProposals(proposals.filter(p => p.id !== proposal.id));
+      // Add to active contracts
+      setActiveContracts([...activeContracts, {
+        ...proposal,
+        status: 'accepted',
+        accepted_at: new Date().toISOString()
+      }]);
+      // Update driver state to ENGAGED
+      setDriver(prev => ({ ...prev, is_engaged: true }));
+      setProcessingId(null);
+      setActiveTab('active');
+    } catch (err) {
+      console.error('Failed to accept proposal:', err);
+      alert('Failed to accept booking. Please try again.');
+      setProcessingId(null);
+    }
+  };
+
+  const handleRejectProposal = async (proposalId) => {
+    setProcessingId(proposalId);
+    try {
+      await api.post(`/bookings/${proposalId}/decline`, { reason: 'Driver declined' });
+      setProposals(proposals.filter(p => p.id !== proposalId));
+      setProcessingId(null);
+    } catch (err) {
+      console.error('Failed to reject proposal:', err);
+      alert('Failed to decline booking. Please try again.');
+      setProcessingId(null);
+    }
+  };
+
+  // Helper for countdown timer display
+  const [now, setNow] = useState(Date.now());
+  useEffect(() => {
+    const interval = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const formatCountdown = (expiresAtStr) => {
+    const diff = new Date(expiresAtStr).getTime() - now;
+    if (diff <= 0) return '00:00:00';
+    const h = Math.floor(diff / (1000 * 60 * 60));
+    const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+    const s = Math.floor((diff % (1000 * 60)) / 1000);
+    return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+  };
+
+  const handlePrintGuarantorForm = (type) => {
+    try {
+      const currentUser = authService.getUser();
+      const driverNameEncoded = encodeURIComponent(currentUser?.name || "");
+      window.open(
+        `/guarantor-form/${type}/${currentUser?.formatted_driver_id || 'DRV-TEMP'}?name=${driverNameEncoded}&autoprint=true`,
+        '_blank'
+      );
+    } catch (e) {
+       console.error("Failed to generate guarantor code", e);
+    }
+  };
+
+  const handleSaveKyc = async (type) => {
+    try {
+      setProcessingId(`verifying${type}`);
+      const currentUser = authService.getUser();
+
+      let kycPayload = {
+        nin: kycData.nin,
+        bvn: kycData.bvn,
+        residence_address: kycData.address,
+      };
+
+      if (type === 'A') {
+         kycPayload = {
+             ...kycPayload,
+             guarantor_a_name: kycData.guarantorA_name,
+             guarantor_a_phone: kycData.guarantorA_phone,
+             guarantor_a_address: kycData.guarantorA_address,
+             guarantor_a_occupation: kycData.guarantorA_occupation,
+             guarantor_a_company: kycData.guarantorA_company,
+         };
+      } else if (type === 'B') {
+         kycPayload = {
+             ...kycPayload,
+             guarantor_b_name: kycData.guarantorB_name,
+             guarantor_b_phone: kycData.guarantorB_phone,
+             guarantor_b_address: kycData.guarantorB_address,
+             guarantor_b_occupation: kycData.guarantorB_occupation,
+             guarantor_b_company: kycData.guarantorB_company,
+         };
+      }
+
+      await driverService.updateProfile(currentUser.driver_id, kycPayload);
+      await loadDriverDataLocal();
+      alert('Details saved successfully');
+    } catch (e) {
+      console.error('Save error:', e);
+      alert('Failed to save details: ' + (e.response?.data?.message || e.message));
+    } finally {
+      setProcessingId(null);
+    }
+  };
+
+  const [moreSheetOpen, setMoreSheetOpen] = useState(false);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-[#0f172a] flex flex-col items-center justify-center p-6 text-center">
+        <div className="w-12 h-12 border-4 border-[#1cd188] border-t-transparent rounded-full animate-spin mb-4" />
+        <p className="text-white font-bold text-sm tracking-wide">{loadingMessage}</p>
+        <p className="text-slate-500 text-xs mt-1">OgaDriver Operative Network</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-[#0a0f1a] via-[#0f172a] to-[#1e1b4b] text-white font-sans flex flex-col overflow-hidden relative">
+      
+      {/* Decorative Glow Orbs */}
+      <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-brandMint/5 rounded-full blur-[120px] pointer-events-none" />
+      <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-naijaPurple/5 rounded-full blur-[120px] pointer-events-none" />
+
+      <main className="flex-1 w-full h-screen overflow-y-auto custom-scrollbar pb-32 pt-16 relative z-10">
+        {!['surge','dashboard','proposals','account'].includes(activeTab) && (
+          <button
+            type="button"
+            onClick={() => (window.history.length > 1 ? navigate(-1) : navigate('/driver/account'))}
+            aria-label="Go back"
+            className="fixed top-3 left-3 z-[60] flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-slate-900/80 text-white shadow-lg backdrop-blur-xl transition hover:border-[#1cd188] hover:text-[#1cd188] active:scale-95"
+          >
+            <ArrowLeft className="h-5 w-5" />
+          </button>
+        )}
+        <div>
+          <Routes>
+            <Route path="/" element={<Navigate to="surge" replace />} />
+
+          <Route path="proposals" element={<DriverProposalsTab
+              proposals={proposals}
+              driver={driver}
+              handleAcceptProposal={handleAcceptProposal}
+            />} />
+
+          <Route path="active" element={<Navigate to="account" replace />} />
+            <Route path="badge" element={<IdentityBadgeScreen driver={driver} user={user} isIndependent={driver?.has_vehicle === true} guarantorAUnlocked={driver?.guarantor_a_status === 'verified'} guarantorBUnlocked={driver?.guarantor_b_status === 'verified'} uploadedFiles={uploadedFiles} />} />
+            <Route path="compliance" element={<DriverComplianceTab
+                driver={driver}
+                vettingStep={vettingStep}
+                setVettingStep={setVettingStep}
+                user={user}
+                kycData={kycData}
+                setKycData={setKycData}
+                uploadedFiles={uploadedFiles}
+                handleFileUpload={handleFileUpload}
+                handleSaveKyc={handleSaveKyc}
+                processingId={processingId}
+                handlePrintGuarantorForm={handlePrintGuarantorForm}
+              />
+} />
+
+          <Route path="subscriptions" element={<DriverSubscriptionsTab
+              subscriptionStatus={subscriptionStatus}
+              subscriptionEndsAt={subscriptionEndsAt}
+              activePlan={activePlan}
+              user={user}
+              onSubscriptionUpdated={handleSubscriptionUpdated}
+              verificationProgress={verificationProgress}
+            />} />
+
+          <Route path="ratings" element={<DriverRatingsTab
+              driver={driver}
+              ratings={ratings}
+            />
+} />
+
+          
+          <Route path="account" element={<DriverAccountHubTab setActiveTab={setActiveTab} driver={driver} user={user} handleLogout={handleLogout} email={profileHook.email} fullName={profileHook.fullName} setFullName={profileHook.setFullName} nickname={profileHook.nickname} setNickname={profileHook.setNickname} phone={profileHook.phone} setPhone={profileHook.setPhone} gender={profileHook.gender} setGender={profileHook.setGender} dateOfBirth={profileHook.dateOfBirth} setDateOfBirth={profileHook.setDateOfBirth} languages={profileHook.languages} setLanguages={profileHook.setLanguages} residenceStateId={profileHook.residenceStateId} setResidenceStateId={profileHook.setResidenceStateId} dbStates={dbStates} residenceCityId={profileHook.residenceCityId} setResidenceCityId={profileHook.setResidenceCityId} dbCitiesResidence={dbCitiesResidence} handleSaveProfile={() => profileHook.handleSaveProfile(driver, setDriver)}
+              emergencyContactName={profileHook.emergencyContactName}
+              setEmergencyContactName={profileHook.setEmergencyContactName}
+              emergencyContactPhone={profileHook.emergencyContactPhone}
+              setEmergencyContactPhone={profileHook.setEmergencyContactPhone}
+              serviceMode={profileHook.serviceMode}
+              setServiceMode={profileHook.setServiceMode}
+              employmentTypes={profileHook.employmentTypes}
+              setEmploymentTypes={profileHook.setEmploymentTypes}
+              vehicleMake={profileHook.vehicleMake}
+              setVehicleMake={profileHook.setVehicleMake}
+              vehicleModel={profileHook.vehicleModel}
+              setVehicleModel={profileHook.setVehicleModel}
+              vehicleYear={profileHook.vehicleYear}
+              setVehicleYear={profileHook.setVehicleYear}
+              vehicleColor={profileHook.vehicleColor}
+              setVehicleColor={profileHook.setVehicleColor}
+              licensePlate={profileHook.licensePlate}
+              setLicensePlate={profileHook.setLicensePlate}
+              dailyRate={profileHook.dailyRate}
+              setDailyRate={profileHook.setDailyRate}
+              monthlyRate={profileHook.monthlyRate}
+              setMonthlyRate={profileHook.setMonthlyRate}
+              verificationProgress={verificationProgress}
+              activeContracts={activeContracts}
+              proposals={proposals}
+              setDriver={setDriver}
+            />} />
+
+          <Route path="surge" element={<><DriverNearbyRidesTab /><SurgeMap /></>} />
+          <Route path="training" element={<DriverTrainingTab driver={driver} />} />
+          <Route path="schedule" element={<div className="min-h-screen bg-[#0f172a] px-4 pt-4 pb-24">
+              
+              <AvailabilityCalendar driverId={driver?.id} />
+
+            </div>
+} />
+
+        
+            <Route path="billing" element={<Navigate to="subscriptions" replace />} />
+            <Route path="simulator" element={<Navigate to="training" replace />} />
+            <Route path="*" element={<Navigate to="surge" replace />} />
+          </Routes>
+        </div>
+      </main>
+
+      {/* Floating Glass Bottom Nav */}
+      <nav className="fixed bottom-6 left-4 right-4 bg-[#0a0f1a]/90 backdrop-blur-xl border border-white/10 shadow-[0_8px_32px_rgba(0,0,0,0.5)] rounded-3xl z-50 flex items-center justify-around px-2 py-3">
+        {/* Drive */}
+        <button
+          onClick={() => { setActiveTab('surge'); setMoreSheetOpen(false); }}
+          className={`flex flex-col items-center gap-1 transition-colors ${activeTab === 'surge' ? 'text-[#1cd188]' : 'text-slate-500 hover:text-slate-300'}`}
+        >
+          <Zap className="w-6 h-6" />
+          <span className="text-[10px] font-bold">Drive</span>
+        </button>
+
+        {/* Jobs / Proposals */}
+        <button
+          onClick={() => { setActiveTab('proposals'); setMoreSheetOpen(false); }}
+          className={`flex flex-col items-center gap-1 transition-colors ${activeTab === 'proposals' ? 'text-[#1cd188]' : 'text-slate-500 hover:text-slate-300'}`}
+        >
+          <Briefcase className="w-6 h-6" />
+          <span className="text-[10px] font-bold">Jobs</span>
+        </button>
+
+
+        {/* Account Hub */}
+        <button
+          onClick={() => { setActiveTab('account'); setMoreSheetOpen(false); }}
+          className={`flex flex-col items-center gap-1 transition-colors ${activeTab === 'account' ? 'text-[#1cd188]' : 'text-slate-500 hover:text-slate-300'}`}
+        >
+          <User className="w-6 h-6" />
+          <span className="text-[10px] font-bold">Account</span>
+        </button>
+      </nav>
+
+              {/* Image Preview Modal */}
+      {previewImage && (
+        <div className="fixed inset-0 z-[150] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm" onClick={() => setPreviewImage(null)}>
+          <div className="relative max-w-4xl max-h-[90vh] w-full flex items-center justify-center" onClick={(e) => e.stopPropagation()}>
+            <button
+              onClick={() => setPreviewImage(null)}
+              className="absolute -top-12 right-0 p-2 text-white/70 hover:text-white bg-black/50 hover:bg-black/80 rounded-full transition-all"
+            >
+              <X className="w-6 h-6" />
+            </button>
+            <img
+              src={previewImage}
+              alt="Preview"
+              className="max-w-full max-h-[85vh] object-contain rounded-lg shadow-2xl"
+            />
+          </div>
+        </div>
+      )}
+
+      {/* Full-Screen Incoming Ride Alert Overlay */}
+      {incomingRide && (
+        <IncomingRideOverlay
+          ride={incomingRide}
+          onAccept={handleAcceptRideOverlay}
+          onDecline={handleDeclineRideOverlay}
+        />
+      )}
+    </div>
+  );
+}
+
+
+export default function DriverPortalWrapper() {
+  return (
+    <ErrorBoundary>
+      <DriverPortal />
+    </ErrorBoundary>
+  );
+}

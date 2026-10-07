@@ -1,62 +1,44 @@
 import React from 'react';
-import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { View, Text } from 'react-native';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
 import HirerDashboardScreen from '../screens/HirerDashboardScreen';
+import HirerDashboardScreenV2 from '../screens/HirerDashboardScreenV2';
 import PostJobScreen from '../screens/PostJobScreen';
 import HirerBookingsScreen from '../screens/HirerBookingsScreen';
+import ProfileScreen from '../screens/ProfileScreen';
+import SearchDriversScreen from '../screens/SearchDriversScreen';
+import PlacementPaymentScreen from '../screens/PlacementPaymentScreen';
+import ReportInfractionScreen from '../screens/ReportInfractionScreen';
+import ReferralScreen from '../screens/ReferralScreen';
+import LoyaltyScreen from '../screens/LoyaltyScreen';
+import ChatScreen from '../screens/ChatScreen';
+import ConversationsListScreen from '../screens/ConversationsListScreen';
+import AppSettingsScreen from '../screens/AppSettingsScreen';
+import VipFleetScreen from '../screens/VipFleetScreen';
+import NaijaHirerHomeScreen from '../screens/NaijaHirerHomeScreen';
 
-const Tab = createBottomTabNavigator();
+const Stack = createNativeStackNavigator();
 
-function TabIcon({ focused, name }) {
+function HomeStack() {
   return (
-    <View className="items-center justify-center">
-      <Text className={`text-lg ${focused ? 'text-brandMint' : 'text-slate-500'}`}>
-        {name === 'Dashboard' ? '🏠' : name === 'Post Job' ? '➕' : '📋'}
-      </Text>
-      <Text className={`text-xs mt-1 ${focused ? 'text-brandMint' : 'text-slate-500'}`}>{name}</Text>
-    </View>
+    <Stack.Navigator screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="HirerDashboardMain" component={HirerDashboardScreen} />
+      <Stack.Screen name="VipFleet" component={VipFleetScreen} />
+      <Stack.Screen name="SearchDrivers" component={SearchDriversScreen} />
+      <Stack.Screen name="PlacementPayment" component={PlacementPaymentScreen} />
+      <Stack.Screen name="ReportInfraction" component={ReportInfractionScreen} />
+      <Stack.Screen name="Referrals" component={ReferralScreen} />
+      <Stack.Screen name="Loyalty" component={LoyaltyScreen} />
+      <Stack.Screen name="Conversations" component={ConversationsListScreen} />
+      <Stack.Screen name="Chat" component={ChatScreen} />
+      <Stack.Screen name="AppSettings" component={AppSettingsScreen} />
+      <Stack.Screen name="PostJob" component={PostJobScreen} />
+      <Stack.Screen name="HirerBookings" component={HirerBookingsScreen} />
+      <Stack.Screen name="Profile" component={ProfileScreen} />
+    </Stack.Navigator>
   );
 }
 
 export default function HirerNavigator() {
-  return (
-    <Tab.Navigator
-      screenOptions={{
-        headerShown: false,
-        tabBarStyle: {
-          backgroundColor: '#0f172a',
-          borderTopColor: '#1e293b',
-          borderTopWidth: 1,
-          height: 70,
-          paddingBottom: 10,
-          paddingTop: 10,
-        },
-        tabBarActiveTintColor: '#22d3ee',
-        tabBarInactiveTintColor: '#64748b',
-      }}
-    >
-      <Tab.Screen
-        name="Dashboard"
-        component={HirerDashboardScreen}
-        options={{
-          tabBarIcon: ({ focused }) => <TabIcon focused={focused} name="Dashboard" />,
-        }}
-      />
-      <Tab.Screen
-        name="Post Job"
-        component={PostJobScreen}
-        options={{
-          tabBarIcon: ({ focused }) => <TabIcon focused={focused} name="Post Job" />,
-        }}
-      />
-      <Tab.Screen
-        name="Bookings"
-        component={HirerBookingsScreen}
-        options={{
-          tabBarIcon: ({ focused }) => <TabIcon focused={focused} name="Bookings" />,
-        }}
-      />
-    </Tab.Navigator>
-  );
+  return <HomeStack />;
 }
