@@ -45,20 +45,13 @@ export default function DriverSettingsScreen({ navigation }) {
         {/* Top App Bar Header */}
         <View className="flex-row justify-between items-center mb-1">
           <View className="flex-row items-center">
-            <TouchableOpacity 
-              onPress={() => (navigation?.canGoBack && navigation.canGoBack()) ? navigation.goBack() : navigation.navigate('Home')}
-              style={{ backgroundColor: themeStyles.headerBtnBg, borderColor: themeStyles.headerBtnBorder }}
-              className="p-2 rounded-xl border mr-2.5"
-            >
-              <Ionicons name="arrow-back" size={18} color={themeStyles.primaryText} />
-            </TouchableOpacity>
             <View className="w-8 h-8 rounded-full bg-emerald-500/20 border border-emerald-500 items-center justify-center mr-2 relative">
               <Ionicons name="person" size={16} color="#10b981" />
-              <View className="w-3 h-3 rounded-full bg-blue-500 absolute -bottom-0.5 -right-0.5 items-center justify-center">
+              <View className="w-3 h-3 rounded-full bg-emerald-500 absolute -bottom-0.5 -right-0.5 items-center justify-center">
                 <Ionicons name="checkmark" size={8} color="#ffffff" />
               </View>
             </View>
-            <Text style={{ color: themeStyles.primaryText }} className="font-bold text-lg">Oga Driver</Text>
+            <Text style={{ color: themeStyles.primaryText }} className="font-normal text-lg">Oga Driver</Text>
           </View>
           <View className="flex-row items-center space-x-3">
             <TouchableOpacity 

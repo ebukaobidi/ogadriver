@@ -399,37 +399,19 @@ export default function HireBookingScreen({ navigation }) {
         }}
         className="flex-row items-center justify-between"
       >
-        <TouchableOpacity
-          onPress={() => {
-            if (navigation.canGoBack && navigation.canGoBack()) {
-              navigation.goBack();
-            } else {
-              navigation.navigate('Ride');
-            }
-          }}
-          style={{
-            backgroundColor: isDark ? 'rgba(18,25,39,0.92)' : 'rgba(255,255,255,0.95)',
-            borderColor: isDark ? '#1e293b' : '#e2e8f0',
-          }}
-          className="w-11 h-11 rounded-2xl border items-center justify-center shadow-lg shadow-black/10"
-          activeOpacity={0.7}
-        >
-          <Ionicons name="arrow-back" size={20} color={isDark ? '#ffffff' : '#0f172a'} />
-        </TouchableOpacity>
-
         <View
           style={{
             backgroundColor: isDark ? 'rgba(18,25,39,0.92)' : 'rgba(255,255,255,0.95)',
             borderColor: isDark ? '#1e293b' : '#e2e8f0',
           }}
-          className="flex-row items-center px-3.5 py-2 rounded-2xl border shadow-lg shadow-black/10"
+          className="flex-row items-center px-4 py-2.5 rounded-2xl border shadow-lg shadow-black/10"
         >
           <View className="w-2.5 h-2.5 rounded-full bg-emerald-500 mr-2" />
-          <Text style={{ color: isDark ? '#ffffff' : '#0f172a' }} className="font-normal text-xs mr-2">
+          <Text style={{ color: isDark ? '#ffffff' : '#0f172a' }} className="font-semibold text-xs mr-2">
             OgaDriver Chauffeur
           </Text>
           <View className="px-1.5 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/30">
-            <Text className="text-[9px] font-normal uppercase text-emerald-500">Live Map</Text>
+            <Text className="text-[9px] font-bold uppercase text-emerald-500">Live Map</Text>
           </View>
         </View>
 

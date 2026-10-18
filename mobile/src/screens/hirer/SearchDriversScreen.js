@@ -172,13 +172,13 @@ export default function SearchDriversScreen({ navigation }) {
           {/* Rating Badge */}
           <View
             style={{
-              backgroundColor: isDark ? 'rgba(245, 158, 11, 0.12)' : '#fffbeb',
-              borderColor: isDark ? 'rgba(245, 158, 11, 0.25)' : '#fde68a',
+              backgroundColor: isDark ? 'rgba(16, 185, 129, 0.12)' : '#ecfdf5',
+              borderColor: isDark ? 'rgba(16, 185, 129, 0.25)' : '#a7f3d0',
             }}
             className="px-2.5 py-1 rounded-xl border flex-row items-center"
           >
-            <Ionicons name="star" size={12} color="#f59e0b" />
-            <Text style={{ color: isDark ? '#fef08a' : '#92400e' }} className="text-xs font-normal ml-1">
+            <Ionicons name="star" size={12} color="#10b981" />
+            <Text style={{ color: isDark ? '#34d399' : '#065f46' }} className="text-xs font-normal ml-1">
               {item.rating || '5.0'}
             </Text>
           </View>
@@ -271,20 +271,9 @@ export default function SearchDriversScreen({ navigation }) {
         }}
         className="px-4 py-3.5 border-b flex-row items-center justify-between"
       >
-        <TouchableOpacity
-          onPress={() => navigation.goBack()}
-          className="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 items-center justify-center mr-3"
-          activeOpacity={0.7}
-        >
-          <Ionicons name="arrow-back" size={20} color={isDark ? '#f8fafc' : '#0f172a'} />
-        </TouchableOpacity>
-
         <View className="flex-1">
           <Text style={{ color: isDark ? '#ffffff' : '#0f172a' }} className="font-normal text-base">
             Drivers Directory
-          </Text>
-          <Text className="text-xs font-normal text-emerald-600 dark:text-brandMint">
-            Verified & Security-Cleared Drivers
           </Text>
         </View>
 

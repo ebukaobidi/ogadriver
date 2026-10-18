@@ -269,22 +269,6 @@ export default function NaijaHirerHomeScreen({ navigation }) {
               )}
             </View>
           </View>
-
-          {/* Cultural Proverb / Market Motto Banner */}
-          <View
-            style={{
-              backgroundColor: isDark ? '#121927' : '#ecfdf5',
-              borderColor: isDark ? '#1e293b' : '#a7f3d0',
-            }}
-            className="rounded-2xl p-3.5 border shadow-sm"
-          >
-            <Text
-              style={{ color: isDark ? '#34d399' : '#065f46' }}
-              className="text-xs italic font-normal"
-            >
-              {selectedCountry.proverb}
-            </Text>
-          </View>
         </View>
 
         {/* Today's Activity Summary */}
@@ -346,36 +330,33 @@ export default function NaijaHirerHomeScreen({ navigation }) {
           </View>
         </View>
 
-        {/* OgaPoints Rewards Road-Sign Yellow Alert Banner */}
+        {/* OgaPoints Rewards Banner */}
         <View className="px-4 mb-4">
           <TouchableOpacity
             onPress={() => navigation.navigate('Loyalty')}
             activeOpacity={0.85}
             style={{
-              backgroundColor: isDark ? 'rgba(245, 158, 11, 0.15)' : '#fffbeb',
-              borderColor: '#f59e0b',
+              backgroundColor: isDark ? 'rgba(16, 185, 129, 0.1)' : '#ecfdf5',
+              borderColor: isDark ? '#1e293b' : '#a7f3d0',
             }}
-            className="border rounded-2xl p-3.5 flex-row items-center justify-between shadow-sm"
+            className="border rounded-2xl p-3 flex-row items-center justify-between shadow-sm"
           >
             <View className="flex-row items-center flex-1 mr-2">
-              <View className="w-9 h-9 rounded-xl bg-amber-400 items-center justify-center mr-3 shadow-md shadow-amber-400/30">
-                <Ionicons name="sparkles" size={18} color="#78350f" />
+              <View className="w-8 h-8 rounded-xl bg-emerald-500/15 items-center justify-center mr-3 border border-emerald-500/30">
+                <Ionicons name="sparkles" size={16} color="#10b981" />
               </View>
               <View className="flex-1">
                 <View className="flex-row items-center">
-                  <Text style={{ color: isDark ? '#ffffff' : '#78350f' }} className="font-normal text-xs">
-                    Earn OgaPoints on Every Ride & Hire
+                  <Text style={{ color: isDark ? '#ffffff' : '#0f172a' }} className="font-normal text-xs">
+                    OgaPoints Rewards
                   </Text>
-                  <View className="ml-2 px-1.5 py-0.5 rounded bg-amber-500/20">
-                    <Text className="text-[9px] font-normal uppercase text-amber-500">1 pt = ₦1</Text>
+                  <View className="ml-2 px-1.5 py-0.5 rounded bg-emerald-500/20">
+                    <Text className="text-[9px] font-normal uppercase text-emerald-500">1 pt = ₦1</Text>
                   </View>
                 </View>
-                <Text style={{ color: isDark ? '#fbbf24' : '#b45309' }} className="text-[11px] font-normal mt-0.5">
-                  Redeem up to ₦2,000 off upcoming bookings!
-                </Text>
               </View>
             </View>
-            <Ionicons name="chevron-forward" size={16} color="#f59e0b" />
+            <Ionicons name="chevron-forward" size={16} color="#10b981" />
           </TouchableOpacity>
         </View>
 
@@ -454,19 +435,16 @@ export default function NaijaHirerHomeScreen({ navigation }) {
               onPress={() => navigation.navigate('RideBooking')}
             >
               <View className="w-12 h-12 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 items-center justify-center mb-2">
-                <Ionicons name="car" size={24} color="#008751" />
+                <Ionicons name="car" size={24} color="#10b981" />
               </View>
               <View className="flex-row items-center">
                 <Text style={{ color: isDark ? '#ffffff' : '#0f172a' }} className="font-normal text-xs">
                   Instant Ride
                 </Text>
-                <View className="ml-1.5 px-1.5 py-0.2 rounded bg-amber-400">
-                  <Text className="text-[8px] font-normal text-amber-950 uppercase">Fast</Text>
+                <View className="ml-1.5 px-1.5 py-0.2 rounded bg-emerald-500/20">
+                  <Text className="text-[8px] font-normal text-emerald-500 uppercase">Fast</Text>
                 </View>
               </View>
-              <Text style={{ color: isDark ? '#94a3b8' : '#64748b' }} className="text-[10px] font-normal mt-0.5">
-                Point-to-point trip
-              </Text>
             </TouchableOpacity>
 
             {/* 2. Hire Chauffeur */}
@@ -479,7 +457,7 @@ export default function NaijaHirerHomeScreen({ navigation }) {
               onPress={() => navigation.navigate('HireBooking')}
             >
               <View className="w-12 h-12 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 items-center justify-center mb-2">
-                <Ionicons name="briefcase" size={22} color="#008751" />
+                <Ionicons name="briefcase" size={22} color="#10b981" />
               </View>
               <View className="flex-row items-center">
                 <Text style={{ color: isDark ? '#ffffff' : '#0f172a' }} className="font-normal text-xs">
@@ -489,9 +467,6 @@ export default function NaijaHirerHomeScreen({ navigation }) {
                   <Text className="text-[8px] font-normal text-emerald-500 uppercase">Pro</Text>
                 </View>
               </View>
-              <Text style={{ color: isDark ? '#94a3b8' : '#64748b' }} className="text-[10px] font-normal mt-0.5">
-                Daily / Weekly / Monthly
-              </Text>
             </TouchableOpacity>
           </View>
 
@@ -505,20 +480,17 @@ export default function NaijaHirerHomeScreen({ navigation }) {
               className="flex-1 border rounded-2xl p-4 items-center shadow-sm"
               onPress={() => navigation.navigate('PostJob')}
             >
-              <View className="w-12 h-12 rounded-2xl bg-amber-400/15 border border-amber-400/40 items-center justify-center mb-2">
-                <Ionicons name="add-circle" size={24} color="#f59e0b" />
+              <View className="w-12 h-12 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 items-center justify-center mb-2">
+                <Ionicons name="add-circle" size={24} color="#10b981" />
               </View>
               <View className="flex-row items-center">
                 <Text style={{ color: isDark ? '#ffffff' : '#0f172a' }} className="font-normal text-xs">
                   Post Job
                 </Text>
-                <View className="ml-1.5 px-1.5 py-0.2 rounded bg-amber-400">
-                  <Text className="text-[8px] font-normal text-amber-950 uppercase">Flex</Text>
+                <View className="ml-1.5 px-1.5 py-0.2 rounded bg-emerald-500/20">
+                  <Text className="text-[8px] font-normal text-emerald-500 uppercase">Flex</Text>
                 </View>
               </View>
-              <Text style={{ color: isDark ? '#94a3b8' : '#64748b' }} className="text-[10px] font-normal mt-0.5">
-                Set custom budget
-              </Text>
             </TouchableOpacity>
 
             {/* 4. Browse Drivers */}
@@ -531,7 +503,7 @@ export default function NaijaHirerHomeScreen({ navigation }) {
               onPress={() => navigation.navigate('SearchDrivers')}
             >
               <View className="w-12 h-12 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 items-center justify-center mb-2">
-                <Ionicons name="people" size={22} color="#008751" />
+                <Ionicons name="people" size={22} color="#10b981" />
               </View>
               <View className="flex-row items-center">
                 <Text style={{ color: isDark ? '#ffffff' : '#0f172a' }} className="font-normal text-xs">
@@ -541,9 +513,6 @@ export default function NaijaHirerHomeScreen({ navigation }) {
                   <Text className="text-[8px] font-normal text-emerald-500 uppercase">Vetted</Text>
                 </View>
               </View>
-              <Text style={{ color: isDark ? '#94a3b8' : '#64748b' }} className="text-[10px] font-normal mt-0.5">
-                Filter by State & Class
-              </Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -626,7 +595,7 @@ export default function NaijaHirerHomeScreen({ navigation }) {
                         {fleetItem.min_fare || `${selectedCountry.currency}35,000/day`}
                       </Text>
                       <View className="flex-row items-center mt-0.5">
-                        <Ionicons name="star" size={11} color="#f59e0b" style={{ marginRight: 2 }} />
+                        <Ionicons name="star" size={11} color="#10b981" style={{ marginRight: 2 }} />
                         <Text style={{ color: isDark ? '#ffffff' : '#0f172a' }} className="text-[10px] font-normal">
                           {fleetItem.rating || 4.9}
                         </Text>

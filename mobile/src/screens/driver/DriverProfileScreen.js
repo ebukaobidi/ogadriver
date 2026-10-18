@@ -595,9 +595,6 @@ export default function DriverProfileScreen({ navigation, route }) {
                 <Text style={{ color: themeStyles.primaryText }} className="font-normal text-sm ml-2">
                   Driver Subscription Pass
                 </Text>
-                <Text style={{ color: themeStyles.subText }} className="text-[10px] ml-2 font-normal">
-                  0% Commission • From ₦300/day
-                </Text>
               </View>
             </View>
             <View className="flex-row items-center">
@@ -674,9 +671,6 @@ export default function DriverProfileScreen({ navigation, route }) {
                 <Text style={{ color: themeStyles.primaryText }} className="font-normal text-sm">
                   Instant Fuel Loan (0% Advance)
                 </Text>
-                <Text style={{ color: themeStyles.subText }} className="text-[10px] font-normal">
-                  Performance-Qualified Fleet Credit
-                </Text>
               </View>
             </View>
             <View className="flex-row items-center">
@@ -747,9 +741,6 @@ export default function DriverProfileScreen({ navigation, route }) {
             <View>
               <Text style={{ color: themeStyles.primaryText }} className="font-normal text-sm">
                 Driver Wallet & Bank Account
-              </Text>
-              <Text style={{ color: themeStyles.subText }} className="font-normal text-[10px] mt-0.5">
-                Bank payouts, instant cashout & ledger
               </Text>
             </View>
             <Ionicons name="chevron-forward" size={18} color={themeStyles.subText} />

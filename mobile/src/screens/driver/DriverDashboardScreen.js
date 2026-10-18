@@ -45,7 +45,7 @@ export default function DriverDashboardScreen({ navigation }) {
               value={8}
               max={15}
               label="Trips Today"
-              color="#3b82f6"
+              color="#10b981"
               unit="trips"
             />
           </View>
@@ -88,9 +88,9 @@ export default function DriverDashboardScreen({ navigation }) {
             <Text className="text-white/60 text-[10px] font-mono uppercase tracking-wider mb-4">
               Performance Metrics
             </Text>
-            <HorizontalBarGauge value={4.9} max={5} label="Rating" color="#f59e0b" />
-            <HorizontalBarGauge value={95} max={100} label="Acceptance Rate" color="#1cd188" />
-            <HorizontalBarGauge value={12} max={15} label="Weekly Target" color="#3b82f6" />
+            <HorizontalBarGauge value={4.9} max={5} label="Rating" color="#10b981" />
+            <HorizontalBarGauge value={95} max={100} label="Acceptance Rate" color="#10b981" />
+            <HorizontalBarGauge value={12} max={15} label="Weekly Target" color="#10b981" />
           </View>
         </SlideUp>
 

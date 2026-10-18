@@ -98,19 +98,9 @@ export default function GiftFundsScreen({ navigation }) {
         }}
         className="flex-row items-center justify-between px-4 py-3 border-b"
       >
-        <TouchableOpacity
-          onPress={() => navigation.goBack()}
-          className="w-10 h-10 rounded-xl items-center justify-center bg-slate-100 dark:bg-slate-800"
-        >
-          <Ionicons name="arrow-back" size={20} color={isDark ? '#ffffff' : '#0f172a'} />
-        </TouchableOpacity>
-
-        <View className="items-center">
+        <View className="flex-1">
           <Text style={{ color: isDark ? '#ffffff' : '#0f172a' }} className="font-normal text-base">
-            Gift Funds & Ride Vouchers
-          </Text>
-          <Text style={{ color: isDark ? '#94a3b8' : '#64748b' }} className="text-[10px]">
-            Send Wallet Balance or Referral Bonuses
+            Gift Funds & Vouchers
           </Text>
         </View>
 

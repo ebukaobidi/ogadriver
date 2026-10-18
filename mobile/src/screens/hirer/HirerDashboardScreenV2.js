@@ -128,9 +128,8 @@ export default function HirerDashboardScreenV2({ navigation }) {
         {activeView === 'jobs' && (
           <View className="flex-1 items-center justify-center">
             <View className="text-center">
-              <Ionicons name="briefcase" size={64} color="#3b82f6" />
-              <Text className="text-white font-black text-xl mt-4">Active Jobs</Text>
-              <Text className="text-slate-400 text-sm">Swipe to return to map</Text>
+              <Ionicons name="briefcase" size={64} color="#10b981" />
+              <Text className="text-white font-normal text-xl mt-4">Active Jobs</Text>
             </View>
           </View>
         )}

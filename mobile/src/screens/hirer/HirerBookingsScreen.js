@@ -192,7 +192,7 @@ export default function HirerBookingsScreen({ navigation }) {
           {/* Dropoff */}
           <View className="flex-row items-start">
             <View className="w-4 items-center mr-2 mt-0.5">
-              <Ionicons name="location" size={13} color="#f59e0b" />
+              <Ionicons name="location" size={13} color="#10b981" />
             </View>
             <View className="flex-1">
               <Text style={{ color: isDark ? '#94a3b8' : '#64748b' }} className="text-[10px] uppercase font-normal">
@@ -223,9 +223,9 @@ export default function HirerBookingsScreen({ navigation }) {
         </View>
 
         {isExpiringSoon && (
-          <View className="bg-amber-500/10 border border-amber-500/25 px-2.5 py-1.5 rounded-lg mb-3 flex-row items-center">
-            <Ionicons name="alert-circle-outline" size={14} color="#f59e0b" style={{ marginRight: 4 }} />
-            <Text className="text-amber-500 text-[10px] font-normal uppercase tracking-wider">
+          <View className="bg-emerald-500/10 border border-emerald-500/25 px-2.5 py-1.5 rounded-lg mb-3 flex-row items-center">
+            <Ionicons name="alert-circle-outline" size={14} color="#10b981" style={{ marginRight: 4 }} />
+            <Text className="text-emerald-500 text-[10px] font-normal uppercase tracking-wider">
               Engagement Expiring Soon • Renew Contract
             </Text>
           </View>
@@ -303,25 +303,9 @@ export default function HirerBookingsScreen({ navigation }) {
         }}
         className="flex-row items-center justify-between px-4 py-3 border-b"
       >
-        <TouchableOpacity
-          onPress={() => {
-            if (navigation.canGoBack()) {
-              navigation.goBack();
-            } else {
-              navigation.navigate('Ride');
-            }
-          }}
-          className="w-10 h-10 rounded-xl items-center justify-center bg-slate-100 dark:bg-slate-800"
-        >
-          <Ionicons name="arrow-back" size={20} color={isDark ? '#ffffff' : '#0f172a'} />
-        </TouchableOpacity>
-
-        <View className="items-center">
+        <View className="flex-1">
           <Text style={{ color: isDark ? '#ffffff' : '#0f172a' }} className="font-normal text-base">
             My Bookings
-          </Text>
-          <Text style={{ color: isDark ? '#94a3b8' : '#64748b' }} className="text-[10px]">
-            Active rides, scheduled trips & chauffeur hires
           </Text>
         </View>
 

@@ -95,9 +95,8 @@ export default function DriverTacticalMapScreen({ navigation }) {
         {activeView === 'surge' && (
           <View className="flex-1 items-center justify-center">
             <View className="text-center">
-              <Ionicons name="flash" size={64} color="#f59e0b" />
-              <Text className="text-white font-black text-xl mt-4">Surge Zones</Text>
-              <Text className="text-slate-400 text-sm">Swipe to return to map</Text>
+              <Ionicons name="flash" size={64} color="#10b981" />
+              <Text className="text-white font-normal text-xl mt-4">Surge Zones</Text>
             </View>
           </View>
         )}
@@ -105,9 +104,8 @@ export default function DriverTacticalMapScreen({ navigation }) {
         {activeView === 'earnings' && (
           <View className="flex-1 items-center justify-center">
             <View className="text-center">
-              <Ionicons name="wallet" size={64} color="#3b82f6" />
-              <Text className="text-white font-black text-xl mt-4">Earnings Dashboard</Text>
-              <Text className="text-slate-400 text-sm">Swipe to return to map</Text>
+              <Ionicons name="wallet" size={64} color="#10b981" />
+              <Text className="text-white font-normal text-xl mt-4">Earnings Dashboard</Text>
             </View>
           </View>
         )}

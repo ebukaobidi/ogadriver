@@ -150,9 +150,9 @@ export default function HirerDashboardScreen({ navigation }) {
               onPress={() => setDropoffLocation(savedPlaces.work || 'Ikoyi, Lagos')}
               className="flex-1 bg-slate-950/50 backdrop-blur-sm border border-slate-800 rounded-xl p-2.5 flex-row items-center space-x-2 shadow-lg"
             >
-              <Ionicons name="briefcase" size={14} color="#3b82f6" />
+              <Ionicons name="briefcase" size={14} color="#10b981" />
               <View className="flex-1">
-                <Text className="text-white font-bold text-[11px]">Work / Office</Text>
+                <Text className="text-white font-normal text-[11px]">Work / Office</Text>
                 <Text className="text-slate-400 text-[9px]" numberOfLines={1}>{savedPlaces.work || 'Ikoyi'}</Text>
               </View>
             </TouchableOpacity>
@@ -227,10 +227,10 @@ export default function HirerDashboardScreen({ navigation }) {
             className="flex-1 bg-slate-900/50 backdrop-blur-sm border border-slate-800 rounded-2xl p-4 items-center ml-1 shadow-lg"
             onPress={() => navigation.navigate('SearchDrivers')}
           >
-            <View className="w-12 h-12 rounded-xl bg-blue-500/10 items-center justify-center mb-2">
-              <Ionicons name="search-outline" size={24} color="#3b82f6" />
+            <View className="w-12 h-12 rounded-xl bg-emerald-500/10 items-center justify-center mb-2">
+              <Ionicons name="search-outline" size={24} color="#10b981" />
             </View>
-            <Text className="text-white font-bold text-xs">Browse Drivers</Text>
+            <Text className="text-white font-normal text-xs">Browse Drivers</Text>
           </TouchableOpacity>
         </View>
 

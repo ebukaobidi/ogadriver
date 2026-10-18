@@ -119,9 +119,9 @@ export default function ProposalsScreen({ navigation }) {
               {item.title || 'Executive Private Chauffeur'}
             </Text>
             <View className="flex-row items-center mt-1">
-              <View className="bg-blue-500/20 px-2 py-0.5 rounded-full border border-blue-500/30 flex-row items-center">
-                <Ionicons name="checkmark-circle" size={12} color="#3b82f6" style={{ marginRight: 3 }} />
-                <Text className="text-blue-500 text-[10px] font-bold">Verified driver ✓✓✓</Text>
+              <View className="bg-emerald-500/15 px-2 py-0.5 rounded-full border border-emerald-500/30 flex-row items-center">
+                <Ionicons name="checkmark-circle" size={12} color="#10b981" style={{ marginRight: 3 }} />
+                <Text className="text-emerald-500 text-[10px] font-normal">Verified driver</Text>
               </View>
             </View>
           </View>
@@ -188,22 +188,13 @@ export default function ProposalsScreen({ navigation }) {
         {/* Top App Bar Header */}
         <View className="flex-row justify-between items-center mb-2">
           <View className="flex-row items-center">
-            {navigation?.canGoBack && navigation.canGoBack() && (
-              <TouchableOpacity 
-                onPress={() => navigation.goBack()} 
-                style={{ backgroundColor: themeStyles.headerBtnBg, borderColor: themeStyles.headerBtnBorder }}
-                className="p-2 rounded-xl border mr-2"
-              >
-                <Ionicons name="arrow-back" size={18} color={themeStyles.primaryText} />
-              </TouchableOpacity>
-            )}
             <View className="w-8 h-8 rounded-full bg-emerald-500/20 border border-emerald-500 items-center justify-center mr-2 relative">
               <Ionicons name="person" size={16} color="#10b981" />
-              <View className="w-3 h-3 rounded-full bg-blue-500 absolute -bottom-0.5 -right-0.5 items-center justify-center">
+              <View className="w-3 h-3 rounded-full bg-emerald-500 absolute -bottom-0.5 -right-0.5 items-center justify-center">
                 <Ionicons name="checkmark" size={8} color="#ffffff" />
               </View>
             </View>
-            <Text style={{ color: themeStyles.primaryText }} className="font-bold text-lg">Oga Driver</Text>
+            <Text style={{ color: themeStyles.primaryText }} className="font-normal text-lg">Oga Driver</Text>
           </View>
           <View className="flex-row items-center space-x-3">
             <TouchableOpacity 

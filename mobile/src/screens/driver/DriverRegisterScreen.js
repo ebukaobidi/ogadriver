@@ -123,10 +123,9 @@ export default function DriverRegisterScreen({ navigation }) {
               <TouchableOpacity 
                 onPress={() => navigation.navigate('Login')}
                 style={{ backgroundColor: themeStyles.headerBtnBg, borderColor: themeStyles.headerBtnBorder }}
-                className="p-2 rounded-xl border flex-row items-center"
+                className="px-3 py-1.5 rounded-xl border flex-row items-center"
               >
-                <Ionicons name="arrow-back" size={18} color={themeStyles.primaryText} />
-                <Text style={{ color: themeStyles.primaryText }} className="text-xs font-bold ml-1.5">Sign In</Text>
+                <Text style={{ color: themeStyles.primaryText }} className="text-xs font-normal">Sign In</Text>
               </TouchableOpacity>
               <View className="flex-row items-center">
                 <View className="w-2 h-2 rounded-full bg-emerald-500 mr-2" />

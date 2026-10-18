@@ -171,20 +171,9 @@ export default function PostJobScreen({ navigation, route }) {
           }}
           className="px-4 py-3.5 border-b flex-row items-center justify-between"
         >
-          <TouchableOpacity
-            onPress={() => navigation.goBack()}
-            className="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 items-center justify-center mr-3"
-            activeOpacity={0.7}
-          >
-            <Ionicons name="arrow-back" size={20} color={isDark ? '#f8fafc' : '#0f172a'} />
-          </TouchableOpacity>
-
           <View className="flex-1">
             <Text style={{ color: isDark ? '#ffffff' : '#0f172a' }} className="text-base font-normal">
               Post Driver Vacancy
-            </Text>
-            <Text className="text-xs font-normal text-emerald-600 dark:text-brandMint">
-              Broadcast to Vetted Fleets & Drivers
             </Text>
           </View>
 
@@ -474,7 +463,7 @@ export default function PostJobScreen({ navigation, route }) {
                 }}
                 className="flex-row items-center border rounded-xl px-3"
               >
-                <Ionicons name="flag" size={15} color="#ef4444" />
+                <Ionicons name="flag" size={15} color="#10b981" />
                 <TextInput
                   style={{ color: isDark ? '#ffffff' : '#0f172a' }}
                   className="flex-1 py-2.5 pl-2 text-xs font-normal"

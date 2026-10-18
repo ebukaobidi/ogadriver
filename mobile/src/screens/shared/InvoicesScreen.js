@@ -109,20 +109,9 @@ export default function InvoicesScreen({ navigation }) {
         }}
         className="flex-row items-center justify-between px-4 py-3 border-b"
       >
-        <TouchableOpacity
-          onPress={() => navigation.goBack()}
-          className="w-10 h-10 rounded-xl items-center justify-center"
-          style={{ backgroundColor: isDark ? '#121927' : '#f1f5f9' }}
-        >
-          <Ionicons name="arrow-back" size={20} color={isDark ? '#ffffff' : '#0f172a'} />
-        </TouchableOpacity>
-
-        <View className="items-center">
+        <View className="flex-1">
           <Text style={{ color: isDark ? '#ffffff' : '#0f172a' }} className="font-normal text-base">
             Invoices & Receipts
-          </Text>
-          <Text style={{ color: isDark ? '#94a3b8' : '#64748b' }} className="text-[10px]">
-            Official Statements & Tax Receipts
           </Text>
         </View>
 

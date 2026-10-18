@@ -590,21 +590,18 @@ export default function ProfileScreen({ navigation, route }) {
             className="border rounded-2xl p-4 flex-row items-center justify-between shadow-sm"
           >
             <View className="flex-row items-center flex-1 mr-3">
-              <View className="w-11 h-11 rounded-xl bg-emerald-500/10 border border-emerald-500/20 items-center justify-center mr-3.5">
-                <Ionicons name="calendar" size={22} color="#008751" />
+              <View className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 items-center justify-center mr-3">
+                <Ionicons name="calendar" size={20} color="#10b981" />
               </View>
               <View className="flex-1">
                 <View className="flex-row items-center">
-                  <Text style={{ color: isDark ? '#ffffff' : '#0f172a' }} className="font-bold text-sm mr-2">
+                  <Text style={{ color: isDark ? '#ffffff' : '#0f172a' }} className="font-normal text-sm mr-2">
                     My Bookings
                   </Text>
                   <View className="px-2 py-0.5 rounded-full bg-emerald-500/15 border border-emerald-500/30">
-                    <Text className="text-[9px] font-black uppercase text-emerald-500">NEW</Text>
+                    <Text className="text-[9px] font-normal uppercase text-emerald-500">NEW</Text>
                   </View>
                 </View>
-                <Text style={{ color: isDark ? '#94a3b8' : '#64748b' }} className="text-xs mt-0.5">
-                  Track active rides, scheduled trips & chauffeur hires
-                </Text>
               </View>
             </View>
             <Ionicons name="chevron-forward" size={18} color={isDark ? '#94a3b8' : '#64748b'} />
@@ -628,13 +625,10 @@ export default function ProfileScreen({ navigation, route }) {
                 style={{ backgroundColor: isDark ? 'rgba(16, 185, 129, 0.15)' : '#ecfdf5', borderColor: isDark ? 'rgba(16, 185, 129, 0.3)' : '#a7f3d0' }}
                 className="w-10 h-10 rounded-xl border items-center justify-center mb-1.5"
               >
-                <Ionicons name="people" size={19} color={isDark ? '#34d399' : '#059669'} />
+                <Ionicons name="people" size={19} color="#10b981" />
               </View>
-              <Text style={{ color: isDark ? '#ffffff' : '#0f172a' }} className="font-normal text-[11px]">
+              <Text style={{ color: isDark ? '#ffffff' : '#0f172a' }} className="font-normal text-xs">
                 Drivers
-              </Text>
-              <Text style={{ color: isDark ? '#94a3b8' : '#64748b' }} className="text-[9px]">
-                Directory
               </Text>
             </View>
           </TouchableOpacity>
@@ -651,16 +645,13 @@ export default function ProfileScreen({ navigation, route }) {
               className="border rounded-2xl p-3 items-center shadow-sm"
             >
               <View 
-                style={{ backgroundColor: isDark ? 'rgba(245, 158, 11, 0.15)' : '#fffbeb', borderColor: isDark ? 'rgba(245, 158, 11, 0.3)' : '#fde68a' }}
+                style={{ backgroundColor: isDark ? 'rgba(16, 185, 129, 0.15)' : '#ecfdf5', borderColor: isDark ? 'rgba(16, 185, 129, 0.3)' : '#a7f3d0' }}
                 className="w-10 h-10 rounded-xl border items-center justify-center mb-1.5"
               >
-                <Ionicons name="gift" size={19} color={isDark ? '#fbbf24' : '#d97706'} />
+                <Ionicons name="gift" size={19} color="#10b981" />
               </View>
-              <Text style={{ color: isDark ? '#ffffff' : '#0f172a' }} className="font-normal text-[11px]">
+              <Text style={{ color: isDark ? '#ffffff' : '#0f172a' }} className="font-normal text-xs">
                 Gift Funds
-              </Text>
-              <Text style={{ color: isDark ? '#94a3b8' : '#64748b' }} className="text-[9px]">
-                Give ₦2k
               </Text>
             </View>
           </TouchableOpacity>
@@ -677,16 +668,13 @@ export default function ProfileScreen({ navigation, route }) {
               className="border rounded-2xl p-3 items-center shadow-sm"
             >
               <View 
-                style={{ backgroundColor: isDark ? 'rgba(99, 102, 241, 0.15)' : '#eef2ff', borderColor: isDark ? 'rgba(99, 102, 241, 0.3)' : '#c7d2fe' }}
+                style={{ backgroundColor: isDark ? 'rgba(16, 185, 129, 0.15)' : '#ecfdf5', borderColor: isDark ? 'rgba(16, 185, 129, 0.3)' : '#a7f3d0' }}
                 className="w-10 h-10 rounded-xl border items-center justify-center mb-1.5"
               >
-                <Ionicons name="star" size={19} color={isDark ? '#818cf8' : '#4f46e5'} />
+                <Ionicons name="star" size={19} color="#10b981" />
               </View>
-              <Text style={{ color: isDark ? '#ffffff' : '#0f172a' }} className="font-normal text-[11px]">
+              <Text style={{ color: isDark ? '#ffffff' : '#0f172a' }} className="font-normal text-xs">
                 OgaPoints
-              </Text>
-              <Text className="text-emerald-500 font-normal text-[9px]">
-                {userPoints.toLocaleString()} pts
               </Text>
             </View>
           </TouchableOpacity>
@@ -839,9 +827,6 @@ export default function ProfileScreen({ navigation, route }) {
                 <Text style={{ color: isDark ? '#ffffff' : '#0f172a' }} className="font-normal text-xs">
                   Quiet Ride Preferred
                 </Text>
-                <Text style={{ color: isDark ? '#94a3b8' : '#64748b' }} className="text-[10px]">
-                  Driver keeps audio silent and conversations professional
-                </Text>
               </View>
               <Switch
                 value={ridePref}
@@ -855,9 +840,6 @@ export default function ProfileScreen({ navigation, route }) {
                 <Text style={{ color: isDark ? '#ffffff' : '#0f172a' }} className="font-normal text-xs">
                   Auto-Share Live Trip Status
                 </Text>
-                <Text style={{ color: isDark ? '#94a3b8' : '#64748b' }} className="text-[10px]">
-                  Broadcast GPS tracking link to personal assistant / family
-                </Text>
               </View>
               <Switch
                 value={tripPref}
@@ -870,9 +852,6 @@ export default function ProfileScreen({ navigation, route }) {
               <View className="flex-1 pr-3">
                 <Text style={{ color: isDark ? '#ffffff' : '#0f172a' }} className="font-normal text-xs">
                   Corporate Business Account
-                </Text>
-                <Text style={{ color: isDark ? '#94a3b8' : '#64748b' }} className="text-[10px]">
-                  Attach company TIN and receive bulk monthly statements
                 </Text>
               </View>
               <Switch
@@ -897,9 +876,6 @@ export default function ProfileScreen({ navigation, route }) {
             <View>
               <Text className="text-red-500 font-normal text-sm tracking-wider uppercase">
                 Emergency SOS Dispatch
-              </Text>
-              <Text style={{ color: isDark ? '#94a3b8' : '#64748b' }} className="text-[10px]">
-                Instant armed response & security relay
               </Text>
             </View>
           </View>
@@ -939,9 +915,6 @@ export default function ProfileScreen({ navigation, route }) {
                       </Text>
                     </View>
                   </View>
-                  <Text style={{ color: isDark ? '#94a3b8' : '#64748b' }} className="text-[10px] mt-0.5">
-                    Govt ID, Address & SOS Emergency Next of Kin
-                  </Text>
                 </View>
               </View>
               <Ionicons name="chevron-forward" size={16} color="#64748b" />

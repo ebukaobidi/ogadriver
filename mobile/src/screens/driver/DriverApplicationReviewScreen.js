@@ -134,19 +134,9 @@ export default function DriverApplicationReviewScreen({ route, navigation }) {
         className="px-5 py-4 flex-row items-center justify-between"
       >
         <View className="flex-row items-center">
-          <TouchableOpacity 
-            onPress={() => navigation.goBack()}
-            style={{ backgroundColor: themeStyles.headerBtnBg, borderColor: themeStyles.headerBtnBorder }}
-            className="p-2 mr-3 rounded-xl border"
-          >
-            <Ionicons name="arrow-back" size={18} color={themeStyles.primaryText} />
-          </TouchableOpacity>
           <View>
-            <Text style={{ color: themeStyles.primaryText }} className="font-black text-lg">
+            <Text style={{ color: themeStyles.primaryText }} className="font-normal text-base">
               Quick Verification
-            </Text>
-            <Text style={{ color: themeStyles.subText }} className="text-xs">
-              Step 3 of 3 • Instant Sign-Up
             </Text>
           </View>
         </View>

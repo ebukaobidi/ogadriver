@@ -99,7 +99,7 @@ export default function JobDetailsScreen({ route, navigation }) {
  if (loading) {
  return (
  <SafeAreaView className="flex-1 bg-white dark:bg-corporateNavy items-center justify-center">
- <ActivityIndicator color="#22d3ee" size="large" />
+ <ActivityIndicator color="#10b981" size="large" />
  </SafeAreaView>
  );
  }
@@ -127,12 +127,8 @@ export default function JobDetailsScreen({ route, navigation }) {
     onVerified={() => setShowSecurityHalt(false)} 
  />
  <View className="px-6 py-4 border-b border-slate-200 dark:border-slate-800 flex-row items-center">
- <TouchableOpacity onPress={() => navigation.goBack()} className="mr-4">
- <Ionicons name="arrow-back" size={24} color="#22d3ee" />
- </TouchableOpacity>
  <View>
- <Text className="text-xl font-black text-slate-900 dark:text-white uppercase tracking-widest">Job Details</Text>
- <Text className="text-brandMint font-mono text-[10px]">Job Information</Text>
+ <Text className="text-xl font-normal text-slate-900 dark:text-white uppercase tracking-widest">Job Details</Text>
  </View>
  </View>
 
@@ -196,7 +192,7 @@ export default function JobDetailsScreen({ route, navigation }) {
  <View>
  <Text className="text-slate-900 dark:text-white font-bold text-lg">{job.hirer?.user?.name}</Text>
  <View className="flex-row items-center mt-1">
- <Ionicons name="star" size={12} color="#fbbf24" />
+ <Ionicons name="star" size={12} color="#10b981" />
  <Text className="text-slate-500 dark:text-slate-400 text-xs ml-1">{job.hirer?.rating || 'No ratings'}</Text>
  </View>
  </View>

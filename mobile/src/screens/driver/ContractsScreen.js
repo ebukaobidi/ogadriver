@@ -93,21 +93,9 @@ export default function ContractsScreen({ navigation }) {
         className="px-5 pt-4 pb-3 flex-row items-center justify-between"
       >
         <View className="flex-row items-center">
-          {navigation?.canGoBack && navigation.canGoBack() && (
-            <TouchableOpacity 
-              onPress={() => navigation.goBack()}
-              style={{ backgroundColor: themeStyles.headerBtnBg, borderColor: themeStyles.headerBtnBorder }}
-              className="p-2 mr-3 rounded-xl border"
-            >
-              <Ionicons name="arrow-back" size={18} color={themeStyles.primaryText} />
-            </TouchableOpacity>
-          )}
           <View>
-            <Text style={{ color: themeStyles.titleText }} className="text-2xl font-black uppercase tracking-wide">
+            <Text style={{ color: themeStyles.titleText }} className="text-xl font-normal tracking-wide">
               Active Ops
-            </Text>
-            <Text style={{ color: themeStyles.subText }} className="text-xs">
-              Ongoing Deployments & Hire Contracts
             </Text>
           </View>
         </View>

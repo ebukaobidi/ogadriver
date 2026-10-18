@@ -105,22 +105,12 @@ export default function LoyaltyScreen({ navigation }) {
         className="flex-row items-center justify-between px-4 py-3 border-b"
       >
         <View className="flex-row items-center">
-          <TouchableOpacity onPress={() => navigation.goBack()} className="mr-3">
-            <Ionicons name="arrow-back" size={24} color={isDark ? '#ffffff' : '#0f172a'} />
-          </TouchableOpacity>
-          <View>
-            <View className="flex-row items-center">
-              <Text style={{ color: isDark ? '#ffffff' : '#0f172a' }} className="font-normal text-lg">
-                OgaPoints & Rewards
-              </Text>
-              <View className="ml-2 px-1.5 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/30">
-                <Text className="text-[9px] font-normal uppercase text-emerald-500 tracking-wider">
-                  Ride For Less
-                </Text>
-              </View>
-            </View>
-            <Text style={{ color: isDark ? '#94a3b8' : '#64748b' }} className="text-[11px]">
-              1 Point = ₦1 Ride Credit • Profit Balanced
+          <Text style={{ color: isDark ? '#ffffff' : '#0f172a' }} className="font-normal text-lg">
+            OgaPoints & Rewards
+          </Text>
+          <View className="ml-2 px-1.5 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/30">
+            <Text className="text-[9px] font-normal uppercase text-emerald-500 tracking-wider">
+              Ride For Less
             </Text>
           </View>
         </View>

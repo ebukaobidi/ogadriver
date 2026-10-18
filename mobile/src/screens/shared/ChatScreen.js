@@ -72,15 +72,10 @@ export default function ChatScreen({ route, navigation }) {
   return (
     <SafeAreaView className="flex-1 bg-slate-950">
       {/* Header */}
-      <View className="px-4 py-3 bg-slate-50 dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 flex-row items-center justify-between">
-        <TouchableOpacity onPress={() => navigation.goBack()} className="p-2">
-          <Ionicons name="arrow-back" size={24} color="#ffffff" />
-        </TouchableOpacity>
-        <View className="items-center">
-          <Text className="text-slate-900 dark:text-white font-bold text-base">{recipientName || 'Chat'}</Text>
-          <Text className="text-brandMint text-[10px] font-mono uppercase tracking-widest">Secure Chat</Text>
+      <View className="px-4 py-3.5 bg-slate-50 dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 flex-row items-center justify-between">
+        <View className="flex-1">
+          <Text className="text-slate-900 dark:text-white font-normal text-base">{recipientName || 'Chat'}</Text>
         </View>
-        <View className="w-8" />
       </View>
 
       <KeyboardAvoidingView

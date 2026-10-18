@@ -209,21 +209,11 @@ export default function KycVerificationScreen({ navigation }) {
         }}
         className="flex-row items-center justify-between px-4 py-3 border-b"
       >
-        <TouchableOpacity
-          onPress={() => navigation.goBack()}
-          className="p-2 rounded-xl bg-slate-100 dark:bg-slate-800"
-        >
-          <Ionicons name="arrow-back" size={20} color={isDark ? '#ffffff' : '#0f172a'} />
-        </TouchableOpacity>
-        <View className="items-center">
+        <View className="flex-1">
           <Text style={{ color: isDark ? '#ffffff' : '#0f172a' }} className="font-normal text-base tracking-tight">
             KYC & Identity Verification
           </Text>
-          <Text style={{ color: isDark ? '#94a3b8' : '#64748b' }} className="text-[10px] uppercase font-normal">
-            Tier 2 Compliance & Safety Charter
-          </Text>
         </View>
-        <View className="w-8" />
       </View>
 
       {loading ? (

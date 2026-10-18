@@ -117,22 +117,9 @@ export default function VehicleInspectionScreen({ route, navigation }) {
         {/* Top Header Bar with Back Button & Notification Menu */}
         <View className="flex-row items-center justify-between mb-5">
           <View className="flex-row items-center flex-1">
-            <TouchableOpacity 
-              onPress={() => navigation.goBack()} 
-              style={{
-                backgroundColor: themeStyles.headerBtnBg,
-                borderColor: themeStyles.headerBtnBorder
-              }}
-              className="p-2 mr-3 rounded-xl border"
-            >
-              <Ionicons name="arrow-back" size={20} color={themeStyles.primaryText} />
-            </TouchableOpacity>
             <View className="flex-1">
-              <Text style={{ color: themeStyles.titleText }} className="text-xl font-black">
+              <Text style={{ color: themeStyles.titleText }} className="text-xl font-normal">
                 Vehicle & Rates
-              </Text>
-              <Text style={{ color: themeStyles.subText }} className="text-xs">
-                Tier qualification, daily rates & inspection
               </Text>
             </View>
           </View>

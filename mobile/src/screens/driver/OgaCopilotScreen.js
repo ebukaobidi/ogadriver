@@ -30,13 +30,10 @@ export default function OgaCopilotScreen({ navigation }) {
         {/* Top App Bar Header */}
         <View className="flex-row justify-between items-center mb-1">
           <View className="flex-row items-center">
-            <TouchableOpacity onPress={() => navigation.goBack()} className="p-2 rounded-xl bg-slate-900/50 backdrop-blur-sm border border-slate-800 mr-2 shadow-lg">
-              <Ionicons name="arrow-back" size={18} color="#10b981" />
-            </TouchableOpacity>
             <View className="w-8 h-8 rounded-full bg-emerald-500/20 border border-emerald-500/50 items-center justify-center mr-2 relative shadow-lg shadow-emerald-500/20">
               <Ionicons name="person" size={16} color="#10b981" />
             </View>
-            <Text className="text-white font-bold text-lg">Oga Driver</Text>
+            <Text className="text-white font-normal text-lg">Oga Driver</Text>
           </View>
           <View className="flex-row items-center space-x-3">
             <TouchableOpacity className="p-2 rounded-xl bg-slate-900/50 backdrop-blur-sm border border-slate-800 shadow-lg">
@@ -44,8 +41,8 @@ export default function OgaCopilotScreen({ navigation }) {
             </TouchableOpacity>
             <TouchableOpacity className="p-2 rounded-xl bg-slate-900/50 backdrop-blur-sm border border-slate-800 shadow-lg ml-2 relative">
               <Ionicons name="notifications-outline" size={18} color="#ffffff" />
-              <View className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-red-500 border-2 border-slate-900 flex items-center justify-center">
-                <Text className="text-white text-[9px] font-bold">3</Text>
+              <View className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-emerald-500 border-2 border-slate-900 flex items-center justify-center">
+                <Text className="text-white text-[9px] font-normal">3</Text>
               </View>
             </TouchableOpacity>
           </View>

@@ -49,24 +49,11 @@ export default function WeeklySprintScreen({ navigation }) {
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: themeStyles.screenBg }}>
       <ScrollView className="flex-1 px-4 py-4" showsVerticalScrollIndicator={false}>
-        {/* Header with Back Button */}
+        {/* Header */}
         <View className="flex-row items-center mb-4">
-          <TouchableOpacity 
-            onPress={() => navigation.goBack()} 
-            style={{
-              backgroundColor: themeStyles.headerBtnBg,
-              borderColor: themeStyles.headerBtnBorder
-            }}
-            className="p-2 mr-3 rounded-xl border"
-          >
-            <Ionicons name="arrow-back" size={20} color={themeStyles.primaryText} />
-          </TouchableOpacity>
           <View>
-            <Text style={{ color: themeStyles.titleText }} className="text-2xl font-black">
-              🏆 Weekly Cash Sprint
-            </Text>
-            <Text style={{ color: themeStyles.subText }} className="text-xs">
-              Top Drivers Leaderboard & Weekly Cash Prizes
+            <Text style={{ color: themeStyles.titleText }} className="text-xl font-normal">
+              Weekly Cash Sprint
             </Text>
           </View>
         </View>

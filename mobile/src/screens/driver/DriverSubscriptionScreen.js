@@ -324,7 +324,7 @@ export default function DriverSubscriptionScreen({ navigation }) {
             className="rounded-2xl p-3 mt-2 flex-row items-center justify-between"
           >
             <View className="flex-row items-center">
-              <Ionicons name="sparkles" size={16} color="#f59e0b" style={{ marginRight: 6 }} />
+              <Ionicons name="sparkles" size={16} color="#10b981" style={{ marginRight: 6 }} />
               <Text style={{ color: themeStyles.primaryText }} className="text-xs font-normal">
                 0% Platform Commission
               </Text>
@@ -344,8 +344,8 @@ export default function DriverSubscriptionScreen({ navigation }) {
           }}
           className="rounded-2xl p-4 mb-5 flex-row items-center"
         >
-          <View className="w-10 h-10 rounded-xl bg-amber-400/20 items-center justify-center mr-3 border border-amber-400/40">
-            <Ionicons name="pricetag-outline" size={20} color="#f59e0b" />
+          <View className="w-10 h-10 rounded-xl bg-emerald-500/15 items-center justify-center mr-3 border border-emerald-500/30">
+            <Ionicons name="pricetag-outline" size={20} color="#10b981" />
           </View>
           <View className="flex-1">
             <Text style={{ color: themeStyles.primaryText }} className="font-normal text-xs">

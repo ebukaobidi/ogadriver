@@ -373,30 +373,19 @@ export default function RideBookingScreen({ navigation }) {
         }}
         className="flex-row items-center justify-between"
       >
-        <TouchableOpacity
-          onPress={() => navigation.goBack ? navigation.goBack() : navigation.navigate('NaijaHirerHome')}
-          style={{
-            backgroundColor: isDark ? 'rgba(18,25,39,0.92)' : 'rgba(255,255,255,0.95)',
-            borderColor: isDark ? '#1e293b' : '#e2e8f0',
-          }}
-          className="w-11 h-11 rounded-2xl border items-center justify-center shadow-lg shadow-black/10"
-        >
-          <Ionicons name="arrow-back" size={20} color={isDark ? '#ffffff' : '#0f172a'} />
-        </TouchableOpacity>
-
         <View
           style={{
             backgroundColor: isDark ? 'rgba(18,25,39,0.92)' : 'rgba(255,255,255,0.95)',
             borderColor: isDark ? '#1e293b' : '#e2e8f0',
           }}
-          className="flex-row items-center px-3.5 py-2 rounded-2xl border shadow-lg shadow-black/10"
+          className="flex-row items-center px-4 py-2.5 rounded-2xl border shadow-lg shadow-black/10"
         >
           <View className="w-2.5 h-2.5 rounded-full bg-emerald-500 mr-2" />
-          <Text style={{ color: isDark ? '#ffffff' : '#0f172a' }} className="font-normal text-xs mr-2">
+          <Text style={{ color: isDark ? '#ffffff' : '#0f172a' }} className="font-semibold text-xs mr-2">
             OgaDriver Ride
           </Text>
           <View className="px-1.5 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/30">
-            <Text className="text-[9px] font-normal uppercase text-emerald-500">Live Map</Text>
+            <Text className="text-[9px] font-bold uppercase text-emerald-500">Live Map</Text>
           </View>
         </View>
 
@@ -409,7 +398,7 @@ export default function RideBookingScreen({ navigation }) {
           className="px-3.5 h-11 rounded-2xl border items-center justify-center flex-row shadow-lg shadow-black/10"
         >
           <Ionicons name="storefront-outline" size={16} color="#10b981" style={{ marginRight: 4 }} />
-          <Text className="text-emerald-500 font-normal text-xs">Market</Text>
+          <Text className="text-emerald-500 font-semibold text-xs">Market</Text>
         </TouchableOpacity>
       </View>
 
@@ -619,11 +608,11 @@ export default function RideBookingScreen({ navigation }) {
                     onPress={() => updateStop(stopItem.id, 'Intermediate Waypoint Pin')}
                     className="p-1 mr-1"
                   >
-                    <Ionicons name="location" size={16} color="#0284c7" />
+                    <Ionicons name="location" size={16} color="#10b981" />
                   </TouchableOpacity>
                 )}
                 <TouchableOpacity onPress={() => removeStop(stopItem.id)} className="p-1">
-                  <Ionicons name="trash-outline" size={16} color="#ef4444" />
+                  <Ionicons name="trash-outline" size={16} color="#94a3b8" />
                 </TouchableOpacity>
               </View>
             </View>
@@ -637,7 +626,7 @@ export default function RideBookingScreen({ navigation }) {
             }}
             className="flex-row items-center border rounded-2xl px-3.5 py-2.5 shadow-sm"
           >
-            <View className="w-3.5 h-3.5 rounded-full bg-amber-500 mr-2.5 items-center justify-center">
+            <View className="w-3.5 h-3.5 rounded-full bg-emerald-500 mr-2.5 items-center justify-center">
               <View className="w-1.5 h-1.5 rounded-full bg-white" />
             </View>
             <TextInput
@@ -659,7 +648,7 @@ export default function RideBookingScreen({ navigation }) {
             {/* Switching between Clear/Cancel and Map Location Icon */}
             {dropoff ? (
               <TouchableOpacity onPress={() => setDropoff('')} className="p-1">
-                <Ionicons name="close-circle" size={17} color="#ef4444" />
+                <Ionicons name="close-circle" size={17} color="#94a3b8" />
               </TouchableOpacity>
             ) : (
               <TouchableOpacity
@@ -669,7 +658,7 @@ export default function RideBookingScreen({ navigation }) {
                 }}
                 className="p-1"
               >
-                <Ionicons name="location" size={17} color="#f59e0b" />
+                <Ionicons name="location" size={17} color="#10b981" />
               </TouchableOpacity>
             )}
           </View>
@@ -800,10 +789,6 @@ export default function RideBookingScreen({ navigation }) {
                 </View>
               </View>
 
-              <Text className="text-white text-xs font-normal mb-2 text-center opacity-80">
-                You offer: Set what you want to pay
-              </Text>
-
               {/* Offer Stepper */}
               <View className="flex-row justify-between items-center my-1 bg-black/20 p-2 rounded-2xl">
                 <TouchableOpacity
@@ -813,7 +798,7 @@ export default function RideBookingScreen({ navigation }) {
                   <Ionicons name="remove" size={24} color="#ffffff" />
                 </TouchableOpacity>
 
-                <Text className="text-white font-normal text-3xl tracking-tight">
+                <Text className="text-white font-semibold text-3xl tracking-tight">
                   ₦{(usePointsDiscount ? Math.max(1000, offerPrice - pointsDiscountValue) : offerPrice).toLocaleString()}
                 </Text>
 
@@ -827,9 +812,9 @@ export default function RideBookingScreen({ navigation }) {
 
               {usePointsDiscount ? (
                 <View className="bg-emerald-400/20 py-1.5 px-3 rounded-xl border border-emerald-400/30 flex-row items-center justify-center mt-2 mb-1">
-                  <Ionicons name="checkmark-circle" size={14} color="#34d399" style={{ marginRight: 4 }} />
+                  <Ionicons name="checkmark-circle" size={14} color="#10b981" style={{ marginRight: 4 }} />
                   <Text className="text-emerald-300 font-normal text-[11px]">
-                    ₦1,000 Points Discount Applied (Original: ₦{offerPrice.toLocaleString()})
+                    ₦1,000 Points Discount Applied
                   </Text>
                 </View>
               ) : null}
@@ -838,13 +823,13 @@ export default function RideBookingScreen({ navigation }) {
               <View className="mt-3 pt-3 border-t border-emerald-500/20 flex-row items-center justify-between">
                 <View className="flex-1 mr-2">
                   <View className="flex-row items-center">
-                    <Ionicons name="sparkles" size={14} color="#34d399" style={{ marginRight: 4 }} />
-                    <Text className="text-emerald-300 font-normal text-xs">
-                      Redeem 1,000 pts (Save ₦1,000)
+                    <Ionicons name="sparkles" size={14} color="#10b981" style={{ marginRight: 4 }} />
+                    <Text className="text-emerald-300 font-medium text-xs">
+                      Redeem 1,000 pts
                     </Text>
                   </View>
-                  <Text className="text-white text-[10px] mt-0.5 font-normal">
-                    Balance: {userPoints.toLocaleString()} pts • Earn +{pointsToEarn} pts on this trip
+                  <Text className="text-white/80 text-[10px] mt-0.5 font-normal">
+                    {userPoints.toLocaleString()} pts available
                   </Text>
                 </View>
 
@@ -870,10 +855,6 @@ export default function RideBookingScreen({ navigation }) {
                   </Text>
                 </TouchableOpacity>
               </View>
-
-              <Text className="text-white text-[11px] text-center mt-3 font-normal">
-                Drivers in your radius can accept directly or send a sharp counter-offer.
-              </Text>
             </View>
 
             {/* WHEN SECTION: WITH TOGGLE BTN FOR NEATNESS */}

@@ -161,19 +161,9 @@ export default function DriverStatusScreen({ route, navigation }) {
       <ScrollView className="flex-1 px-5 pt-6 pb-12" showsVerticalScrollIndicator={false}>
         {/* Header Navigation */}
         <View className="flex-row items-center mb-4">
-          <TouchableOpacity 
-            onPress={() => navigation.goBack()}
-            style={{ backgroundColor: themeStyles.headerBtnBg, borderColor: themeStyles.headerBtnBorder }}
-            className="p-2 mr-3 rounded-xl border"
-          >
-            <Ionicons name="arrow-back" size={20} color={themeStyles.primaryText} />
-          </TouchableOpacity>
           <View>
-            <Text style={{ color: themeStyles.titleText }} className="font-normal text-2xl">
+            <Text style={{ color: themeStyles.titleText }} className="font-normal text-xl">
               Vehicle & Work Profile
-            </Text>
-            <Text style={{ color: themeStyles.subText }} className="text-xs font-normal">
-              Step 2 of 3 • Choose your operational mode
             </Text>
           </View>
         </View>
@@ -725,7 +715,7 @@ export default function DriverStatusScreen({ route, navigation }) {
             >
               <View className="flex-row items-center justify-between mb-2">
                 <View className="flex-row items-center flex-1 mr-2">
-                  <Ionicons name="sparkles" size={14} color="#f59e0b" style={{ marginRight: 6 }} />
+                  <Ionicons name="sparkles" size={14} color="#10b981" style={{ marginRight: 6 }} />
                   <Text style={{ color: themeStyles.primaryText }} className="font-normal text-xs">
                     Auto-Classified Fleet Tier:
                   </Text>

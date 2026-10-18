@@ -16,8 +16,7 @@ export default function HeaderBar({
 }) {
   const { isDark, updateThemeMode } = useTheme();
 
-  const canGoBack = Boolean(navigation?.canGoBack && navigation.canGoBack());
-  const shouldShowBack = showBack !== undefined ? showBack : canGoBack;
+  const shouldShowBack = false;
 
   const handleBack = () => {
     if (onBack) {
@@ -33,7 +32,7 @@ export default function HeaderBar({
   const borderColor = isDark ? '#1e293b' : '#e2e8f0';
   const buttonBg = isDark ? '#121927' : '#f1f5f9';
   const buttonBorder = isDark ? '#1e293b' : '#cbd5e1';
-  const iconColor = isDark ? '#ffffff' : '#0f172a';
+  const iconColor = isDark ? '#00e588' : '#059669';
   const brandGreen = isDark ? '#00e588' : '#059669';
   const partnerTextColor = isDark ? '#ffffff' : '#0f172a';
   const titleColor = isDark ? '#ffffff' : '#0f172a';
@@ -50,38 +49,22 @@ export default function HeaderBar({
         borderBottomColor: borderColor, 
         borderBottomWidth: 1 
       }} 
-      className="px-4 py-3 flex-row justify-between items-center z-50"
+      className="px-4 py-3.5 flex-row justify-between items-center z-50"
     >
-      {/* Left Section: Back Button or Brand / Title */}
+      {/* Left Section: Brand / Clean Title (Phone back button handles return) */}
       <View className="flex-row items-center flex-1 mr-2">
-        {shouldShowBack && (
-          <TouchableOpacity
-            onPress={handleBack}
-            style={{ backgroundColor: buttonBg, borderColor: buttonBorder }}
-            className="mr-3 w-9 h-9 items-center justify-center rounded-full border shadow-sm"
-            activeOpacity={0.7}
-          >
-            <Ionicons name="arrow-back" size={18} color={iconColor} />
-          </TouchableOpacity>
-        )}
-
         {title ? (
           <View className="flex-1">
-            <Text style={{ color: titleColor }} className="font-normal text-base" numberOfLines={1}>
+            <Text style={{ color: titleColor }} className="font-semibold text-base" numberOfLines={1}>
               {title}
             </Text>
-            {subtitle ? (
-              <Text style={{ color: subTextColor }} className="text-[11px] font-normal" numberOfLines={1}>
-                {subtitle}
-              </Text>
-            ) : null}
           </View>
         ) : (
           <View className="flex-row items-baseline">
-            <Text style={{ color: brandGreen }} className="font-normal text-sm tracking-wider uppercase">
+            <Text style={{ color: brandGreen }} className="font-bold text-sm tracking-wider uppercase">
               OGADRIVER
             </Text>
-            <Text style={{ color: partnerTextColor }} className="font-normal text-sm tracking-wider uppercase ml-1">
+            <Text style={{ color: partnerTextColor }} className="font-bold text-sm tracking-wider uppercase ml-1">
               PARTNERS
             </Text>
           </View>
@@ -104,7 +87,7 @@ export default function HeaderBar({
             <Ionicons 
               name={isDark ? "sunny" : "moon"} 
               size={18} 
-              color={isDark ? "#f59e0b" : "#475569"} 
+              color={brandGreen} 
             />
           </TouchableOpacity>
         )}
@@ -117,7 +100,7 @@ export default function HeaderBar({
             onPress={() => navigation?.navigate('Conversations')}
             activeOpacity={0.7}
           >
-            <Ionicons name="notifications-outline" size={18} color={iconColor} />
+            <Ionicons name="notifications-outline" size={18} color={brandGreen} />
             {hasUnread && (
               <View 
                 style={{ backgroundColor: brandGreen, borderColor: containerBg }} 
