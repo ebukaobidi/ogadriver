@@ -160,7 +160,7 @@ function Login() {
           Sign In
         </h2>
         <p className="mt-2 text-center text-sm text-slate-400 font-mono">
-          Access your operative dashboard
+          Access your dashboard
         </p>
       </div>
 

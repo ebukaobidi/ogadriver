@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Building2, Cpu, Shield, Lock, User, LogOut, Menu, X, MapPin, Bell, Award } from 'lucide-react';
+import { Building2, Cpu, Shield, Lock, User, LogOut, Menu, X, MapPin, Bell, Award, Download } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { authService } from '../api/auth';
 import api from '../api/axios';
@@ -56,6 +56,17 @@ const SiteNavbar = () => {
             fetchNotifications();
         } catch (err) {
             console.error(err);
+        }
+    };
+
+    const handleTriggerInstall = () => {
+        if (window.__pwaDeferredPrompt) {
+            window.__pwaDeferredPrompt.prompt();
+            window.__pwaDeferredPrompt.userChoice.then(() => {
+                window.__pwaDeferredPrompt = null;
+            });
+        } else {
+            alert("To install OgaDriver on your phone:\n1. Tap your browser menu (the 3 dots ⋮ at the top right)\n2. Select 'Install app' or 'Add to Home screen'\n3. Tap 'Install' — done!");
         }
     };
 
@@ -198,6 +209,13 @@ const SiteNavbar = () => {
                     ) : (
                         <div className="flex items-center gap-3">
                             <button
+                                onClick={handleTriggerInstall}
+                                className="hidden sm:flex items-center gap-1.5 px-3 py-2 text-xs font-bold text-brandMint border border-brandMint/40 rounded-lg hover:bg-brandMint/10 transition-colors"
+                            >
+                                <Download className="w-3.5 h-3.5" />
+                                <span>Install App</span>
+                            </button>
+                            <button
                                 onClick={handleEnterGrid}
                                 className="relative flex items-center gap-2 overflow-hidden rounded-lg bg-gradient-to-r from-brandMint to-emerald-500 px-5 py-3 text-sm font-bold text-corporateNavy shadow-md transition-transform hover:scale-[1.02] active:scale-95"
                             >
@@ -221,6 +239,13 @@ const SiteNavbar = () => {
             {mobileMenuOpen && (
                 <div className="lg:hidden border-t border-slate-800 bg-corporateNavy/95 backdrop-blur-md">
                     <nav className="px-6 py-4 space-y-4">
+                        <button
+                            onClick={() => { setMobileMenuOpen(false); handleTriggerInstall(); }}
+                            className="w-full flex items-center justify-center gap-2 py-2.5 text-xs font-bold text-brandMint border border-brandMint/40 rounded-xl bg-brandMint/10"
+                        >
+                            <Download className="w-4 h-4" />
+                            <span>Install OgaDriver App</span>
+                        </button>
                         <a href="#about" onClick={() => setMobileMenuOpen(false)} className="block text-sm font-medium text-slate-300 hover:text-brandMint">About Us</a>
                         <a href="#employers" onClick={() => setMobileMenuOpen(false)} className="block text-sm font-medium text-slate-300 hover:text-brandMint">For Employers / Drivers</a>
                         <button onClick={() => { setMobileMenuOpen(false); navigate('/login'); }} className="block w-full text-left text-sm font-medium text-slate-300 hover:text-brandMint">Verify Simulator</button>

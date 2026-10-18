@@ -2,21 +2,55 @@ import axios from 'axios';
 import * as SecureStore from 'expo-secure-store';
 import { Platform } from 'react-native';
 
-// For Android emulator, localhost is 10.0.2.2. For iOS it's localhost or your machine's IP.
-const baseURL = 'https://ogadriver.ng/api';
+const Storage = {
+  getItemAsync: async (key) => {
+    try {
+      if (Platform.OS === 'web') return typeof localStorage !== 'undefined' ? localStorage.getItem(key) : null;
+      return await SecureStore.getItemAsync(key);
+    } catch (e) {
+      return null;
+    }
+  },
+  setItemAsync: async (key, value) => {
+    try {
+      if (Platform.OS === 'web') return typeof localStorage !== 'undefined' ? localStorage.setItem(key, value) : null;
+      return await SecureStore.setItemAsync(key, value);
+    } catch (e) {}
+  },
+  deleteItemAsync: async (key) => {
+    try {
+      if (Platform.OS === 'web') return typeof localStorage !== 'undefined' ? localStorage.removeItem(key) : null;
+      return await SecureStore.deleteItemAsync(key);
+    } catch (e) {}
+  }
+};
+
+// Intelligent baseURL resolution for web/localhost vs production
+const resolveBaseUrl = () => {
+  if (process.env.EXPO_PUBLIC_API_URL) {
+    return process.env.EXPO_PUBLIC_API_URL;
+  }
+  if (Platform.OS === 'web' && typeof window !== 'undefined' && window.location) {
+    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+      return 'http://localhost/ogadriver.ng/public/api';
+    }
+  }
+  return 'https://ogadriver.ng/api';
+};
+
+const baseURL = resolveBaseUrl();
 
 const api = axios.create({
   baseURL,
   headers: {
     'Accept': 'application/json',
-    'Content-Type': 'application/json',
   },
 });
 
 // Interceptor to add auth token
 api.interceptors.request.use(
   async (config) => {
-    const token = await SecureStore.getItemAsync('auth_token');
+    const token = await Storage.getItemAsync('auth_token');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -25,12 +59,62 @@ api.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
+// Interceptor to handle 403 IP Whitelist blocks globally
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response && error.response.status === 403) {
+      // Check if it's our specific IP whitelist block or a generic 403
+      const isIpBlocked = error.response.headers['x-ip-whitelist-failed'] || 
+                          (error.response.data && error.response.data.error === 'Access denied');
+      if (isIpBlocked) {
+        import('react-native').then(({ Alert }) => {
+           Alert.alert('Access Denied', 'Access from your current IP address is not permitted.');
+        });
+      }
+    }
+    return Promise.reject(error);
+  }
+);
+
 export const authService = {
   login: async (credentials) => {
     const res = await api.post('/auth/login', credentials);
     if (res.data.token) {
-      await SecureStore.setItemAsync('auth_token', res.data.token);
-      await SecureStore.setItemAsync('user', JSON.stringify(res.data.user));
+      await Storage.setItemAsync('auth_token', res.data.token);
+      await Storage.setItemAsync('user', JSON.stringify(res.data.user));
+    }
+    return res.data;
+  },
+
+  requestOtp: async (phone) => {
+    const res = await api.post('/auth/request-otp', { phone });
+    return res.data;
+  },
+
+  loginWithOtp: async (phone, code) => {
+    const res = await api.post('/auth/login-otp', { phone, code });
+    if (res.data.token) {
+      await Storage.setItemAsync('auth_token', res.data.token);
+      await Storage.setItemAsync('user', JSON.stringify(res.data.user));
+    }
+    return res.data;
+  },
+
+  googleTokenLogin: async (idTokenOrPayload) => {
+    const payload = typeof idTokenOrPayload === 'string' ? { id_token: idTokenOrPayload } : idTokenOrPayload;
+    const res = await api.post('/auth/google-token', payload);
+    if (res.data.token) {
+      await Storage.setItemAsync('auth_token', res.data.token);
+      await Storage.setItemAsync('user', JSON.stringify(res.data.user));
+    }
+    return res.data;
+  },
+
+  completeOnboarding: async (data) => {
+    const res = await api.post('/auth/onboarding', data);
+    if (res.data.success && res.data.user) {
+      await Storage.setItemAsync('user', JSON.stringify(res.data.user));
     }
     return res.data;
   },
@@ -46,13 +130,36 @@ export const authService = {
     } catch (e) {
       console.log('Logout API error', e);
     }
-    await SecureStore.deleteItemAsync('auth_token');
-    await SecureStore.deleteItemAsync('user');
+    await Storage.deleteItemAsync('auth_token');
+    await Storage.deleteItemAsync('user');
   },
 
   getUser: async () => {
-    const userStr = await SecureStore.getItemAsync('user');
+    const userStr = await Storage.getItemAsync('user');
     return userStr ? JSON.parse(userStr) : null;
+  },
+
+  updateUser: async (userData) => {
+    try {
+      await Storage.setItemAsync('user', JSON.stringify(userData));
+      const res = await api.put('/user/profile', userData).catch(() => null);
+      return res?.data || userData;
+    } catch (e) {
+      return userData;
+    }
+  },
+
+  deleteAccount: async () => {
+    try {
+      const res = await api.delete('/user/account');
+      await Storage.deleteItemAsync('auth_token');
+      await Storage.deleteItemAsync('user');
+      return res.data;
+    } catch (e) {
+      await Storage.deleteItemAsync('auth_token');
+      await Storage.deleteItemAsync('user');
+      throw e;
+    }
   }
 };
 
@@ -86,17 +193,96 @@ export const driverService = {
     return res.data;
   },
 
+  getMissingDocuments: async (driverId) => {
+    const res = await api.get(`/drivers/${driverId}/documents/missing`);
+    return res.data;
+  },
+
+  getExpiringDocuments: async (driverId, days = 30) => {
+    const res = await api.get(`/drivers/${driverId}/documents/expiring`, { params: { days } });
+    return res.data;
+  },
+
   uploadDocument: async (driverId, formData) => {
-    const res = await api.post(`/drivers/${driverId}/documents`, formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-    });
+    const res = await api.post(`/drivers/${driverId}/documents`, formData);
+    return res.data;
+  },
+
+  validateDocument: async (driverId, documentId) => {
+    const res = await api.post(`/drivers/${driverId}/documents/${documentId}/validate`);
+    return res.data;
+  },
+
+  getDocumentAlerts: async () => {
+    const res = await api.get('/notifications/document-alerts');
     return res.data;
   },
 
   getReviews: async (driverId) => {
     const res = await api.get(`/drivers/${driverId}/reviews`);
+    return res.data;
+  },
+
+  updateVehicleProfile: async (data) => {
+    const res = await api.post('/drivers/update-vehicle', data);
+    return res.data;
+  },
+
+  getBoostStatus: async () => {
+    const res = await api.get('/drivers/boost-status');
+    return res.data;
+  },
+
+  activateBoost: async (planId) => {
+    const res = await api.post('/drivers/boost', { plan_id: planId });
+    return res.data;
+  },
+
+  verifyNIN: async (data) => {
+    const res = await api.post('/v1/verify/nin', data);
+    return res.data;
+  },
+
+  verifyBankAccount: async (accountNumber, bankCode, country = 'nigeria') => {
+    const res = await api.post('/v1/verify/bank-account', {
+      account_number: accountNumber,
+      bank_code: bankCode,
+      country,
+    });
+    return res.data;
+  },
+};
+
+export const verificationService = {
+  verifyNIN: async (data) => {
+    const res = await api.post('/v1/verify/nin', data);
+    return res.data;
+  },
+  verifyBankAccount: async (accountNumber, bankCode, country = 'nigeria') => {
+    const res = await api.post('/v1/verify/bank-account', {
+      account_number: accountNumber,
+      bank_code: bankCode,
+      country,
+    });
+    return res.data;
+  },
+};
+
+export const radioService = {
+  getChannels: async () => {
+    const res = await api.get('/drivers/radio/channels');
+    return res.data;
+  },
+  getStatus: async (channel = 'lagos_mainland') => {
+    const res = await api.get('/drivers/radio/status', { params: { channel } });
+    return res.data;
+  },
+  requestFloor: async (channel = 'lagos_mainland') => {
+    const res = await api.post('/drivers/radio/floor/request', { channel });
+    return res.data;
+  },
+  releaseFloor: async (channel = 'lagos_mainland') => {
+    const res = await api.post('/drivers/radio/floor/release', { channel });
     return res.data;
   },
 };
@@ -143,9 +329,39 @@ export const jobService = {
     const res = await api.get('/my-applications');
     return res.data;
   },
+
+  createJob: async (data) => {
+    const res = await api.post('/jobs', data);
+    return res.data;
+  },
+
+  signNda: async (jobId, signatureData) => {
+    const res = await api.post(`/jobs/${jobId}/sign-nda`, signatureData);
+    return res.data;
+  },
+};
+
+export const corporateFleetService = {
+  getVipFleet: async () => {
+    const res = await api.get('/corporate-fleet/vip');
+    return res.data;
+  },
+
+  bookVipFleet: async (data) => {
+    const res = await api.post('/corporate-fleet/vip/book', data);
+    return res.data;
+  },
 };
 
 export const bookingService = {
+  acceptProposal: async (bookingId) => {
+    const res = await api.post(`/bookings/${bookingId}/accept`);
+    return res.data;
+  },
+  rejectProposal: async (bookingId, reason) => {
+    const res = await api.post(`/bookings/${bookingId}/decline`, { reason });
+    return res.data;
+  },
   getMyBookings: async () => {
     const res = await api.get('/bookings/my');
     return res.data;
@@ -197,4 +413,94 @@ export const bookingService = {
   },
 };
 
+export const referralService = {
+  getReferral: async () => {
+    const res = await api.get('/referral');
+    return res.data;
+  },
+  claimBonus: async () => {
+    const res = await api.post('/referral/claim');
+    return res.data;
+  },
+  withdraw: async () => {
+    const res = await api.post('/referral/withdraw');
+    return res.data;
+  },
+};
+
+export const simulatorService = {
+  getModules: async () => {
+    try {
+      const res = await api.get('/drivers/simulator/modules');
+      return res.data;
+    } catch (e) {
+      try {
+        const fallback = await api.get('/driver/simulator/modules');
+        return fallback.data;
+      } catch (err) {
+        return null;
+      }
+    }
+  },
+  getQuestions: async (moduleId = 1) => {
+    try {
+      const res = await api.get(`/drivers/simulator/questions?module_id=${moduleId}`);
+      return res.data;
+    } catch (e) {
+      try {
+        const fallback = await api.get(`/driver/simulator/questions?module_id=${moduleId}`);
+        return fallback.data;
+      } catch (err) {
+        return null;
+      }
+    }
+  },
+  saveResult: async (score, difficulty = 'beginner') => {
+    const payload = {
+      score: parseInt(score, 10),
+      difficulty: String(difficulty).toLowerCase(),
+    };
+    try {
+      const res = await api.post('/drivers/simulator/result', payload);
+      return res.data;
+    } catch (e) {
+      try {
+        const fallback = await api.post('/driver/simulator/result', payload);
+        return fallback.data;
+      } catch (err) {
+        return null;
+      }
+    }
+  },
+  getLeaderboard: async (difficulty = 'all') => {
+    try {
+      const res = await api.get(`/drivers/simulator/leaderboard?difficulty=${difficulty}`);
+      return res.data;
+    } catch (e) {
+      try {
+        const fallback = await api.get(`/driver/simulator/leaderboard?difficulty=${difficulty}`);
+        return fallback.data;
+      } catch (err) {
+        return null;
+      }
+    }
+  },
+  getCertificate: async () => {
+    try {
+      const res = await api.get('/drivers/simulator/certificate');
+      return res.data;
+    } catch (e) {
+      try {
+        const fallback = await api.get('/driver/simulator/certificate');
+        return fallback.data;
+      } catch (err) {
+        return null;
+      }
+    }
+  },
+};
+
+export { api };
 export default api;
+
+

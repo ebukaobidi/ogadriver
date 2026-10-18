@@ -270,314 +270,128 @@ const DriverProfileTab = ({
     );
   }
 
+  const hasVehicle = Boolean(driver?.has_vehicle || driver?.vehicle_make || driver?.license_plate);
+  const vehicleSubtitle = hasVehicle
+    ? ([driver?.vehicle_make, driver?.vehicle_model].filter(Boolean).join(' ') || 'Vehicle Verified') + (driver?.license_plate ? ` · ${driver.license_plate}` : '')
+    : 'Fleet Operative · Seeking Car Placement';
+
   return (
-    <div className="min-h-[100dvh] bg-[#0f172a] pb-28 text-white">
-      <div className="px-4 pt-4">
-        <div className="relative overflow-hidden rounded-[30px] border border-white/10 shadow-2xl shadow-slate-950/40">
-          <div
-            className="absolute inset-0 bg-cover bg-center"
-            style={{ backgroundImage: "url('/images/hero/female_driver_1784366932413.png')" }}
-          />
-          <div className="absolute inset-0 bg-gradient-to-r from-[#020817]/90 via-[#020817]/70 to-[#0f172a]/30" />
-
-          <div className="relative p-5">
-            <div className="flex items-start justify-between gap-3">
-              <div>
-                <p className="text-[10px] font-bold tracking-[0.28em] text-emerald-400">SYSTEM ID: {systemId}</p>
-                <h1 className="mt-2 text-2xl font-black leading-none">Profile</h1>
-                  <button onClick={() => setShowBasicInfoModal(true)} className="mt-3 text-[10px] font-bold text-white bg-white/10 px-3 py-1.5 rounded-full flex items-center gap-1.5 hover:bg-white/20 transition"><User className="w-3 h-3" /> Edit Basic Info</button>
-                  <div className={`mt-2 inline-block px-3 py-1 rounded-full text-[10px] font-black tracking-widest uppercase shadow-lg ${tierColor}`}>
-                    {driverTier} Tier
-                  </div>
-
-              </div>
-
-              <div className="flex items-center gap-2">
-                <MessagingButton />
-                <NotificationBell />
-                <button
-                  type="button"
-                  onClick={() => setActiveTab('settings')}
-                  aria-label="Open settings"
-                  className="flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-white/5 backdrop-blur-sm transition-colors hover:bg-white/10"
-                >
-                  <Menu className="h-5 w-5 text-white" />
-                </button>
-              </div>
-            </div>
-
-            <div className="mt-6 flex items-end justify-between gap-3">
-              <div className="flex items-center gap-3">
-                <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-full border-2 border-white/30 bg-slate-900/80 shadow-xl shadow-slate-950/50">
-                  {avatar ? (
-                    <img src={avatar} alt="Driver profile" className="h-full w-full object-cover" />
-                  ) : (
-                    <div className="flex h-full w-full items-center justify-center text-2xl font-bold uppercase text-slate-300">
-                      {fullName ? fullName[0] : <User aria-hidden="true" />}
-                    </div>
-                  )}
-                </div>
-
-                <div>
-                  <div className="flex items-center gap-2">
-                    <h2 className="text-xl font-black text-white">{fullName || 'Name unavailable'}</h2>
-                    {driver.is_verified && <CheckCircle2 className="h-4 w-4 text-emerald-400" aria-label="Verified" />}
-                  </div>
-                  <p className="mt-1 text-sm text-slate-200">
-                    {driver.rating ?? '—'} ★ · {driver.subscription_tier || '—'}
-                  </p>
-                </div>
-              </div>
-
-              <button
-                type="button"
-                onClick={toggleOnline}
-                disabled={saving}
-                className={`rounded-full border px-3 py-1 text-[10px] font-black tracking-[0.18em] transition-colors disabled:opacity-60 ${
-                  isOnline
-                    ? 'border-emerald-400/30 bg-emerald-500/20 text-emerald-300'
-                    : 'border-slate-600 bg-slate-900/80 text-slate-300'
-                }`}
-              >
-                {isOnline ? 'ONLINE' : 'OFFLINE'}
-              </button>
-            </div>
+    <div className="min-h-[100dvh] bg-[#0f172a] pb-28 text-white font-sans">
+      {/* Top Header Bar */}
+      <div className="px-4 pt-4 flex justify-between items-center mb-3">
+        <div>
+          <div className="flex items-baseline mb-0.5">
+            <span className="text-amber-400 font-black text-xs tracking-wider uppercase">OGADRIVERS</span>
+            <span className="text-white font-black text-xs tracking-wider uppercase ml-1">PARTNERS</span>
           </div>
+          <h1 className="text-white font-black text-2xl">Profile</h1>
         </div>
+        <NotificationBell />
       </div>
 
-      <section className="mt-5 px-4" aria-label="Performance statistics">
-        <div className="rounded-[26px] border border-white/10 bg-[#0f172a] p-5 shadow-lg shadow-slate-950/30">
-          {earningsError ? (
-            <p className="w-full text-center text-xs text-rose-300" role="alert">{earningsError}</p>
-          ) : (
-            <div className="grid grid-cols-3 gap-3">
-              <div className="bg-slate-900/60 backdrop-blur-2xl border border-white/10 rounded-2xl p-3 flex flex-col items-center justify-center text-center shadow-sm">
-                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Total Earning</p>
-                <p className="text-sm font-black text-white">{currencySymbol}{earningsSummary ? Number(earningsSummary.total_earnings).toLocaleString() : '0'}</p>
-              </div>
-              <div className="bg-slate-900/60 backdrop-blur-2xl border border-white/10 rounded-2xl p-3 flex flex-col items-center justify-center text-center shadow-sm">
-                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">This Month</p>
-                <p className="text-sm font-black text-white">{currencySymbol}{earningsSummary ? Number(earningsSummary.month_earnings).toLocaleString() : '0'}</p>
-              </div>
-              <div className="bg-slate-900/60 backdrop-blur-2xl border border-white/10 rounded-2xl p-3 flex flex-col items-center justify-center text-center shadow-sm">
-                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Completed</p>
-                <p className="text-sm font-black text-white">{driver?.total_jobs || 0}</p>
-              </div>
-              
-              <div className="bg-slate-900/60 backdrop-blur-2xl border border-white/10 rounded-2xl p-3 flex flex-col items-center justify-center text-center shadow-sm">
-                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Job Offers</p>
-                <p className="text-sm font-black text-white">{driver?.job_offers || driver?.total_jobs || 0}</p>
-              </div>
-              <div className="bg-slate-900/60 backdrop-blur-2xl border border-white/10 rounded-2xl p-3 flex flex-col items-center justify-center text-center shadow-sm">
-                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Acceptance</p>
-                <p className="text-sm font-black text-[#1cd188]">{driver?.acceptance_rate || 100}%</p>
-              </div>
-              <div className="bg-slate-900/60 backdrop-blur-2xl border border-white/10 rounded-2xl p-3 flex flex-col items-center justify-center text-center shadow-sm">
-                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Cancelled</p>
-                <p className="text-sm font-black text-rose-400">{driver?.cancellation_rate || 0}%</p>
-              </div>
-            </div>
-          )}
+      <div className="px-4 space-y-4">
+        {/* 1. Header Profile Card */}
+        <div className="bg-[#1e293b] border border-slate-800 rounded-3xl p-5 shadow-xl flex items-center gap-4">
+          <div className="w-16 h-16 rounded-full bg-amber-400 flex items-center justify-center text-slate-950 text-xl font-black shrink-0 border-2 border-amber-300 shadow-md overflow-hidden">
+            {avatar ? (
+              <img src={avatar} alt="Profile" className="w-full h-full object-cover" />
+            ) : (
+              (fullName || 'TO').split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase()
+            )}
+          </div>
 
+          <div className="flex-1 min-w-0">
+            <h2 className="text-white font-black text-xl truncate">{fullName || 'Partner Driver'}</h2>
+            <p className="text-slate-400 text-xs font-semibold mt-0.5 truncate">{vehicleSubtitle}</p>
+            <div className="flex items-center gap-1 mt-1 text-emerald-400 text-xs font-bold">
+              <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+              <span>Verified partner</span>
+            </div>
+          </div>
+        </div>
+
+        {/* 2. Top Quick Actions Menu */}
+        <div className="bg-[#1e293b] border border-slate-800 rounded-3xl overflow-hidden shadow-lg">
           <button
-            type="button"
-            onClick={() => setShowInstantCashout(true)}
-            className="mt-5 flex w-full items-center justify-center gap-2 rounded-2xl border border-[#1cd188]/30 bg-[#1cd188]/10 px-4 py-3 text-sm font-bold text-[#1cd188] shadow-lg transition-colors hover:bg-[#1cd188]/20"
+            onClick={() => setActiveTab('boost')}
+            className="w-full p-4 flex items-center justify-between border-b border-slate-800/80 hover:bg-slate-800/50 transition text-left"
           >
-            Withdraw Fund ({currencySymbol}{Number(driver?.wallet_balance || 0).toLocaleString()})
-          </button>
-        </div>
-      </section>
-
-      {actionError && (
-        <p className="mx-4 mt-4 rounded-2xl border border-rose-500/30 bg-rose-500/10 p-3 text-sm text-rose-200" role="alert">
-          {actionError}
-        </p>
-      )}
-
-            <section className="mt-5 px-4" aria-label="Boost profile">
-        <div className="relative overflow-hidden rounded-[24px] bg-gradient-to-br from-indigo-800 to-purple-900 p-5 shadow-lg">
-          <Zap className="absolute -right-4 top-4 h-32 w-32 -rotate-12 text-white/10" />
-          <div className="relative z-10">
-            <h3 className="mb-2 flex items-center gap-2 text-xl font-bold text-white">
-              <Sparkles className="h-5 w-5" />
-              Boost My Profile
-            </h3>
-            <p className="mb-4 text-sm text-indigo-100">
-              Rank #1 on the local hire directory for 24 hours. Get 10x more job offers.
-            </p>
-            <button
-              type="button"
-              className="rounded-xl bg-white px-5 py-3 text-sm font-black text-indigo-950 shadow-md transition-colors hover:bg-slate-100 uppercase"
-            >
-              ACTIVATE {currencySymbol}{boostPrice} / DAY
-            </button>
-          </div>
-        </div>
-      </section>
-
-      <section className="px-6 mt-4">
-        <div className="bg-slate-900/60 backdrop-blur-2xl border border-white/10 rounded-3xl p-5 shadow-lg relative overflow-hidden">
-          <div className="flex justify-between items-center mb-3 relative z-10">
-            <h3 className="text-white font-black text-sm flex items-center gap-2">
-              <Zap className="w-4 h-4 text-amber-400" /> Weekly Goal
-            </h3>
-            <button onClick={() => setShowGoalModal(true)} className="text-amber-400 text-xs font-bold hover:text-amber-300">Edit</button>
-          </div>
-          <div className="relative z-10">
-            <div className="flex justify-between text-xs font-bold mb-1">
-              <span className="text-slate-400">Progress</span>
-              <span className="text-white">{currencySymbol}{Number(earningsSummary?.month_earnings || 0).toLocaleString()} / {currencySymbol}{Number(weeklyGoal).toLocaleString()}</span>
+            <div className="flex items-center gap-3">
+              <Zap className="w-5 h-5 text-amber-400" />
+              <span className="text-white font-bold text-sm">Boost my profile</span>
             </div>
-            <div className="w-full bg-slate-800 rounded-full h-2">
-              <div className="bg-gradient-to-r from-amber-500 to-orange-500 h-2 rounded-full" style={{ width: `${Math.min(100, ((earningsSummary?.month_earnings || 0) / (weeklyGoal || 1)) * 100)}%` }}></div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section className="mt-6 px-6" aria-labelledby="driver-status-heading">
-        <h3 id="driver-status-heading" className="mb-3 text-sm font-bold">Driver Status</h3>
-        <div className="flex flex-col gap-3">
-          <button
-            type="button"
-            disabled={saving}
-            onClick={() => handleServiceModeChange('driver_with_vehicle')}
-            aria-pressed={driver?.service_mode === 'driver_with_vehicle'}
-            className={`relative overflow-hidden rounded-2xl border-2 p-4 text-left transition-all disabled:opacity-50 ${
-              driver?.service_mode === 'driver_with_vehicle' ? 'border-[#1cd188] bg-[#1cd188]/10' : 'border-white/10 bg-slate-900/60 backdrop-blur-2xl hover:border-slate-700'
-            }`}
-          >
-            <div className="relative z-10 mb-1 flex items-start justify-between">
-              <div className="flex items-center gap-2">
-                <Car className={`h-5 w-5 ${driver?.service_mode === 'driver_with_vehicle' ? 'text-[#1cd188]' : 'text-slate-400'}`} />
-                <span className="font-black">Independent Operator</span>
-              </div>
-              {driver?.service_mode === 'driver_with_vehicle' && <CheckCircle2 className="h-5 w-5 text-[#1cd188]" />}
-            </div>
-            <p className="relative z-10 mb-2 text-xs text-slate-400">You own or lease your vehicle</p>
+            <ChevronRight className="w-5 h-5 text-slate-500" />
           </button>
 
           <button
-            type="button"
-            disabled={saving}
-            onClick={() => handleServiceModeChange('driver_without_vehicle')}
-            aria-pressed={driver?.service_mode === 'driver_without_vehicle'}
-            className={`relative overflow-hidden rounded-2xl border-2 p-4 text-left transition-all disabled:opacity-50 ${
-              driver?.service_mode === 'driver_without_vehicle' ? 'border-blue-500 bg-blue-500/10' : 'border-white/10 bg-slate-900/60 backdrop-blur-2xl hover:border-slate-700'
-            }`}
+            onClick={() => setActiveTab('referrals')}
+            className="w-full p-4 flex items-center justify-between hover:bg-slate-800/50 transition text-left"
           >
-            <div className="relative z-10 mb-1 flex items-start justify-between">
-              <div className="flex items-center gap-2">
-                <User className={`h-5 w-5 ${driver?.service_mode === 'driver_without_vehicle' ? 'text-blue-400' : 'text-slate-400'}`} />
-                <span className="font-black">Fleet Operative</span>
-              </div>
-              {driver?.service_mode === 'driver_without_vehicle' && <CheckCircle2 className="h-5 w-5 text-blue-400" />}
+            <div className="flex items-center gap-3">
+              <Gift className="w-5 h-5 text-emerald-400" />
+              <span className="text-white font-bold text-sm">Referral earnings</span>
             </div>
-            <p className="relative z-10 mb-2 text-xs text-slate-400">You need a vehicle assigned to you</p>
+            <ChevronRight className="w-5 h-5 text-slate-500" />
+          </button>
+        </div>
+
+        {/* 3. Main Menu Group */}
+        <div className="bg-[#1e293b] border border-slate-800 rounded-3xl overflow-hidden shadow-lg divide-y divide-slate-800/60">
+          <button
+            onClick={() => setActiveTab('documents')}
+            className="w-full p-4 flex items-center justify-between hover:bg-slate-800/50 transition text-left"
+          >
+            <span className="text-white font-bold text-sm">Documents & licence</span>
+            <ChevronRight className="w-5 h-5 text-slate-500" />
           </button>
 
           <button
-            type="button"
-            disabled={saving}
-            onClick={() => handleServiceModeChange('both')}
-            aria-pressed={driver?.service_mode === 'both'}
-            className={`relative overflow-hidden rounded-2xl border-2 p-4 text-left transition-all disabled:opacity-50 ${
-              driver?.service_mode === 'both' ? 'border-purple-500 bg-purple-500/10' : 'border-white/10 bg-slate-900/60 backdrop-blur-2xl hover:border-slate-700'
-            }`}
+            onClick={() => setActiveTab('vehicle')}
+            className="w-full p-4 flex items-center justify-between hover:bg-slate-800/50 transition text-left"
           >
-            <div className="relative z-10 mb-1 flex items-start justify-between">
-              <div className="flex items-center gap-2">
-                <Briefcase className={`h-5 w-5 ${driver?.service_mode === 'both' ? 'text-purple-400' : 'text-slate-400'}`} />
-                <span className="font-black">Both / Flexible</span>
-              </div>
-              {driver?.service_mode === 'both' && <CheckCircle2 className="h-5 w-5 text-purple-400" />}
-            </div>
-            <p className="relative z-10 mb-2 text-xs text-slate-400">Available as an independent or fleet operative</p>
+            <span className="text-white font-bold text-sm">Vehicle details</span>
+            <ChevronRight className="w-5 h-5 text-slate-500" />
           </button>
-        </div>
-      </section>
 
-      <section className="px-6 mt-6">
-        <div className="bg-blue-500/10 border border-blue-500/30 rounded-3xl p-5 shadow-lg relative overflow-hidden">
-          <div className="relative z-10">
-            <h3 className="text-white font-black text-lg">Instant Fuel Loan</h3>
-            <p className="text-blue-200 text-sm mt-1">Available exclusively for Merit Drivers.</p>
-            <button onClick={() => setShowFuelLoanModal(true)} className="mt-4 bg-blue-500 text-white font-bold px-4 py-3 rounded-xl text-sm shadow-lg w-full hover:bg-blue-400 transition-colors">
-              Apply Now (From {currencySymbol}{currencySymbol === '₦' ? '5,000' : '5.00'})
-            </button>
-          </div>
-          <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/10 rounded-full blur-2xl -mr-10 -mt-10 pointer-events-none" />
-        </div>
-      </section>
+          <button
+            onClick={() => setActiveTab('schedule')}
+            className="w-full p-4 flex items-center justify-between hover:bg-slate-800/50 transition text-left"
+          >
+            <span className="text-white font-bold text-sm">Hire availability</span>
+            <ChevronRight className="w-5 h-5 text-slate-500" />
+          </button>
 
-            <section className="px-6 mt-6">
-        <div className="bg-slate-900/60 backdrop-blur-2xl border border-white/10 rounded-3xl p-5 shadow-lg">
-          <h3 className="text-white font-black text-lg mb-4 flex items-center gap-2">
-            <User className="w-5 h-5 text-[#1cd188]" /> Basic Information
-          </h3>
-          
-          <div className="space-y-4">
-            <div>
-              <p className="text-xs text-slate-400 font-bold uppercase tracking-wider mb-1">Full Name</p>
-              <p className="text-sm font-medium text-white">{fullName}</p>
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <p className="text-xs text-slate-400 font-bold uppercase tracking-wider mb-1">Email</p>
-                <p className="text-sm font-medium text-white break-all">{profileUser?.email || '—'}</p>
-              </div>
-              <div>
-                <p className="text-xs text-slate-400 font-bold uppercase tracking-wider mb-1">Phone</p>
-                <p className="text-sm font-medium text-white">{profileUser?.phone || profileUser?.phone_number || '—'}</p>
-              </div>
-              <div>
-                <p className="text-xs text-slate-400 font-bold uppercase tracking-wider mb-1">Gender</p>
-                <p className="text-sm font-medium text-white capitalize">{profileUser?.gender || '—'}</p>
-              </div>
-              <div>
-                <p className="text-xs text-slate-400 font-bold uppercase tracking-wider mb-1">Date of Birth</p>
-                <p className="text-sm font-medium text-white">{profileUser?.date_of_birth || '—'}</p>
-              </div>
-            </div>
+          <button
+            onClick={() => setShowBankModal(true)}
+            className="w-full p-4 flex items-center justify-between hover:bg-slate-800/50 transition text-left"
+          >
+            <span className="text-white font-bold text-sm">Bank account</span>
+            <ChevronRight className="w-5 h-5 text-slate-500" />
+          </button>
+
+          <div className="p-4 flex items-center justify-between">
+            <span className="text-white font-bold text-sm">Country: Nigeria NG</span>
+            <ChevronRight className="w-5 h-5 text-slate-500" />
           </div>
         </div>
-      </section>
 
-      <section className="px-6 mt-6">
-        <div className="bg-slate-900/60 backdrop-blur-2xl border border-white/10 rounded-3xl p-5 shadow-lg">
-          
-      <section className="px-6 mt-6">
-        <div className="bg-slate-900/60 backdrop-blur-2xl border border-white/10 rounded-3xl p-5 shadow-lg">
-          <div className="flex justify-between items-center mb-4">
-            <h3 className="text-white font-black text-lg flex items-center gap-2">
-              <Car className="w-5 h-5 text-[#1cd188]" /> Active Vehicle
-            </h3>
-            <button onClick={() => window.location.href='/driver/settings'} className="text-[#1cd188] text-sm font-bold hover:text-emerald-400">Edit</button>
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <p className="text-xs text-slate-400 font-bold uppercase tracking-wider mb-1">Make & Model</p>
-              <p className="text-sm font-medium text-white">{driver?.vehicle_make || '—'} {driver?.vehicle_model || ''}</p>
-            </div>
-            <div>
-              <p className="text-xs text-slate-400 font-bold uppercase tracking-wider mb-1">License Plate</p>
-              <p className="text-sm font-medium text-white">{driver?.license_plate || '—'}</p>
-            </div>
-          </div>
-        </div>
-      </section>
+        {/* 4. Partner Support Button */}
+        <button
+          onClick={() => window.location.href = 'tel:08000000000'}
+          className="w-full bg-[#1e293b] border border-slate-800 rounded-3xl p-4 flex items-center justify-center gap-2 hover:bg-slate-800/80 transition text-white font-bold text-base shadow-lg"
+        >
+          <HelpCircle className="w-5 h-5 text-white" />
+          <span>Partner support</span>
+        </button>
 
-      <section className="px-6 mt-6">
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div className="bg-slate-900/60 backdrop-blur-2xl border border-white/10 rounded-3xl p-5 shadow-lg">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-white font-black text-sm flex items-center gap-2">
-                <Briefcase className="w-4 h-4 text-blue-400" /> Payout Method
-              </h3>
-              <button onClick={() => setShowBankModal(true)} className="text-blue-400 text-xs font-bold hover:text-blue-300">Edit</button>
-            </div>
+        {/* 5. Sign Out Button */}
+        <button
+          onClick={doLogout}
+          className="w-full bg-rose-500/10 border border-rose-500/30 rounded-3xl p-4 text-center text-rose-400 font-bold text-sm hover:bg-rose-500/20 transition"
+        >
+          Sign Out
+        </button>
+      </div>
             <p className="text-xs text-slate-400 font-bold uppercase tracking-wider mb-1">Bank Name</p>
             <p className="text-sm font-medium text-white mb-3">{driver?.bank_name || 'Not Set'}</p>
             <p className="text-xs text-slate-400 font-bold uppercase tracking-wider mb-1">Account Number</p>

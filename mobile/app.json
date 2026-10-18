@@ -2,34 +2,85 @@
   "expo": {
     "name": "OgaDriver",
     "slug": "ogadriver",
-    "version": "1.0.0",
+    "scheme": "ogadriver",
+    "version": "1.0.1",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
-    "userInterfaceStyle": "light",
+    "userInterfaceStyle": "automatic",
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#0f172a"
+    },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.ogadriver.app"
+      "bundleIdentifier": "com.ogadriver.app",
+      "buildNumber": "2",
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "OgaDriver needs your location to match you with nearby jobs.",
+        "NSCameraUsageDescription": "OgaDriver needs camera access to scan your documents and verify your identity.",
+        "NSPhotoLibraryUsageDescription": "OgaDriver needs access to your photos to upload documents.",
+        "NSMicrophoneUsageDescription": "OgaDriver needs microphone access for voice features.",
+        "NSFaceIDUsageDescription": "OgaDriver uses Face ID to verify your identity before going online."
+      }
     },
     "android": {
       "package": "com.ogadriver.app",
+      "versionCode": 2,
+      "config": {
+        "googleMaps": {
+          "apiKey": "AIzaSyDummyKey-ForCompilationOnly"
+        }
+      },
+      "permissions": [
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_COARSE_LOCATION",
+        "ACCESS_BACKGROUND_LOCATION",
+        "CAMERA",
+        "READ_EXTERNAL_STORAGE",
+        "WRITE_EXTERNAL_STORAGE",
+        "RECORD_AUDIO",
+        "RECEIVE_BOOT_COMPLETED",
+        "VIBRATE"
+      ],
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
+        "backgroundColor": "#0f172a",
         "foregroundImage": "./assets/android-icon-foreground.png",
-        "backgroundImage": "./assets/android-icon-background.png",
-        "monochromeImage": "./assets/android-icon-monochrome.png"
-      }
+        "backgroundImage": "./assets/android-icon-background.png"
+      },
+      "intentFilters": [
+        {
+          "action": "VIEW",
+          "autoVerify": true,
+          "data": [
+            {
+              "scheme": "https",
+              "host": "ogadriver.ng",
+              "pathPrefix": "/app"
+            }
+          ],
+          "category": ["BROWSABLE", "DEFAULT"]
+        }
+      ]
     },
     "web": {
-      "favicon": "./assets/favicon.png"
+      "favicon": "./assets/favicon.png", "bundler": "metro"
     },
     "plugins": [
-      "expo-secure-store"
+      "expo-secure-store",
+      "expo-location",
+      "expo-image-picker",
+      "expo-notifications",
+      "@react-native-community/datetimepicker",
+      "expo-font"
     ],
     "extra": {
+      "apiUrl": "https://ogadriver.ng/api",
       "eas": {
-        "projectId": "1617db22-6d88-41d7-a37b-b63898f98f08"
+        "projectId": "286e2712-b412-44eb-820c-3c9f7215d904"
       }
-    },
-    "owner": "ogadriverng"
+    }
   }
 }
+
+

@@ -575,6 +575,11 @@ function DriverVerification() {
                           <div className="flex items-center gap-2 mt-0.5">
                             <span className="text-xs font-mono text-slate-500">{v.license_number || 'No license'}</span>
                             <span className={statusBadge('pending')}>pending</span>
+                            {v.has_vehicle ? (
+                              <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">With Car</span>
+                            ) : (
+                              <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-sky-500/10 text-sky-400 border border-sky-500/30">Placement (No Car)</span>
+                            )}
                             {(() => {
                               const licenseExpiry = v.license_expiry_date ? checkDocumentExpiry(v.license_expiry_date) : null;
                               const idExpiry = v.id_expiry_date ? checkDocumentExpiry(v.id_expiry_date) : null;
@@ -657,6 +662,7 @@ function DriverVerification() {
 
                   <div className="grid grid-cols-2 gap-2">
                     {[
+                      { label: 'Operational Track', value: selectedDriver.has_vehicle ? 'Operates Own Vehicle (With Car)' : 'Seeking Vehicle Placement (No Car - Guarantors Required)' },
                       { label: 'NIN', value: selectedDriver.nin },
                       { label: 'BVN', value: selectedDriver.bvn },
                       { label: 'License No.', value: selectedDriver.license_number },

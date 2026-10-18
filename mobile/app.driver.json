@@ -1,0 +1,59 @@
+{
+  "expo": {
+    "name": "OgaDriver Partner",
+    "slug": "ogadriver",
+    "scheme": "ogadriver-partner",
+    "version": "1.0.2",
+    "orientation": "portrait",
+    "icon": "./assets/driver-icon.png",
+    "userInterfaceStyle": "dark",
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#0f172a"
+    },
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.ogadriver.partner",
+      "buildNumber": "3",
+      "infoPlist": {
+        "NSLocationAlwaysAndWhenInUseUsageDescription": "OgaDriver Partner needs background location tracking to dispatch nearby ride opportunities and enable live GPS trip tracking.",
+        "NSLocationWhenInUseUsageDescription": "OgaDriver Partner needs location access to broadcast your position to nearby hirers.",
+        "NSCameraUsageDescription": "Camera access required for facial verification and document uploads.",
+        "NSPhotoLibraryUsageDescription": "Photo library access required for uploading driver credentials.",
+        "NSMicrophoneUsageDescription": "Microphone access for voice notes and SOS emergency support."
+      }
+    },
+    "android": {
+      "package": "com.ogadriver.partner",
+      "versionCode": 3,
+      "config": {
+        "googleMaps": {
+          "apiKey": "AIzaSyDummyKey-ForCompilationOnly"
+        }
+      },
+      "permissions": [
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_COARSE_LOCATION",
+        "ACCESS_BACKGROUND_LOCATION",
+        "FOREGROUND_SERVICE",
+        "CAMERA",
+        "READ_EXTERNAL_STORAGE",
+        "WRITE_EXTERNAL_STORAGE",
+        "RECORD_AUDIO",
+        "RECEIVE_BOOT_COMPLETED",
+        "VIBRATE"
+      ],
+      "adaptiveIcon": {
+        "backgroundColor": "#0f172a",
+        "foregroundImage": "./assets/android-driver-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png"
+      }
+    },
+    "web": {
+      "favicon": "./assets/favicon.png", "bundler": "metro"
+    }
+  }
+}
+
+

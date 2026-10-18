@@ -1,7 +1,7 @@
 import * as Notifications from 'expo-notifications';
 import * as SecureStore from 'expo-secure-store';
 import { Platform } from 'react-native';
-import { api } from '../api/api';
+import api from '../api/api';
 
 // Configure notification handler
 Notifications.setNotificationHandler({
@@ -35,12 +35,13 @@ class NotificationService {
   }
 
   async registerPushToken() {
+    if (Platform.OS === 'web') return null;
     try {
       const hasPermission = await this.requestPermissions();
       if (!hasPermission) return null;
 
       const tokenData = await Notifications.getExpoPushTokenAsync({
-        projectId: 'your-project-id', // Replace with your Expo project ID
+        projectId: '286e2712-b412-44eb-820c-3c9f7215d904', // Replace with your Expo project ID
       });
 
       this.pushToken = tokenData.data;
@@ -48,11 +49,20 @@ class NotificationService {
       // Send token to backend
       const userStr = await SecureStore.getItemAsync('user');
       if (userStr) {
-        const user = JSON.parse(userStr);
-        await api.post('/user/push-token', {
-          push_token: this.pushToken,
-          platform: Platform.OS,
-        });
+        try {
+          await api.post('/notifications/fcm-token', {
+            fcm_token: this.pushToken,
+            platform: Platform.OS,
+          });
+        } catch (e) {
+          // Fallback if endpoint varies
+          try {
+            await api.post('/user/push-token', {
+              push_token: this.pushToken,
+              platform: Platform.OS,
+            });
+          } catch (err) {}
+        }
       }
 
       return this.pushToken;
@@ -99,4 +109,8 @@ class NotificationService {
   }
 }
 
-export default new NotificationService();
+const notificationService = new NotificationService();
+export const registerForPushNotificationsAsync = async () => {
+  return await notificationService.registerPushToken();
+};
+export default notificationService;

@@ -1,0 +1,201 @@
+import React, { useState, useEffect } from 'react';
+import {
+  Briefcase, CreditCard, ChevronRight, Shield, Calendar,
+  Wallet, TrendingUp, ArrowUpRight, Star, Power, CheckCircle2,
+} from 'lucide-react';
+import api from '../../api/axios';
+import DocumentButlerCard from './DocumentButlerCard';
+import ProfileCompletionBar from './ProfileCompletionBar';
+import EmergencySosButton from './EmergencySosButton';
+import DestinationModeCard from './DestinationModeCard';
+import InstantCashoutModal from './InstantCashoutModal';
+
+const naira = (n) => `₦${Number(n || 0).toLocaleString()}`;
+
+const glass = 'rounded-3xl border border-white/10 bg-slate-900/60 backdrop-blur-2xl shadow-lg';
+
+const toCount = (v) =>
+  Array.isArray(v) ? v.length : v?.data && Array.isArray(v.data) ? v.data.length : 0;
+
+const DriverDashboardTab = ({
+  user,
+  driver,
+  setDriver,
+  proposals,
+  activeContracts,
+  setActiveTab,
+  verificationProgress,
+}) => {
+  const [isOnline, setIsOnline] = useState(driver?.is_online || false);
+  const [earnings, setEarnings] = useState({ today: 0, week: 0, wallet: 0 });
+  const [cashoutOpen, setCashoutOpen] = useState(false);
+
+  useEffect(() => {
+    setIsOnline(driver?.is_online || false);
+    setEarnings({
+      today: driver?.today_earnings || 0,
+      week: driver?.week_earnings || 0,
+      wallet: driver?.wallet_balance || 0,
+    });
+
+    if (driver?.id) {
+      api.get(`/drivers/${driver.id}/earnings-summary`)
+        .then(res => {
+          if (res.data) {
+            setEarnings({
+              today: res.data.today_earnings || 0,
+              week: res.data.week_earnings || 0,
+              wallet: res.data.wallet_balance || 0,
+            });
+          }
+        })
+        .catch(err => console.error(err));
+    }
+  }, [driver]);
+
+  const toggleOnline = async () => {
+    const nextState = !isOnline;
+    try {
+      setIsOnline(nextState);
+      if (setDriver) setDriver(prev => ({ ...prev, is_online: nextState }));
+      await api.post(`/drivers/${driver.id}/toggle-online`);
+    } catch (error) {
+      setIsOnline(!nextState);
+      if (setDriver) setDriver(prev => ({ ...prev, is_online: !nextState }));
+      console.error(error);
+    }
+  };
+
+  const displayName = driver?.alias || user?.name || 'Driver';
+  const firstName = String(displayName).split(' ')[0];
+  const hour = new Date().getHours();
+  const greeting = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening';
+
+  const progress = typeof verificationProgress === 'number'
+    ? verificationProgress
+    : (parseInt(verificationProgress) || 0);
+  const contractsCount = toCount(activeContracts);
+  const rating = Number(driver?.rating_average ?? driver?.rating ?? 0);
+
+  return (
+    <div className="min-h-screen bg-[#0f172a] px-4 pb-24 pt-4 space-y-5">
+      {/* Greeting + online toggle */}
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <p className="text-[10px] font-mono uppercase tracking-[0.3em] text-slate-500">🇳🇬 Naija Driver Market</p>
+          <h1 className="mt-1 truncate text-2xl font-black text-white">{greeting}, {firstName}</h1>
+          <p className="mt-0.5 text-xs text-slate-400">
+            {isOnline ? 'Oga, you dey work — na you be boss today' : 'Turn on make you start to dey chop'}
+          </p>
+        </div>
+        <button
+          onClick={toggleOnline}
+          className={`flex shrink-0 items-center gap-2 rounded-full px-4 py-2.5 text-xs font-black transition-all ${
+            isOnline
+              ? 'bg-[#1cd188] text-slate-950 shadow-[0_0_20px_rgba(28,209,136,0.35)]'
+              : 'border border-white/10 bg-slate-800 text-slate-300'
+          }`}
+        >
+          <Power className="h-4 w-4" />
+          {isOnline ? 'ONLINE' : 'GO ONLINE'}
+        </button>
+      </div>
+
+      {/* Balance card */}
+      <section className={`${glass} relative overflow-hidden p-5`}>
+        <div className="pointer-events-none absolute -right-10 -top-10 h-40 w-40 rounded-full bg-[#1cd188]/10 blur-3xl" />
+        <p className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-slate-400">
+          <Wallet className="h-4 w-4 text-[#1cd188]" /> Wallet balance
+        </p>
+        <p className="mt-2 text-4xl font-black tracking-tight text-white">{naira(earnings.wallet)}</p>
+        <div className="mt-4 flex gap-3">
+          <button
+            onClick={() => setCashoutOpen(true)}
+            className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-[#1cd188] py-3 text-sm font-black text-slate-950 transition hover:opacity-90"
+          >
+            <ArrowUpRight className="h-4 w-4" /> Cash out
+          </button>
+          <button
+            onClick={() => setActiveTab('subscriptions')}
+            className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-white/10 bg-slate-800 py-3 text-sm font-bold text-white transition hover:border-[#1cd188]/50"
+          >
+            <CreditCard className="h-4 w-4" /> Billing
+          </button>
+        </div>
+      </section>
+
+      {/* Stats */}
+      <section className="grid grid-cols-3 gap-3">
+        <div className={`${glass} p-3 text-center`}>
+          <TrendingUp className="mx-auto h-4 w-4 text-[#1cd188]" />
+          <p className="mt-1.5 text-lg font-black text-white">{naira(earnings.today)}</p>
+          <p className="text-[10px] uppercase tracking-wider text-slate-400">Today</p>
+        </div>
+        <div className={`${glass} p-3 text-center`}>
+          <Calendar className="mx-auto h-4 w-4 text-[#1cd188]" />
+          <p className="mt-1.5 text-lg font-black text-white">{naira(earnings.week)}</p>
+          <p className="text-[10px] uppercase tracking-wider text-slate-400">This week</p>
+        </div>
+        <div className={`${glass} p-3 text-center`}>
+          <Star className="mx-auto h-4 w-4 text-amber-400" />
+          <p className="mt-1.5 text-lg font-black text-white">{rating ? rating.toFixed(1) : '—'}</p>
+          <p className="text-[10px] uppercase tracking-wider text-slate-400">
+            {driver?.completed_jobs_count || 0} trips
+          </p>
+        </div>
+      </section>
+
+      <DestinationModeCard driver={driver} user={user} />
+
+      {/* Active jobs + compliance */}
+      <section className="space-y-3">
+        <button onClick={() => setActiveTab('active')} className={`${glass} flex w-full items-center gap-4 p-4 text-left transition hover:border-[#1cd188]/50`}>
+          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[#1cd188]/10 text-[#1cd188]">
+            <Briefcase className="h-6 w-6" />
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="text-[10px] uppercase tracking-wider text-slate-400">Active jobs</p>
+            <p className="font-black text-white">
+              {contractsCount > 0 ? `${contractsCount} active job${contractsCount > 1 ? 's' : ''}` : 'No active jobs'}
+            </p>
+          </div>
+          <ChevronRight className="h-5 w-5 text-slate-500" />
+        </button>
+
+        <button onClick={() => setActiveTab('compliance')} className={`${glass} flex w-full items-center gap-4 p-4 text-left transition hover:border-amber-400/50`}>
+          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-amber-400/10 text-amber-400">
+            <Shield className="h-6 w-6" />
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="text-[10px] uppercase tracking-wider text-slate-400">Compliance status</p>
+            <p className="font-black text-white">{progress}% complete</p>
+            <div className="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-slate-800">
+              <div className="h-full rounded-full bg-amber-400 transition-all" style={{ width: `${Math.min(progress, 100)}%` }} />
+            </div>
+          </div>
+          {progress >= 100 ? (
+            <CheckCircle2 className="h-5 w-5 text-[#1cd188]" />
+          ) : (
+            <ChevronRight className="h-5 w-5 text-slate-500" />
+          )}
+        </button>
+      </section>
+
+      <DocumentButlerCard driver={driver} />
+      <ProfileCompletionBar driver={driver} verificationProgress={verificationProgress} user={user} />
+      <EmergencySosButton driver={driver} />
+
+      <InstantCashoutModal
+        isOpen={cashoutOpen}
+        onClose={() => setCashoutOpen(false)}
+        walletBalance={earnings.wallet}
+        onCashoutSuccess={() => {
+          setCashoutOpen(false);
+          setEarnings(prev => ({ ...prev, wallet: 0 }));
+        }}
+      />
+    </div>
+  );
+};
+
+export default DriverDashboardTab;

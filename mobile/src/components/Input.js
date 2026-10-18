@@ -1,19 +1,20 @@
 import React from 'react';
 import { View, TextInput, Text } from 'react-native';
 
-export default function Input({ 
-  label, 
-  placeholder, 
-  value, 
-  onChangeText, 
-  secureTextEntry = false, 
-  keyboardType = 'default', 
+export default function Input({
+  label,
+  placeholder,
+  value,
+  onChangeText,
+  secureTextEntry = false,
+  keyboardType = 'default',
   autoCapitalize = 'none',
   multiline = false,
   numberOfLines = 1,
   error = null,
+  icon,
   className = '',
-  ...props 
+  ...props
 }) {
   return (
     <View className={`mb-4 ${className}`}>
@@ -22,9 +23,10 @@ export default function Input({
           {label}
         </Text>
       )}
-      <View className={`bg-slate-900 border ${error ? 'border-red-500' : 'border-slate-800'} rounded-xl px-4 py-3`}>
+      <View className={`bg-slate-900/50 backdrop-blur-sm border ${error ? 'border-red-500' : 'border-slate-800'} rounded-2xl px-4 py-3.5 flex-row items-center shadow-lg`}>
+        {icon && <View className="mr-3">{icon}</View>}
         <TextInput
-          className="text-white text-base font-bold"
+          className="text-white text-base font-bold flex-1"
           placeholder={placeholder}
           placeholderTextColor="#475569"
           value={value}

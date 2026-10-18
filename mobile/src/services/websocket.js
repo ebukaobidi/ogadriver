@@ -1,10 +1,9 @@
 import * as SecureStore from 'expo-secure-store';
 import { Platform } from 'react-native';
 
-// For Android emulator, localhost is 10.0.2.2. For iOS it's localhost.
-const WS_URL = Platform.OS === 'android' 
-  ? 'ws://10.0.2.2:8000' 
-  : 'ws://localhost:8000';
+// For Android emulator, localhost is 10.0.2.2. For Reverb default port is 8080.
+const REVERB_KEY = process.env.EXPO_PUBLIC_REVERB_KEY || 'configure_in_env';
+const WS_URL = 'wss://ogadriver.ng';
 
 class WebSocketService {
   constructor() {
@@ -19,10 +18,10 @@ class WebSocketService {
     try {
       const token = await SecureStore.getItemAsync('auth_token');
       
-      this.ws = new WebSocket(`${WS_URL}/?token=${token}`);
+      this.ws = new WebSocket(WS_URL);
 
       this.ws.onopen = () => {
-        console.log('WebSocket connected');
+        console.log('WebSocket connected to Reverb');
         this.reconnectAttempts = 0;
         this.emit('connected');
       };
@@ -30,7 +29,20 @@ class WebSocketService {
       this.ws.onmessage = (event) => {
         try {
           const data = JSON.parse(event.data);
-          this.emit(data.event || 'message', data);
+          
+          // Handle Pusher protocol messages
+          if (data.event === 'pusher:connection_established') {
+            console.log('Pusher connection established');
+            return;
+          }
+
+          if (data.event === 'pusher:error') {
+            console.error('Pusher error:', data.data.message);
+            return;
+          }
+
+          // Emit regular events
+          this.emit(data.event || 'message', data.data || data);
         } catch (error) {
           console.error('Error parsing WebSocket message:', error);
         }
@@ -97,17 +109,25 @@ class WebSocketService {
     }
   }
 
-  // Channel-specific methods for Laravel Echo compatibility
+  // Channel-specific methods for Laravel Reverb/Pusher compatibility
+  subscribe(channel) {
+    this.send('pusher:subscribe', { channel });
+  }
+
+  unsubscribe(channel) {
+    this.send('pusher:unsubscribe', { channel });
+  }
+
   subscribeToDriverChannel(driverId) {
-    this.send('subscribe', { channel: `driver.${driverId}` });
+    this.subscribe(`private-driver.${driverId}`);
   }
 
   subscribeToBookingChannel(bookingId) {
-    this.send('subscribe', { channel: `booking.${bookingId}` });
+    this.subscribe(`private-bookings.${bookingId}.updates`);
   }
 
-  unsubscribeFromChannel(channel) {
-    this.send('unsubscribe', { channel });
+  subscribeToChatChannel(conversationId) {
+    this.subscribe(`private-chat.${conversationId}`);
   }
 }
 

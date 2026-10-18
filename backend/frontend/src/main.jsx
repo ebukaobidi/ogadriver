@@ -52,9 +52,20 @@ if ('serviceWorker' in navigator && typeof window !== 'undefined') {
       }
     }).catch(() => {});
   } else if (import.meta.env.PROD) {
-    // Clean background registration without aggressive auto-reload
+    // Refresh client automatically when a new service worker takes over
+    let refreshing = false;
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      if (!refreshing) {
+        refreshing = true;
+        window.location.reload();
+      }
+    });
+
     window.addEventListener('load', () => {
-      navigator.serviceWorker.register('/sw.js').catch((err) => {
+      navigator.serviceWorker.register('/sw.js').then((reg) => {
+        // Explicitly check for new deployments
+        reg.update();
+      }).catch((err) => {
         console.warn('PWA service worker registration note:', err?.message || err);
       });
     });

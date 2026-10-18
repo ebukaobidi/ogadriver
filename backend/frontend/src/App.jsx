@@ -9,6 +9,7 @@ import ErrorBoundary from './components/ErrorBoundary';
 import ThemeToggle from './components/ThemeToggle';
 import InstallPrompt from './components/InstallPrompt';
 import OfflineBanner from './components/OfflineBanner';
+import { LanguageProvider } from './context/LanguageContext';
 import api from './api/axios';
 import './index.css';
 
@@ -239,10 +240,11 @@ function App() {
 
   return (
     <ErrorBoundary>
-      <NotificationProvider>
-        <OfflineBanner />
-        <InstallPrompt />
-        <MessagingProvider>
+      <LanguageProvider>
+        <NotificationProvider>
+          <OfflineBanner />
+          <InstallPrompt />
+          <MessagingProvider>
           <Router>
             <Suspense fallback={
               <div className="min-h-screen bg-[#0f172a] flex flex-col items-center justify-center p-6 text-center select-none">
@@ -346,7 +348,8 @@ function App() {
           
         </Router>
       </MessagingProvider>
-    </NotificationProvider>
+        </NotificationProvider>
+      </LanguageProvider>
     </ErrorBoundary>
   );
 }

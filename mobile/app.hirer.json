@@ -1,0 +1,53 @@
+{
+  "expo": {
+    "name": "OgaDriver Hire & Ride",
+    "slug": "ogadriver",
+    "scheme": "ogadriver-hirer",
+    "version": "1.0.2",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "automatic",
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#0f172a"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.ogadriver.hirer",
+      "buildNumber": "3",
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "OgaDriver needs your location to set pickup spots and match you with verified drivers nearby.",
+        "NSCameraUsageDescription": "Camera access for updating profile photo.",
+        "NSPhotoLibraryUsageDescription": "Access photos to update profile image."
+      }
+    },
+    "android": {
+      "package": "com.ogadriver.hirer",
+      "versionCode": 3,
+      "config": {
+        "googleMaps": {
+          "apiKey": "AIzaSyDummyKey-ForCompilationOnly"
+        }
+      },
+      "permissions": [
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_COARSE_LOCATION",
+        "CAMERA",
+        "READ_EXTERNAL_STORAGE",
+        "WRITE_EXTERNAL_STORAGE",
+        "VIBRATE"
+      ],
+      "adaptiveIcon": {
+        "backgroundColor": "#0f172a",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png"
+      }
+    },
+    "web": {
+      "favicon": "./assets/favicon.png", "bundler": "metro"
+    }
+  }
+}
+
+

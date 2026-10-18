@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { MapPin, Loader2, CheckCircle2, Briefcase } from 'lucide-react';
+import { MapPin, Loader2, CheckCircle2, Briefcase, Car, Key, Sparkles, ChevronDown, ChevronRight, Bell } from 'lucide-react';
 import api from '../../api/axios';
 
 const safeArray = (val) => {
@@ -14,27 +14,72 @@ export default function DriverProposalsTab({ proposals = [], driver }) {
   const [loading, setLoading] = useState(false);
   const [data, setData] = useState(() => safeArray(proposals));
   const [processingId, setProcessingId] = useState(null);
-  const [unreadCount, setUnreadCount] = useState(0);
-  const [activeSubTab, setActiveSubTab] = useState('market');
+  const [activeSubTab, setActiveSubTab] = useState('market'); // 'market' | 'pending' | 'accepted'
+  const [categoryFilter, setCategoryFilter] = useState('all'); // 'all' | 'rides' | 'hire'
+
+  // Smart Hire Match Drawer State
+  const [smartMatchOpen, setSmartMatchOpen] = useState(false);
+  const [preferredSchedule, setPreferredSchedule] = useState('Weekdays, 7am – 6pm');
+  const [serviceArea, setServiceArea] = useState('Ikoyi, Lekki, VI');
+  const [hireType, setHireType] = useState('any'); // 'any' | 'with_car' | 'driver_only'
+  const [hireRequirements, setHireRequirements] = useState(
+    'Weekly or longer contracts, at least ₦20,000/day, no night driving'
+  );
+
+  // Job Market Items Stream
+  const [marketItems, setMarketItems] = useState([]);
 
   const proposalsList = safeArray(data);
-  
+
   useEffect(() => {
-    const fetchProposals = async () => {
+    const fetchData = async () => {
       setLoading(true);
       try {
-        const res = await api.get(`/drivers/${driver?.id || 'me'}/proposals`);
-        const list = safeArray(res.data);
-        setData(list);
-        setUnreadCount(list.filter(p => !p.read_at).length);
+        if (activeSubTab === 'market') {
+          const [ridesRes, jobsRes] = await Promise.all([
+            api.get('/marketplace/open-rides').catch(() => ({ data: [] })),
+            api.get('/jobs').catch(() => ({ data: [] }))
+          ]);
+
+          const openRides = safeArray(ridesRes.data);
+          const nearbyJobs = safeArray(jobsRes.data);
+
+          const combined = [
+            ...openRides.map(r => ({
+              id: `ride_${r.id}`,
+              rawId: r.id,
+              type: 'ride',
+              categoryLabel: 'Ride',
+              title: `${r.pickup_address || r.pickup || 'Location'} → ${r.dropoff_address || r.dropoff || 'Destination'}`,
+              subtitle: `${r.distance || '18.4'} km · ${r.duration || '42'} min`,
+              price: Number(r.agreed_rate || r.fare || 9800),
+              rawItem: r
+            })),
+            ...nearbyJobs.map(j => ({
+              id: `job_${j.id}`,
+              rawId: j.id,
+              type: j.vehicle_required ? 'hire_with_car' : 'hire_driver_only',
+              categoryLabel: j.vehicle_required ? 'Hire · With car' : 'Hire · Driver only',
+              title: `${j.location || j.city || 'Lagos'} → ${j.title || 'Contract'}`,
+              subtitle: j.schedule || j.work_hours || 'Starts soon',
+              price: Number(j.daily_rate || j.monthly_rate || j.offered_salary || 45000),
+              rawItem: j
+            }))
+          ];
+
+          setMarketItems(combined);
+        } else {
+          const res = await api.get(`/drivers/${driver?.id || 'me'}/proposals`);
+          setData(safeArray(res.data));
+        }
       } catch (e) {
         console.error(e);
       } finally {
         setLoading(false);
       }
     };
-    fetchProposals();
-  }, [driver]);
+    fetchData();
+  }, [driver, activeSubTab]);
 
   const handleAccept = async (id) => {
     setProcessingId(id);
@@ -63,107 +108,309 @@ export default function DriverProposalsTab({ proposals = [], driver }) {
 
   const displayedProposals = proposalsList.filter(p => activeSubTab === 'pending' ? p.status === 'pending' : p.status === 'accepted');
 
+  const filteredMarketItems = marketItems.filter(item => {
+    if (categoryFilter === 'all') return true;
+    if (categoryFilter === 'rides') return item.type === 'ride';
+    if (categoryFilter === 'hire') return item.type.startsWith('hire');
+    return true;
+  });
+
   return (
-    <div className="bg-[#0f172a] min-h-screen text-white px-4 pt-4 pb-24">
-      <h2 className="text-xl font-bold mb-4">Employment & Jobs</h2>
-      
-      {/* Pill tabs */}
-      <div className="flex bg-slate-900/60 backdrop-blur-2xl rounded-xl p-1 mb-4">
-        <button onClick={() => setActiveSubTab('market')}
-          className={`flex-1 py-2.5 rounded-lg text-[10px] sm:text-xs font-bold uppercase tracking-widest transition-all ${
-            activeSubTab === 'market' ? 'bg-blue-600 text-white' : 'text-slate-500'
-          }`}>
+    <div className="bg-[#090d16] min-h-screen text-white px-4 pt-4 pb-24 font-sans">
+      {/* Top Header Bar */}
+      <div className="flex justify-between items-center mb-3">
+        <div>
+          <div className="flex items-baseline mb-0.5">
+            <span className="text-amber-400 font-black text-sm tracking-wider uppercase">OGADRIVERS</span>
+            <span className="text-white font-black text-sm tracking-wider uppercase ml-1">PARTNERS</span>
+          </div>
+          <h1 className="text-white font-black text-2xl">Available jobs</h1>
+        </div>
+        <div className="relative w-10 h-10 rounded-full bg-slate-900 border border-slate-800 flex items-center justify-center">
+          <Bell className="w-5 h-5 text-white" />
+          <span className="absolute top-2 right-2 w-2.5 h-2.5 rounded-full bg-amber-400 border border-slate-900" />
+        </div>
+      </div>
+
+      {/* Main Tab Bar */}
+      <div className="flex bg-slate-900/90 rounded-2xl p-1.5 mb-5 border border-slate-800">
+        <button
+          onClick={() => setActiveSubTab('market')}
+          className={`flex-1 py-2.5 rounded-xl text-xs font-black transition-all ${
+            activeSubTab === 'market' ? 'bg-[#1cd188] text-slate-950' : 'text-slate-400'
+          }`}
+        >
           Job Market
         </button>
-        <button onClick={() => setActiveSubTab('pending')}
-          className={`flex-1 py-2.5 rounded-lg text-[10px] sm:text-xs font-bold uppercase tracking-widest transition-all ${
-            activeSubTab === 'pending' ? 'bg-[#0f172a] text-white' : 'text-slate-500'
-          }`}>
+        <button
+          onClick={() => setActiveSubTab('pending')}
+          className={`flex-1 py-2.5 rounded-xl text-xs font-black transition-all ${
+            activeSubTab === 'pending' ? 'bg-[#1cd188] text-slate-950' : 'text-slate-400'
+          }`}
+        >
           Direct Offers
         </button>
-        <button onClick={() => setActiveSubTab('accepted')}
-          className={`flex-1 py-2.5 rounded-lg text-[10px] sm:text-xs font-bold uppercase tracking-widest transition-all ${
-            activeSubTab === 'accepted' ? 'bg-brandMint text-[#0f172a]' : 'text-slate-500'
-          }`}>
+        <button
+          onClick={() => setActiveSubTab('accepted')}
+          className={`flex-1 py-2.5 rounded-xl text-xs font-black transition-all ${
+            activeSubTab === 'accepted' ? 'bg-[#1cd188] text-slate-950' : 'text-slate-400'
+          }`}
+        >
           My Contracts
         </button>
       </div>
 
+      {/* ========================================================================= */}
+      {/* TAB 1: JOB MARKET (WITH SMART HIRE MATCH COLLAPSIBLE & REAL API DATA) */}
+      {/* ========================================================================= */}
       {activeSubTab === 'market' && (
-        <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-20">
-          <div className="bg-gradient-to-r from-blue-900/40 to-blue-600/10 border border-blue-500/20 rounded-2xl p-5 mb-2">
-            <h3 className="font-black text-blue-400 mb-1">The Employment Hub</h3>
-            <p className="text-xs text-blue-200/60 leading-relaxed">Browse available fleet vehicles for hire or apply for corporate driving contracts. Verified operatives only.</p>
+        <div className="space-y-4">
+          {/* Smart Hire Match Collapsible Card */}
+          <div className="bg-slate-900/90 border border-amber-400/40 rounded-3xl p-5 shadow-xl transition-all">
+            <button
+              onClick={() => setSmartMatchOpen(!smartMatchOpen)}
+              className="w-full flex items-center justify-between text-left"
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-full bg-amber-400/10 border border-amber-400/20 flex items-center justify-center">
+                  <Sparkles className="w-5 h-5 text-amber-400" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-white text-base">Smart hire match</h3>
+                  <p className="text-slate-400 text-xs mt-0.5">Tell us your preferences, get matched hires</p>
+                </div>
+              </div>
+              {smartMatchOpen ? <ChevronDown className="w-5 h-5 text-white" /> : <ChevronRight className="w-5 h-5 text-white" />}
+            </button>
+
+            {/* Expanded Fields */}
+            {smartMatchOpen && (
+              <div className="mt-5 pt-4 border-t border-slate-800 space-y-4 animate-in fade-in duration-300">
+                <div>
+                  <label className="block text-slate-400 text-xs font-semibold mb-1">Preferred schedule</label>
+                  <input
+                    type="text"
+                    value={preferredSchedule}
+                    onChange={(e) => setPreferredSchedule(e.target.value)}
+                    className="w-full bg-slate-950 text-white border border-slate-800 rounded-2xl px-4 py-3 text-xs focus:outline-none focus:border-amber-400"
+                    placeholder="Weekdays, 7am – 6pm"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-slate-400 text-xs font-semibold mb-1">Service area</label>
+                  <input
+                    type="text"
+                    value={serviceArea}
+                    onChange={(e) => setServiceArea(e.target.value)}
+                    className="w-full bg-slate-950 text-white border border-slate-800 rounded-2xl px-4 py-3 text-xs focus:outline-none focus:border-amber-400"
+                    placeholder="Ikoyi, Lekki, VI"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-slate-400 text-xs font-semibold mb-1">Hire type</label>
+                  <div className="flex gap-2">
+                    {['any', 'with_car', 'driver_only'].map((typeKey) => (
+                      <button
+                        key={typeKey}
+                        onClick={() => setHireType(typeKey)}
+                        className={`px-4 py-2 rounded-full text-xs font-bold transition-all ${
+                          hireType === typeKey ? 'bg-amber-400 text-slate-950' : 'bg-slate-800 text-slate-300'
+                        }`}
+                      >
+                        {typeKey === 'any' ? 'Any' : typeKey === 'with_car' ? 'With my car' : 'Driver only'}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-slate-400 text-xs font-semibold mb-1">Hire requirements</label>
+                  <textarea
+                    rows={3}
+                    value={hireRequirements}
+                    onChange={(e) => setHireRequirements(e.target.value)}
+                    className="w-full bg-slate-950 text-white border border-slate-800 rounded-2xl p-4 text-xs focus:outline-none focus:border-amber-400"
+                    placeholder="Weekly or longer contracts..."
+                  />
+                </div>
+
+                <button
+                  onClick={() => alert(`Preferences saved for ${serviceArea}`)}
+                  className="w-full bg-amber-400 text-slate-950 font-black py-3.5 rounded-full flex items-center justify-center gap-2 shadow-lg shadow-amber-400/20 hover:brightness-110 transition-all"
+                >
+                  <Sparkles className="w-4 h-4" /> Recommend hires
+                </button>
+              </div>
+            )}
           </div>
 
-          <div className="space-y-4">
-            <div className="flex flex-col items-center justify-center py-12 text-center">
-              <Briefcase className="w-12 h-12 text-blue-500/20 mb-4" />
-              <p className="text-white font-bold text-lg mb-2">No Open Opportunities</p>
-              <p className="text-slate-400 text-xs max-w-[250px]">
-                There are currently no fleet vehicles or corporate contracts available in your region. Check back later.
-              </p>
-            </div>
+          {/* Category Filter Pills */}
+          <div className="flex gap-2 mb-4">
+            <button
+              onClick={() => setCategoryFilter('all')}
+              className={`px-5 py-2 rounded-full text-xs font-bold transition-all ${
+                categoryFilter === 'all' ? 'bg-amber-400 text-slate-950' : 'bg-slate-900 border border-slate-800 text-slate-300'
+              }`}
+            >
+              All
+            </button>
+            <button
+              onClick={() => setCategoryFilter('rides')}
+              className={`px-5 py-2 rounded-full text-xs font-bold transition-all ${
+                categoryFilter === 'rides' ? 'bg-amber-400 text-slate-950' : 'bg-slate-900 border border-slate-800 text-slate-300'
+              }`}
+            >
+              Rides
+            </button>
+            <button
+              onClick={() => setCategoryFilter('hire')}
+              className={`px-5 py-2 rounded-full text-xs font-bold transition-all ${
+                categoryFilter === 'hire' ? 'bg-amber-400 text-slate-950' : 'bg-slate-900 border border-slate-800 text-slate-300'
+              }`}
+            >
+              Driver Hire
+            </button>
           </div>
-        </div>
-      )}
 
-      {activeSubTab !== 'market' && (
-        <>
+          {/* Job Items List */}
           {loading ? (
-            <div className="flex justify-center py-12"><Loader2 className="animate-spin text-[#1cd188] w-8 h-8" /></div>
-          ) : displayedProposals.length === 0 ? (
-            <div className="flex flex-col items-center py-8">
-              <p className="text-[#1cd188] text-xs font-bold uppercase tracking-widest mb-1">INBOX EMPTY:</p>
-              <p className="text-white font-bold text-lg mb-2">No Direct Offers Yet</p>
-              <p className="text-slate-400 text-xs text-center mb-6 px-4">
-                You have no direct job offers. Head over to the Job Market to browse open contracts and fleet vehicles.
-              </p>
+            <div className="flex justify-center py-12"><Loader2 className="animate-spin text-amber-400 w-8 h-8" /></div>
+          ) : filteredMarketItems.length === 0 ? (
+            <div className="bg-slate-900/60 border border-slate-800 rounded-3xl p-8 text-center">
+              <Briefcase className="w-12 h-12 text-slate-600 mx-auto mb-3" />
+              <h4 className="text-white font-bold text-base mb-1">No Available Jobs</h4>
+              <p className="text-slate-400 text-xs">No open rides or driver hires match your criteria. Try adjusting your filter preferences.</p>
             </div>
           ) : (
-            <div className="flex flex-col gap-4">
-              {displayedProposals.map(offer => (
-                <div key={offer.id} className="bg-slate-900/60 backdrop-blur-2xl rounded-2xl p-5 border border-white/10">
-                  <div className="flex justify-between items-start mb-2">
-                    <div>
-                      <h3 className="font-bold text-lg">{offer.hirer_name || offer.client_name || 'Hirer'}</h3>
-                      <p className="text-slate-400 text-sm">{offer.job_title || 'Standard Run'}</p>
+            <div className="space-y-3">
+              {filteredMarketItems.map(item => (
+                <div key={item.id} className="bg-slate-900/90 border border-slate-800 rounded-3xl p-4 flex items-center justify-between shadow-lg hover:border-amber-400/40 transition-all cursor-pointer">
+                  <div className="flex items-center gap-3 flex-1 min-w-0 mr-3">
+                    <div className={`w-12 h-12 rounded-full flex items-center justify-center shrink-0 ${
+                      item.type === 'ride' ? 'bg-slate-800' : 'bg-amber-500/20'
+                    }`}>
+                      {item.type === 'ride' ? <Car className="w-6 h-6 text-white" /> :
+                       item.type === 'hire_with_car' ? <Car className="w-6 h-6 text-amber-400" /> :
+                       <Key className="w-6 h-6 text-amber-400" />}
                     </div>
-                    {offer.status === 'accepted' ? (
-                      <span className="bg-[#1cd188]/20 text-[#1cd188] px-2 py-1 rounded text-[10px] font-bold uppercase flex items-center gap-1">
-                        <CheckCircle2 size={12} /> Accepted
-                      </span>
-                    ) : offer.status === 'rejected' ? (
-                      <span className="bg-red-500/20 text-red-500 px-2 py-1 rounded text-[10px] font-bold uppercase">Declined</span>
-                    ) : (
-                      <span className="bg-amber-500/20 text-amber-500 px-2 py-1 rounded text-[10px] font-bold uppercase">Pending</span>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-2 mt-3 mb-4">
-                    <MapPin className="w-4 h-4 text-slate-500" />
-                    <span className="text-slate-300 text-sm truncate">{offer.pickup_location || 'Lagos'}</span>
-                  </div>
-                  <div className="flex items-center justify-between mt-2 pt-4 border-t border-white/10/50">
-                    <div>
-                      <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mb-1">Amount</p>
-                      <span className="text-xl font-black text-[#1cd188]">₦{Number(offer.salary_offered || offer.amount || 0).toLocaleString()}</span>
+
+                    <div className="min-w-0">
+                      <p className="text-slate-400 text-[11px] font-semibold mb-0.5">{item.categoryLabel}</p>
+                      <h4 className="text-white font-bold text-sm truncate">{item.title}</h4>
+                      <p className="text-slate-400 text-xs truncate">{item.subtitle}</p>
                     </div>
-                    {offer.status === 'pending' && (
-                      <div className="flex gap-2">
-                        <button onClick={() => handleDecline(offer.id)} disabled={processingId === offer.id} className="bg-slate-800 text-red-400 font-bold text-xs px-4 py-2 rounded-xl transition-all hover:bg-slate-700 active:scale-95 disabled:opacity-50">
-                          Decline
-                        </button>
-                        <button onClick={() => handleAccept(offer.id)} disabled={processingId === offer.id} className="bg-[#1cd188] text-[#0f172a] font-bold text-xs px-6 py-2 rounded-xl transition-all hover:brightness-110 active:scale-95 flex items-center justify-center min-w-[100px] disabled:opacity-50">
-                          {processingId === offer.id ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Accept Offer'}
-                        </button>
-                      </div>
-                    )}
+                  </div>
+
+                  <div className="flex items-center gap-1 shrink-0">
+                    <span className="text-white font-black text-base">₦{item.price.toLocaleString()}</span>
+                    <ChevronRight className="w-5 h-5 text-slate-500" />
                   </div>
                 </div>
               ))}
             </div>
           )}
-        </>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* TAB 2: DIRECT OFFERS (PENDING PROPOSALS) */}
+      {/* ========================================================================= */}
+      {activeSubTab === 'pending' && (
+        <div className="space-y-4">
+          {loading ? (
+            <div className="flex justify-center py-12"><Loader2 className="animate-spin text-amber-400 w-8 h-8" /></div>
+          ) : displayedProposals.length === 0 ? (
+            <div className="bg-slate-900/60 border border-slate-800 rounded-3xl p-8 text-center">
+              <Briefcase className="w-12 h-12 text-slate-600 mx-auto mb-3" />
+              <h4 className="text-white font-bold text-base mb-1">No Direct Offers Yet</h4>
+              <p className="text-slate-400 text-xs">Direct job proposals sent by employers will appear here.</p>
+            </div>
+          ) : (
+            displayedProposals.map(offer => (
+              <div key={offer.id} className="bg-slate-900/90 border border-slate-800 rounded-3xl p-5 shadow-xl">
+                <div className="flex justify-between items-start mb-2">
+                  <div>
+                    <h3 className="font-bold text-lg text-white">{offer.hirer_name || offer.client_name || 'Direct Employer Offer'}</h3>
+                    <p className="text-slate-400 text-sm">{offer.job_title || 'Executive Driver'}</p>
+                  </div>
+                  <span className="bg-amber-500/20 text-amber-400 px-3 py-1 rounded-full text-[10px] font-bold uppercase">Pending</span>
+                </div>
+
+                <div className="flex items-center gap-2 mt-3 mb-4">
+                  <MapPin className="w-4 h-4 text-slate-500" />
+                  <span className="text-slate-300 text-sm truncate">{offer.pickup_location || 'Lagos'}</span>
+                </div>
+
+                <div className="flex items-center justify-between pt-4 border-t border-slate-800">
+                  <div>
+                    <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mb-1">Salary Offer</p>
+                    <span className="text-2xl font-black text-amber-400">₦{Number(offer.salary_offered || offer.amount || 180000).toLocaleString()}</span>
+                  </div>
+
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => handleDecline(offer.id)}
+                      disabled={processingId === offer.id}
+                      className="bg-slate-800 text-slate-300 font-bold text-xs px-4 py-2.5 rounded-2xl hover:bg-slate-700"
+                    >
+                      Decline
+                    </button>
+                    <button
+                      onClick={() => handleAccept(offer.id)}
+                      disabled={processingId === offer.id}
+                      className="bg-amber-400 text-slate-950 font-black text-xs px-5 py-2.5 rounded-2xl hover:brightness-110"
+                    >
+                      {processingId === offer.id ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Accept Offer'}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* TAB 3: MY CONTRACTS (ACCEPTED JOBS) */}
+      {/* ========================================================================= */}
+      {activeSubTab === 'accepted' && (
+        <div className="space-y-4">
+          {loading ? (
+            <div className="flex justify-center py-12"><Loader2 className="animate-spin text-amber-400 w-8 h-8" /></div>
+          ) : displayedProposals.length === 0 ? (
+            <div className="bg-slate-900/60 border border-slate-800 rounded-3xl p-8 text-center">
+              <CheckCircle2 className="w-12 h-12 text-slate-600 mx-auto mb-3" />
+              <h4 className="text-white font-bold text-base mb-1">No Active Contracts</h4>
+              <p className="text-slate-400 text-xs">Contracts you accept will appear here.</p>
+            </div>
+          ) : (
+            displayedProposals.map(contract => (
+              <div key={contract.id} className="bg-slate-900/90 border border-slate-800 rounded-3xl p-5 shadow-xl">
+                <div className="flex justify-between items-start mb-2">
+                  <div>
+                    <h3 className="font-bold text-lg text-white">{contract.hirer_name || contract.client_name || 'Active Contract'}</h3>
+                    <p className="text-slate-400 text-sm">{contract.job_title || 'Executive Chauffeur'}</p>
+                  </div>
+                  <span className="bg-emerald-500/20 text-emerald-400 px-3 py-1 rounded-full text-[10px] font-bold uppercase flex items-center gap-1">
+                    <CheckCircle2 size={12} /> Active
+                  </span>
+                </div>
+
+                <div className="flex items-center justify-between pt-4 border-t border-slate-800">
+                  <div>
+                    <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mb-1">Contract Amount</p>
+                    <span className="text-2xl font-black text-white">₦{Number(contract.salary_offered || contract.amount || 0).toLocaleString()}</span>
+                  </div>
+                  <button className="bg-slate-800 text-slate-300 font-bold text-xs px-4 py-2.5 rounded-2xl border border-slate-700">
+                    View Terms
+                  </button>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
       )}
     </div>
   );

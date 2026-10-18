@@ -183,10 +183,10 @@ function Register() {
           <img src="/logo.svg" alt="OgaDriver" className="h-16 w-auto" />
         </div>
         <h2 className="mt-2 text-center text-3xl font-black tracking-tight text-white uppercase">
-          Create Account
+          Create account
         </h2>
         <p className="mt-2 text-center text-sm text-slate-400 font-mono">
-          Quick 1-step registration with instant OTP verification
+          Drive and earn with OgaDrivers Partners.
         </p>
       </div>
 

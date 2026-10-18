@@ -1,13 +1,11 @@
 import React, { useState } from 'react';
-import { Car, Users, Award, ShieldCheck, Map } from 'lucide-react';
+import { Car, Users, Award, ShieldCheck } from 'lucide-react';
 import MobileRideBooking from '../components/hirer/MobileRideBooking';
 import MobileHireDirectory from '../components/hirer/MobileHireDirectory';
 import HirerAccount from '../components/hirer/HirerAccount';
 import VipFleetTab from '../components/hirer/VipFleetTab';
-import TacticalMap from '../components/TacticalMap';
 
 const NAV = [
-  { id: 'map', icon: Map, label: 'Map' },
   { id: 'ride', icon: Car, label: 'Ride' },
   { id: 'hire', icon: Users, label: 'Hire' },
   { id: 'vip', icon: Award, label: 'VIP Fleet' },
@@ -17,7 +15,7 @@ const NAV = [
 export default function HirerPortal() {
   const [activeTab, setActiveTabState] = useState(() => {
     const saved = localStorage.getItem('ogadriver_hirer_active_tab');
-    return NAV.some((n) => n.id === saved) ? saved : 'map';
+    return NAV.some((n) => n.id === saved) ? saved : 'ride';
   });
 
   const setActiveTab = (tab) => {
@@ -29,12 +27,11 @@ export default function HirerPortal() {
     <div className="min-h-[100dvh] bg-gradient-to-br from-[#0a0f1a] via-[#0f172a] to-[#1e1b4b] text-white flex flex-col pb-28">
       {/* Header */}
       <div className="px-5 pt-6 pb-4">
-        <span className="text-[#1cd188]/60 text-[10px] font-mono uppercase tracking-[0.3em] block mb-1">Hirer Command Center</span>
-        <h1 className="text-white text-2xl font-black tracking-tight">Operative Dashboard</h1>
+        <span className="text-[#1cd188]/60 text-[10px] font-mono uppercase tracking-[0.3em] block mb-1">OGADRIVERS</span>
+        <h1 className="text-white text-2xl font-black tracking-tight">Hirer Portal</h1>
       </div>
 
       <main className="flex-1 overflow-y-auto">
-        {activeTab === 'map' && <TacticalMap />}
         {activeTab === 'ride' && <MobileRideBooking />}
         {activeTab === 'hire' && <MobileHireDirectory />}
         {activeTab === 'vip' && <VipFleetTab />}

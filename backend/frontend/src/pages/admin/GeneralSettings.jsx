@@ -16,7 +16,9 @@ import {
   RefreshCw,
   AlertTriangle,
   Info,
-  Zap
+  Zap,
+  Award,
+  Smartphone
 } from 'lucide-react';
 import { adminService } from '../../api/admin';
 import { useEffect } from 'react';
@@ -47,6 +49,24 @@ function GeneralSettings() {
     defaultRatePerKm: 250,
     defaultRatePerMin: 30,
     minimumFare: 1000,
+    // OgaPoints & Rewards Economic Engine
+    pointsEarnRatePer100: 1,
+    tripCompletionBonusPoints: 50,
+    weeklyHireBonusPoints: 200,
+    referralBonusPoints: 500,
+    fiveStarRatingBonusPoints: 25,
+    pointsToNairaRatio: 1,
+    maxPointsDiscountPercentPerRide: 20,
+    maxPointsRedeemPerDay: 5000,
+    minPointsToRedeem: 500,
+    // Mobile App Governance & Features
+    mobileMaintenanceMode: false,
+    mobileForceUpdate: false,
+    mobileMinVersion: '1.0.0',
+    mobileConciergeHotline: '+234 800 642 3748',
+    mobileSosEmergencyHotline: '112 / +234 800 767 9111',
+    mobileGiftFundsEnabled: true,
+    mobileMaxGiftTransferPerDay: 50000,
   });
   const [loading, setLoading] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -448,6 +468,179 @@ function GeneralSettings() {
                     onChange={handleChange}
                     className="w-full px-4 py-2 bg-slate-950 border border-slate-800 rounded-xl text-white font-mono focus:outline-none focus:border-brandMint transition-colors"
                   />
+                </div>
+              </div>
+            </div>
+
+            {/* 🌟 OgaPoints & Loyalty Rewards Engine (Sustainable Profit Margin Safeguards) */}
+            <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 lg:col-span-2">
+              <div className="flex flex-col md:flex-row md:items-center justify-between pb-4 mb-4 border-b border-slate-800/50 gap-2">
+                <h3 className="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
+                  <Award size={18} className="text-emerald-400" /> OgaPoints & Rewards System (Profit & Subscription Balancing)
+                </h3>
+                <span className="text-[11px] font-mono bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2.5 py-1 rounded-full self-start md:self-auto">
+                  Margin Protection: Active
+                </span>
+              </div>
+              <p className="text-xs text-slate-400 mb-6">
+                Peg loyalty rewards and trip discounts against subscription revenues and platform commissions so promotions never cause business losses.
+              </p>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div>
+                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Points Earned per ₦100 Spent</label>
+                  <input
+                    type="number"
+                    name="pointsEarnRatePer100"
+                    value={settings.pointsEarnRatePer100 ?? 1}
+                    onChange={handleChange}
+                    className="w-full px-4 py-2 bg-slate-950 border border-slate-800 rounded-xl text-white font-mono focus:outline-none focus:border-emerald-400 transition-colors"
+                  />
+                  <p className="text-[10px] text-slate-500 mt-1">Default 1 pt per ₦100 spent on completed rides & hires.</p>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Max Fare Discount Cap (%)</label>
+                  <input
+                    type="number"
+                    name="maxPointsDiscountPercentPerRide"
+                    value={settings.maxPointsDiscountPercentPerRide ?? 20}
+                    onChange={handleChange}
+                    className="w-full px-4 py-2 bg-slate-950 border border-slate-800 rounded-xl text-amber-400 font-mono font-bold focus:outline-none focus:border-amber-400 transition-colors"
+                  />
+                  <p className="text-[10px] text-slate-500 mt-1">Caps points discount at 20% per ride to protect company profits.</p>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Points to Naira Ratio (1 Pt = ₦X)</label>
+                  <input
+                    type="number"
+                    name="pointsToNairaRatio"
+                    value={settings.pointsToNairaRatio ?? 1}
+                    onChange={handleChange}
+                    className="w-full px-4 py-2 bg-slate-950 border border-slate-800 rounded-xl text-white font-mono focus:outline-none focus:border-emerald-400 transition-colors"
+                  />
+                  <p className="text-[10px] text-slate-500 mt-1">Conversion peg. 1 OgaPoint = ₦1.00 ride credit.</p>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Trip Completion Bonus (Points)</label>
+                  <input
+                    type="number"
+                    name="tripCompletionBonusPoints"
+                    value={settings.tripCompletionBonusPoints ?? 50}
+                    onChange={handleChange}
+                    className="w-full px-4 py-2 bg-slate-950 border border-slate-800 rounded-xl text-white font-mono focus:outline-none focus:border-emerald-400 transition-colors"
+                  />
+                  <p className="text-[10px] text-slate-500 mt-1">Bonus credited upon successful trip payment.</p>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Weekly Chauffeur Hire Bonus (Points)</label>
+                  <input
+                    type="number"
+                    name="weeklyHireBonusPoints"
+                    value={settings.weeklyHireBonusPoints ?? 200}
+                    onChange={handleChange}
+                    className="w-full px-4 py-2 bg-slate-950 border border-slate-800 rounded-xl text-white font-mono focus:outline-none focus:border-emerald-400 transition-colors"
+                  />
+                  <p className="text-[10px] text-slate-500 mt-1">Encourages long-term dedicated driver hiring.</p>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Friend Referral Bonus (Points)</label>
+                  <input
+                    type="number"
+                    name="referralBonusPoints"
+                    value={settings.referralBonusPoints ?? 500}
+                    onChange={handleChange}
+                    className="w-full px-4 py-2 bg-slate-950 border border-slate-800 rounded-xl text-white font-mono focus:outline-none focus:border-emerald-400 transition-colors"
+                  />
+                  <p className="text-[10px] text-slate-500 mt-1">Credited once referred user finishes their 1st ride.</p>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">5-Star Driver Review Bonus (Points)</label>
+                  <input
+                    type="number"
+                    name="fiveStarRatingBonusPoints"
+                    value={settings.fiveStarRatingBonusPoints ?? 25}
+                    onChange={handleChange}
+                    className="w-full px-4 py-2 bg-slate-950 border border-slate-800 rounded-xl text-white font-mono focus:outline-none focus:border-emerald-400 transition-colors"
+                  />
+                  <p className="text-[10px] text-slate-500 mt-1">Reward for submitting verified feedback.</p>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Minimum Points to Redeem</label>
+                  <input
+                    type="number"
+                    name="minPointsToRedeem"
+                    value={settings.minPointsToRedeem ?? 500}
+                    onChange={handleChange}
+                    className="w-full px-4 py-2 bg-slate-950 border border-slate-800 rounded-xl text-white font-mono focus:outline-none focus:border-emerald-400 transition-colors"
+                  />
+                  <p className="text-[10px] text-slate-500 mt-1">Threshold before points unlock in mobile app.</p>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Max Daily Points Redemption</label>
+                  <input
+                    type="number"
+                    name="maxPointsRedeemPerDay"
+                    value={settings.maxPointsRedeemPerDay ?? 5000}
+                    onChange={handleChange}
+                    className="w-full px-4 py-2 bg-slate-950 border border-slate-800 rounded-xl text-white font-mono focus:outline-none focus:border-emerald-400 transition-colors"
+                  />
+                  <p className="text-[10px] text-slate-500 mt-1">Limits abuse or sudden margin drain in 24 hours.</p>
+                </div>
+              </div>
+            </div>
+
+            {/* 📱 Mobile App Controls & Governance */}
+            <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 lg:col-span-2">
+              <h3 className="text-sm font-bold text-white uppercase tracking-wider mb-2 flex items-center gap-2 pb-4 border-b border-slate-800/50">
+                <Smartphone size={18} className="text-blue-400" /> Mobile App Controls & Client Governance
+              </h3>
+              <p className="text-xs text-slate-400 mb-6">
+                Centralized settings for Mobile Concierge, SOS Dispatch Hotlines, Gift Funds parameters, and app availability.
+              </p>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div>
+                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">24/7 Concierge Hotline</label>
+                  <input
+                    type="text"
+                    name="mobileConciergeHotline"
+                    value={settings.mobileConciergeHotline || '+234 800 642 3748'}
+                    onChange={handleChange}
+                    className="w-full px-4 py-2 bg-slate-950 border border-slate-800 rounded-xl text-white font-mono focus:outline-none focus:border-blue-400 transition-colors"
+                  />
+                  <p className="text-[10px] text-slate-500 mt-1">Displayed in Account Profile Concierge modal.</p>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Emergency SOS Hotline</label>
+                  <input
+                    type="text"
+                    name="mobileSosEmergencyHotline"
+                    value={settings.mobileSosEmergencyHotline || '112 / +234 800 767 9111'}
+                    onChange={handleChange}
+                    className="w-full px-4 py-2 bg-slate-950 border border-slate-800 rounded-xl text-red-400 font-mono font-bold focus:outline-none focus:border-red-400 transition-colors"
+                  />
+                  <p className="text-[10px] text-slate-500 mt-1">Dispatched directly during mobile SOS events.</p>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Daily Gift Funds Limit (₦)</label>
+                  <input
+                    type="number"
+                    name="mobileMaxGiftTransferPerDay"
+                    value={settings.mobileMaxGiftTransferPerDay || 50000}
+                    onChange={handleChange}
+                    className="w-full px-4 py-2 bg-slate-950 border border-slate-800 rounded-xl text-white font-mono focus:outline-none focus:border-blue-400 transition-colors"
+                  />
+                  <p className="text-[10px] text-slate-500 mt-1">Maximum ride credit a client can gift per 24 hours.</p>
                 </div>
               </div>
             </div>

@@ -1,7 +1,26 @@
 import React, { useEffect, useState } from 'react';
 import { View, StyleSheet, PermissionsAndroid, Platform, Alert } from 'react-native';
-import MapView, { Marker, Polyline, Circle } from 'react-native-maps';
+import MapView, { Marker, Polyline, Circle, PROVIDER_GOOGLE } from 'react-native-maps';
 import * as Location from 'expo-location';
+
+const WHITE_GOOGLE_MAP_STYLE = [
+  { elementType: 'geometry', stylers: [{ color: '#ffffff' }] },
+  { elementType: 'labels.text.fill', stylers: [{ color: '#334155' }] },
+  { elementType: 'labels.text.stroke', stylers: [{ color: '#ffffff' }] },
+  { featureType: 'administrative', elementType: 'geometry', stylers: [{ visibility: 'off' }] },
+  { featureType: 'administrative.land_parcel', stylers: [{ visibility: 'off' }] },
+  { featureType: 'administrative.neighborhood', stylers: [{ visibility: 'off' }] },
+  { featureType: 'poi', stylers: [{ visibility: 'off' }] },
+  { featureType: 'road', elementType: 'geometry', stylers: [{ color: '#f1f5f9' }] },
+  { featureType: 'road', elementType: 'labels.icon', stylers: [{ visibility: 'off' }] },
+  { featureType: 'road.arterial', elementType: 'geometry', stylers: [{ color: '#e2e8f0' }] },
+  { featureType: 'road.highway', elementType: 'geometry', stylers: [{ color: '#cbd5e1' }] },
+  { featureType: 'road.highway', elementType: 'labels', stylers: [{ visibility: 'off' }] },
+  { featureType: 'road.local', elementType: 'labels.text.fill', stylers: [{ color: '#64748b' }] },
+  { featureType: 'transit', stylers: [{ visibility: 'off' }] },
+  { featureType: 'water', elementType: 'geometry', stylers: [{ color: '#e0f2fe' }] },
+  { featureType: 'water', elementType: 'labels.text.fill', stylers: [{ color: '#0284c7' }] },
+];
 
 export default function MapViewComponent({
   initialRegion,
@@ -55,6 +74,8 @@ export default function MapViewComponent({
   return (
     <View className={`flex-1 ${className}`}>
       <MapView
+        provider={PROVIDER_GOOGLE}
+        customMapStyle={WHITE_GOOGLE_MAP_STYLE}
         style={styles.map}
         region={region}
         onRegionChangeComplete={onRegionChange}
@@ -68,15 +89,15 @@ export default function MapViewComponent({
             title={marker.title}
             description={marker.description}
             onPress={() => onMarkerPress?.(marker)}
-            pinColor={marker.color || '#22d3ee'}
+            pinColor={marker.color || '#008751'}
           />
         ))}
 
         {routeCoordinates.length > 0 && (
           <Polyline
             coordinates={routeCoordinates}
-            strokeColor="#22d3ee"
-            strokeWidth={3}
+            strokeColor="#008751"
+            strokeWidth={4}
           />
         )}
 
@@ -87,8 +108,8 @@ export default function MapViewComponent({
               longitude: location.coords.longitude,
             }}
             radius={100}
-            strokeColor="rgba(34, 211, 238, 0.5)"
-            fillColor="rgba(34, 211, 238, 0.1)"
+            strokeColor="rgba(0, 135, 81, 0.5)"
+            fillColor="rgba(0, 135, 81, 0.1)"
           />
         )}
       </MapView>
