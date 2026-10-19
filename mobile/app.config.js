@@ -18,7 +18,9 @@ export default ({ config }) => {
     const selected = JSON.parse(readFileSync(new URL(configPath, import.meta.url), 'utf8')).expo;
 
     baseConfig = {
+      ...config,
       ...selected,
+      plugins: selected.plugins || config.plugins,
       extra: {
         ...config.extra,
         ...selected.extra,
