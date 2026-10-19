@@ -13,7 +13,7 @@ import {
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { authService, driverService, radioService } from '../../api/api';
+import { authService, driverService, radioService, extractArray } from '../../api/api';
 import { useTheme } from '../../context/ThemeContext';
 
 // Safe MapView imports for native platforms
@@ -60,15 +60,15 @@ export default function NaijaDriverHomeScreen({ navigation }) {
   ]);
 
   // Tactical Walkie-Talkie Channels (Push-To-Talk / Two-Way Driver Comms)
-  const RADIO_CHANNELS = [
+  const [radioChannels, setRadioChannels] = useState([
     { id: 'lagos_mainland', code: 'CH-01', frequency: 'CH-01', name: 'Lagos Mainland Grid', coverage: 'Ikeja, Yaba, 3rd Mainland Bridge', driversOnNet: 142 },
     { id: 'lagos_island', code: 'CH-02', frequency: 'CH-02', name: 'Island & Lekki Express', coverage: 'VI, Ikoyi, Lekki Phase 1, Ajah', driversOnNet: 198 },
     { id: 'abuja_fct', code: 'CH-03', frequency: 'CH-03', name: 'Abuja Federal Net', coverage: 'Central Area, Maitama, Airport Rd', driversOnNet: 95 },
     { id: 'port_harcourt', code: 'CH-04', frequency: 'CH-04', name: 'Port Harcourt Hub', coverage: 'GRA, Trans-Amadi, Aba Rd', driversOnNet: 64 },
     { id: 'sos_emergency', code: 'CH-09', frequency: 'CH-09 (SOS)', name: '🚨 SOS Tactical Net', coverage: 'Nationwide Road Hazard & Priority Comms', driversOnNet: 310 },
-  ];
+  ]);
 
-  const activeChannelInfo = RADIO_CHANNELS.find(c => c.id === selectedChannel) || RADIO_CHANNELS[0];
+  const activeChannelInfo = radioChannels.find(c => c.id === selectedChannel) || radioChannels[0];
 
   // Pulse & Audio Waveform animations
   const pulseAnim = useRef(new Animated.Value(1)).current;
@@ -85,6 +85,21 @@ export default function NaijaDriverHomeScreen({ navigation }) {
 
   useEffect(() => {
     loadProfile();
+    radioService.getChannels()
+      .then(res => {
+        const list = extractArray(res);
+        if (list.length > 0) {
+          setRadioChannels(list.map(c => ({
+            id: c.id,
+            code: c.channel_code || c.code || 'CH-01',
+            frequency: c.frequency || c.channel_code || 'CH-01',
+            name: c.name || 'Tactical Channel',
+            coverage: c.coverage || 'Metropolitan Grid',
+            driversOnNet: c.active_drivers_on_net || c.active_listeners || 50,
+          })));
+        }
+      })
+      .catch(() => {});
   }, []);
 
   // Helper: Generate tailored offer based on vehicle presence, fleet type, subscription, and boost status
@@ -170,7 +185,7 @@ export default function NaijaDriverHomeScreen({ navigation }) {
     }
     try {
       const res = await driverService.getJobs();
-      const openJobs = Array.isArray(res.data) ? res.data : (res.data?.data || []);
+      const openJobs = extractArray(res);
       if (openJobs.length > 0) {
         const topJob = openJobs[0];
         setActiveRequest({
@@ -1009,7 +1024,7 @@ export default function NaijaDriverHomeScreen({ navigation }) {
 
                   {/* Channel Frequency Selector (Tabs) */}
                   <ScrollView horizontal showsHorizontalScrollIndicator={false} className="mb-4">
-                    {RADIO_CHANNELS.map(ch => (
+                    {radioChannels.map(ch => (
                       <TouchableOpacity
                         key={ch.id}
                         onPress={() => setSelectedChannel(ch.id)}

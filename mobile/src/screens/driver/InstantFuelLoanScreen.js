@@ -10,21 +10,21 @@ export default function InstantFuelLoanScreen({ navigation }) {
   const { isDark } = useTheme();
   const [loadingDriver, setLoadingDriver] = useState(true);
   const [driverStats, setDriverStats] = useState({
-    rating: 4.85,
-    completionRate: 96, // %
-    totalTrips: 58,
-    activeDays: 45,
+    rating: 0,
+    completionRate: 0,
+    totalTrips: 0,
+    activeDays: 0,
     infractionsCount: 0,
-    hasActiveSubscription: true,
-    accountStatus: 'verified',
-    simAssessmentScore: 88, // %
+    hasActiveSubscription: false,
+    accountStatus: 'pending',
+    simAssessmentScore: 0,
   });
 
   const [amount, setAmount] = useState('20000');
   const [tenure, setTenure] = useState('7'); // days
-  const [bankName, setBankName] = useState('GTBank');
-  const [accountNumber, setAccountNumber] = useState('0124892019');
-  const [accountName, setAccountName] = useState('Verified Partner Driver');
+  const [bankName, setBankName] = useState('');
+  const [accountNumber, setAccountNumber] = useState('');
+  const [accountName, setAccountName] = useState('');
   const [loading, setLoading] = useState(false);
   const [disbursedAdvance, setDisbursedAdvance] = useState(null);
 
@@ -54,7 +54,7 @@ export default function InstantFuelLoanScreen({ navigation }) {
               activeDays: parseInt(data.active_days || data.days_active || prev.activeDays, 10),
               accountStatus: data.status || 'verified',
               infractionsCount: parseInt(data.infractions_count || 0, 10),
-              hasActiveSubscription: data.has_active_subscription ?? true,
+              hasActiveSubscription: data.has_active_subscription ?? false,
             }));
           }
         }

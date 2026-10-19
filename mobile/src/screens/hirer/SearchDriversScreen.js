@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, FlatList, ActivityIndicator, TextInput, ScrollView, Modal, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import api, { bookingService } from '../../api/api';
+import api, { bookingService, extractArray } from '../../api/api';
 import { Ionicons } from '@expo/vector-icons';
 import * as Location from 'expo-location';
 import { useTheme } from '../../context/ThemeContext';
@@ -72,10 +72,8 @@ export default function SearchDriversScreen({ navigation }) {
       };
 
       const response = await bookingService.searchDrivers(filters);
-      let list = response.data || [];
-
-      // Use real drivers list from production backend API
-      setDrivers(Array.isArray(list) ? list : []);
+      const list = extractArray(response);
+      setDrivers(list);
     } catch (error) {
       console.log('Error searching drivers:', error);
     } finally {

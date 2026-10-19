@@ -36,8 +36,8 @@ export default function InstantCashoutScreen({ navigation }) {
   const [bankSearchQuery, setBankSearchQuery] = useState('');
   const [selectedBank, setSelectedBank] = useState(null);
   const [amount, setAmount] = useState('10000');
-  const [bankCode, setBankCode] = useState('058');
-  const [bankName, setBankName] = useState('Guaranty Trust Bank (GTBank)');
+  const [bankCode, setBankCode] = useState('');
+  const [bankName, setBankName] = useState('');
   const [accountNumber, setAccountNumber] = useState('');
   const [accountName, setAccountName] = useState('');
   const [saveAccount, setSaveAccount] = useState(true);
@@ -100,23 +100,11 @@ export default function InstantCashoutScreen({ navigation }) {
         setAccountNumber(primary.accountNumber);
         setAccountName(primary.accountName);
       } else {
-        const fallbackBanks = getBanksForCountry(globalCountry?.id || 'nigeria');
-        const defaultB = fallbackBanks[0] || { code: '058', name: 'Guaranty Trust Bank (GTBank)' };
-        const demoSaved = {
-          id: 'default_demo',
-          bankName: defaultB.name,
-          bankCode: defaultB.code,
-          accountNumber: '0124892019',
-          accountName: user?.name || 'Verified Partner Driver',
-          country: globalCountry?.id || 'nigeria',
-          isDefault: true,
-        };
-        setSavedAccounts([demoSaved]);
-        setSelectedSavedAccount(demoSaved);
-        setBankCode(demoSaved.bankCode);
-        setBankName(demoSaved.bankName);
-        setAccountNumber(demoSaved.accountNumber);
-        setAccountName(demoSaved.accountName);
+        setSavedAccounts([]);
+        setSelectedSavedAccount(null);
+        setUseCustomAccount(true);
+        setAccountNumber('');
+        setAccountName('');
       }
     } catch (e) {
       console.log('Error loading saved bank:', e);

@@ -23,12 +23,15 @@ export default function EarningsScreen({ navigation }) {
   const { isDark } = useTheme();
   const { country: globalCountry } = useCountry();
   const [earnings, setEarnings] = useState({
-    this_week: 136400,
-    rides_earnings: 52400,
-    hire_earnings: 84000,
-    bank_name: 'GTBank'
+    this_week: 0,
+    rides_earnings: 0,
+    hire_earnings: 0,
+    today_earnings: 0,
+    month_earnings: 0,
+    total_earnings: 0,
+    bank_name: ''
   });
-  const [savedBankDisplay, setSavedBankDisplay] = useState('GTBank');
+  const [savedBankDisplay, setSavedBankDisplay] = useState('Add Bank Account');
   const [refreshing, setRefreshing] = useState(false);
 
   const fetchEarnings = async () => {
@@ -48,16 +51,21 @@ export default function EarningsScreen({ navigation }) {
       const user = await authService.getUser().catch(() => null);
       if (user?.driver_id || user?.driver?.id) {
         const driverId = user.driver_id || user.driver.id;
-        const res = await api.get(`/drivers/${driverId}/earnings`).catch(() => null);
-        if (res?.data?.data) {
+        const [summaryRes, walletRes] = await Promise.all([
+          api.get(`/drivers/${driverId}/earnings-summary`).catch(() => null),
+          api.get('/wallet').catch(() => null)
+        ]);
+        if (summaryRes?.data?.data) {
           setEarnings(prev => ({
             ...prev,
-            ...res.data.data
+            ...summaryRes.data.data
           }));
         }
       }
       if (!foundLocalBank && user?.bank_name) {
         setSavedBankDisplay(user.bank_name);
+      } else if (!foundLocalBank && !user?.bank_name) {
+        setSavedBankDisplay('Add Bank Account');
       }
     } catch (error) {
       console.log('Error fetching earnings:', error);

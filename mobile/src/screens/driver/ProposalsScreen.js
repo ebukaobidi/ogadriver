@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, FlatList, TouchableOpacity, ActivityIndicator, Alert, RefreshControl, Image, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { bookingService } from '../../api/api';
+import { bookingService, extractArray } from '../../api/api';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../context/ThemeContext';
 
@@ -31,10 +31,12 @@ export default function ProposalsScreen({ navigation }) {
     try {
       setLoading(true);
       const response = await bookingService.getMyBookings();
-      const bookingsList = response.data?.data || response.data || response || [];
-      const filtered = Array.isArray(bookingsList) 
-        ? bookingsList.filter(b => activeTab === 'pending' ? b.status === 'pending' : b.status === 'accepted' || b.status === 'in_progress') 
-        : [];
+      const bookingsList = extractArray(response);
+      const filtered = bookingsList.filter(b => 
+        activeTab === 'pending' 
+          ? b.status === 'pending' 
+          : (b.status === 'accepted' || b.status === 'in_progress')
+      );
       setProposals(filtered);
     } catch (e) {
       console.error(e);

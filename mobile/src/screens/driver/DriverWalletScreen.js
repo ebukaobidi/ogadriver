@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, ScrollView, ActivityIndicator, Alert, TextInput, Modal, Clipboard, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as SecureStore from 'expo-secure-store';
-import { walletService, authService, api } from '../../api/api';
+import { walletService, authService, api, extractArray } from '../../api/api';
 import HeaderBar from '../../components/HeaderBar';
 import { useTheme } from '../../context/ThemeContext';
 import { useCountry } from '../../context/CountryContext';
@@ -100,13 +100,31 @@ export default function DriverWalletScreen({ navigation, route }) {
       setLoading(true);
       const user = await authService.getUser().catch(() => null);
       const [walletRes, transRes] = await Promise.all([
-        walletService.getWallet().catch(() => ({ data: { balance: 48500, available_balance: 48500, points_balance: 1250 } })),
-        walletService.getTransactions().catch(() => ({ data: { data: [] } }))
+        walletService.getWallet().catch(() => null),
+        walletService.getTransactions().catch(() => null)
       ]);
 
-      const wData = walletRes.data || { balance: 48500, available_balance: 48500, points_balance: 1250 };
+      const rawWallet = walletRes?.data || walletRes?.wallet || {};
+      const wData = {
+        balance: parseFloat(rawWallet.balance ?? 0),
+        available_balance: parseFloat(rawWallet.available_balance ?? rawWallet.balance ?? 0),
+        points_balance: parseInt(rawWallet.points_balance ?? 0, 10),
+        currency: rawWallet.currency || globalCountry?.currency || 'NGN'
+      };
       setWallet(wData);
-      setTransactions(transRes.data?.data || []);
+      setTransactions(extractArray(transRes));
+
+      if (user) {
+        const phoneDigits = (user.phone || '').replace(/\D/g, '');
+        const dynamicAcc = user.virtual_account_number || (phoneDigits.length >= 9 ? '0' + phoneDigits.slice(-9) : null);
+        if (dynamicAcc) {
+          setVirtualAccount({
+            bankName: 'Wema Bank (OgaDriver Collections)',
+            accountNumber: dynamicAcc,
+            accountName: `OGADRIVER / ${user.name || 'PARTNER TOP-UP'}`.toUpperCase(),
+          });
+        }
+      }
 
       // 1. Check local storage for user's saved bank accounts
       const storedSavedAccountsStr = await Storage.getItemAsync('driver_saved_bank_accounts');
@@ -137,22 +155,8 @@ export default function DriverWalletScreen({ navigation, route }) {
         setSavedAccounts(saved);
         setSelectedSavedAccount(saved[0]);
       } else {
-        // Default bank for active country
-        const countryBanks = getBanksForCountry(globalCountry?.id || 'nigeria');
-        const defaultBank = countryBanks[0] || { code: '058', name: 'Guaranty Trust Bank (GTBank)' };
-        const defaultSaved = [
-          {
-            id: 'default_acc',
-            bankName: defaultBank.name,
-            bankCode: defaultBank.code,
-            accountNumber: '0124892019',
-            accountName: user?.name || 'Verified Partner Driver',
-            country: globalCountry?.id || 'nigeria',
-            isDefault: true,
-          }
-        ];
-        setSavedAccounts(defaultSaved);
-        setSelectedSavedAccount(defaultSaved[0]);
+        setSavedAccounts([]);
+        setSelectedSavedAccount(null);
       }
     } catch (error) {
       console.error('Error loading wallet:', error);
@@ -502,7 +506,27 @@ export default function DriverWalletScreen({ navigation, route }) {
             </View>
 
             {/* List of Saved Bank Accounts */}
-            {savedAccounts.map((acc) => {
+            {savedAccounts.length === 0 ? (
+              <TouchableOpacity
+                onPress={() => setShowAddBankModal(true)}
+                style={{
+                  backgroundColor: themeStyles.itemBg,
+                  borderColor: themeStyles.itemBorder,
+                  borderWidth: 1,
+                  borderStyle: 'dashed',
+                }}
+                className="p-4 rounded-2xl mb-4 items-center justify-center"
+              >
+                <Ionicons name="card-outline" size={22} color={themeStyles.brandGreen} />
+                <Text style={{ color: themeStyles.primaryText, fontSize: 13, marginTop: 4 }}>
+                  No saved bank account
+                </Text>
+                <Text style={{ color: themeStyles.subText, fontSize: 11, marginTop: 2 }}>
+                  Tap 'Add Bank' to set up your payout destination
+                </Text>
+              </TouchableOpacity>
+            ) : (
+              savedAccounts.map((acc) => {
               const isSelected = selectedSavedAccount?.id === acc.id;
               return (
                 <TouchableOpacity
@@ -535,7 +559,7 @@ export default function DriverWalletScreen({ navigation, route }) {
                   )}
                 </TouchableOpacity>
               );
-            })}
+            }))}
 
             {/* Cashout Amount Input */}
             <Text style={{ color: themeStyles.subText, fontSize: 11, fontWeight: 'normal', marginTop: 6, marginBottom: 6, textTransform: 'uppercase' }}>

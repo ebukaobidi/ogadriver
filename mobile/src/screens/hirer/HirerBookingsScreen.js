@@ -11,7 +11,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { bookingService } from '../../api/api';
+import { bookingService, extractArray } from '../../api/api';
 import { useTheme } from '../../context/ThemeContext';
 
 export default function HirerBookingsScreen({ navigation }) {
@@ -29,7 +29,7 @@ export default function HirerBookingsScreen({ navigation }) {
     try {
       setLoading(true);
       const response = await bookingService.getMyBookings();
-      let filteredBookings = response.data?.data || [];
+      let filteredBookings = extractArray(response);
 
       if (filter !== 'all') {
         filteredBookings = filteredBookings.filter((b) => b.status === filter);

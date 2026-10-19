@@ -5,7 +5,7 @@ import { Ionicons } from '@expo/vector-icons';
 import * as Location from 'expo-location';
 import { useTheme } from '../../context/ThemeContext';
 import { useCountry } from '../../context/CountryContext';
-import { api, authService, bookingService } from '../../api/api';
+import { api, authService, bookingService, extractArray } from '../../api/api';
 
 let MapView, Marker;
 try {
@@ -104,11 +104,11 @@ export default function NaijaHirerHomeScreen({ navigation }) {
         api.get('/executive-car-hires'),
         authService.getUser(),
         api.get('/drivers'),
-        api.get('/bookings/my-bookings')
+        bookingService.getMyBookings()
       ]);
 
       if (fleetRes.status === 'fulfilled') {
-        const fleetData = Array.isArray(fleetRes.value.data) ? fleetRes.value.data : (fleetRes.value.data?.data || []);
+        const fleetData = extractArray(fleetRes.value);
         setAdminFleets(fleetData);
       }
       if (userRes.status === 'fulfilled' && userRes.value) {
@@ -116,20 +116,20 @@ export default function NaijaHirerHomeScreen({ navigation }) {
       }
       let driverCount = 0;
       if (driverRes.status === 'fulfilled') {
-        const rawDrivers = Array.isArray(driverRes.value.data) ? driverRes.value.data : (driverRes.value.data?.data || []);
+        const rawDrivers = extractArray(driverRes.value);
         setLiveDrivers(rawDrivers.slice(0, 6));
         driverCount = rawDrivers.length;
       }
       let activeCount = 0;
       let totalSpent = 0;
       if (bookingRes.status === 'fulfilled') {
-        const myBookings = Array.isArray(bookingRes.value.data) ? bookingRes.value.data : (bookingRes.value.data?.data || []);
+        const myBookings = extractArray(bookingRes.value);
         activeCount = myBookings.filter(b => ['pending', 'accepted', 'in_progress'].includes(b.status)).length;
         totalSpent = myBookings.filter(b => b.status === 'completed').reduce((sum, b) => sum + (parseFloat(b.total_amount || b.agreed_rate || 0)), 0);
       }
       setStats({
         activeJobs: activeCount,
-        drivers: driverCount > 0 ? driverCount : 18,
+        drivers: driverCount,
         totalSpend: totalSpent > 0 ? `₦${(totalSpent/1000).toFixed(0)}K` : '₦0'
       });
     } catch (e) {

@@ -15,7 +15,7 @@ import {
   Linking
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { authService, api } from '../../api/api';
+import { authService, api, walletService } from '../../api/api';
 import * as SecureStore from 'expo-secure-store';
 import * as ImagePicker from 'expo-image-picker';
 import { Ionicons } from '@expo/vector-icons';
@@ -47,9 +47,9 @@ export default function ProfileScreen({ navigation, route }) {
   const [refreshing, setRefreshing] = useState(false);
 
   // Financial & Wallet State for Paying Clients
-  const [walletBalance, setWalletBalance] = useState(145000);
-  const [monthlySpend, setMonthlySpend] = useState(85000);
-  const [userPoints, setUserPoints] = useState(1250);
+  const [walletBalance, setWalletBalance] = useState(0);
+  const [monthlySpend, setMonthlySpend] = useState(0);
+  const [userPoints, setUserPoints] = useState(0);
   const [addFundsVisible, setAddFundsVisible] = useState(false);
   const [fundAmount, setFundAmount] = useState('25000');
   const [conciergeModalVisible, setConciergeModalVisible] = useState(false);
@@ -77,7 +77,7 @@ export default function ProfileScreen({ navigation, route }) {
   const [editEmail, setEditEmail] = useState('');
   const [editAvatar, setEditAvatar] = useState(null);
   const [kycData, setKycData] = useState(null);
-  const [companyName, setCompanyName] = useState('Apex Global Enterprises');
+  const [companyName, setCompanyName] = useState('');
 
   // Country & Currency Selector (Global Country System)
   const [countryModalVisible, setCountryModalVisible] = useState(false);
@@ -129,13 +129,26 @@ export default function ProfileScreen({ navigation, route }) {
         setSelectedCountry(JSON.parse(savedCountry));
       }
 
-      const storedKyc = await Storage.getItemAsync('client_kyc_data');
+      const [storedKyc, wRes, pts] = await Promise.all([
+        Storage.getItemAsync('client_kyc_data').catch(() => null),
+        walletService.getWallet().catch(() => null),
+        loyaltyService.getPoints().catch(() => 0)
+      ]);
+
       if (storedKyc) {
-        setKycData(JSON.parse(storedKyc));
+        try {
+          setKycData(JSON.parse(storedKyc));
+        } catch (err) {}
       }
 
-      const pts = await loyaltyService.getPoints();
-      setUserPoints(pts);
+      if (wRes) {
+        const bal = wRes.wallet?.balance ?? wRes.data?.balance ?? 0;
+        setWalletBalance(parseFloat(bal));
+      }
+
+      if (pts !== undefined && pts !== null) {
+        setUserPoints(pts);
+      }
     } catch (e) {
       console.log('Error fetching client profile:', e);
     } finally {

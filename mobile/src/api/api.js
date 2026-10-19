@@ -77,6 +77,22 @@ api.interceptors.response.use(
   }
 );
 
+// Extract array helper for Axios responses, Laravel paginators, and nested data
+export const extractArray = (res) => {
+  if (!res) return [];
+  const d = res.data !== undefined ? res.data : res;
+  if (Array.isArray(d)) return d;
+  if (d && Array.isArray(d.data)) return d.data;
+  if (d && d.data && Array.isArray(d.data.data)) return d.data.data;
+  if (d && Array.isArray(d.items)) return d.items;
+  if (d && Array.isArray(d.bookings)) return d.bookings;
+  if (d && Array.isArray(d.drivers)) return d.drivers;
+  if (d && Array.isArray(d.jobs)) return d.jobs;
+  if (d && Array.isArray(d.vehicles)) return d.vehicles;
+  if (d && Array.isArray(d.transactions)) return d.transactions;
+  return [];
+};
+
 export const authService = {
   login: async (credentials) => {
     const res = await api.post('/auth/login', credentials);
@@ -251,6 +267,31 @@ export const driverService = {
     });
     return res.data;
   },
+
+  getJobs: async (filters = {}) => {
+    const res = await api.get('/jobs', { params: filters });
+    return res.data;
+  },
+
+  getAvailability: async () => {
+    const res = await api.get('/driver/availability');
+    return res.data;
+  },
+
+  saveAvailability: async (data) => {
+    const res = await api.post('/driver/availability', data);
+    return res.data;
+  },
+
+  getEarnings: async (driverId) => {
+    const res = await api.get(`/drivers/${driverId}/earnings`);
+    return res.data;
+  },
+
+  getEarningsSummary: async (driverId) => {
+    const res = await api.get(`/drivers/${driverId}/earnings-summary`);
+    return res.data;
+  },
 };
 
 export const verificationService = {
@@ -343,12 +384,12 @@ export const jobService = {
 
 export const corporateFleetService = {
   getVipFleet: async () => {
-    const res = await api.get('/corporate-fleet/vip');
+    const res = await api.get('/corporate/vip-fleet');
     return res.data;
   },
 
   bookVipFleet: async (data) => {
-    const res = await api.post('/corporate-fleet/vip/book', data);
+    const res = await api.post('/corporate/vip-book', data);
     return res.data;
   },
 };

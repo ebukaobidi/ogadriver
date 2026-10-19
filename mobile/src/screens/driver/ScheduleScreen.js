@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, ScrollView, Alert, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { api } from '../../api/api';
+import { api, driverService, extractArray } from '../../api/api';
 import { useTheme } from '../../context/ThemeContext';
 import HeaderBar from '../../components/HeaderBar';
 
@@ -13,15 +13,34 @@ export default function ScheduleScreen({ navigation }) {
   const [loading, setLoading] = useState(false);
   
   // Day status: 'available' | 'booked' | 'unavailable'
-  const [dayStatus, setDayStatus] = useState({
-    4: 'booked',
-    5: 'booked',
-    6: 'booked',
-    12: 'unavailable',
-    18: 'booked',
-    19: 'booked',
-    25: 'unavailable',
-  });
+  const [dayStatus, setDayStatus] = useState({});
+
+  useEffect(() => {
+    fetchAvailability();
+  }, []);
+
+  const fetchAvailability = async () => {
+    try {
+      setLoading(true);
+      const res = await driverService.getAvailability().catch(() => null);
+      const list = extractArray(res);
+      const mapped = {};
+      list.forEach(item => {
+        if (item.date) {
+          const parts = item.date.split('-');
+          const dayNum = parseInt(parts[2], 10);
+          if (!isNaN(dayNum)) {
+            mapped[dayNum] = item.status || 'unavailable';
+          }
+        }
+      });
+      setDayStatus(mapped);
+    } catch (e) {
+      console.log('Error fetching availability:', e);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const themeStyles = {
     screenBg: isDark ? '#090d16' : '#ffffff',
@@ -73,7 +92,18 @@ export default function ScheduleScreen({ navigation }) {
   const handleSave = async () => {
     try {
       setLoading(true);
-      await api.post('/drivers/schedule/availability', { dayStatus }).catch(() => null);
+      const now = new Date();
+      const year = now.getFullYear();
+      const month = String(now.getMonth() + 1).padStart(2, '0');
+
+      const promises = Object.entries(dayStatus).map(([day, status]) => {
+        const dateStr = `${year}-${month}-${String(day).padStart(2, '0')}`;
+        return driverService.saveAvailability({
+          date: dateStr,
+          status: status === 'available' ? 'available' : 'unavailable'
+        }).catch(() => null);
+      });
+      await Promise.all(promises);
       Alert.alert('Schedule Updated', 'Your hire calendar availability is synced with hirers.');
     } catch (e) {
       Alert.alert('Saved', 'Your schedule availability has been updated.');
