@@ -340,7 +340,11 @@ export default function DriverProfileScreen({ navigation, route }) {
       {/* Top Header Bar with exclusive color theme change icon */}
       <HeaderBar navigation={navigation} showThemeToggle={true} />
 
-      <ScrollView className="flex-1 px-4 pt-3 pb-12" showsVerticalScrollIndicator={false}>
+      <ScrollView 
+        className="flex-1 px-4 pt-3" 
+        contentContainerStyle={{ paddingBottom: 110 }}
+        showsVerticalScrollIndicator={false}
+      >
         {/* Screen Title */}
         <View className="mb-4">
           <Text style={{ color: themeStyles.titleText, fontWeight: 'normal', fontSize: 28 }}>

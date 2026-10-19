@@ -221,7 +221,11 @@ export default function KycVerificationScreen({ navigation }) {
           <ActivityIndicator size="large" color="#10b981" />
         </View>
       ) : (
-        <ScrollView className="flex-1 px-4 py-4" showsVerticalScrollIndicator={false}>
+        <ScrollView 
+          className="flex-1 px-4 py-4" 
+          contentContainerStyle={{ paddingBottom: 110 }}
+          showsVerticalScrollIndicator={false}
+        >
           {/* Status Banner */}
           <View
             style={{

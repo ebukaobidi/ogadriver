@@ -30,7 +30,11 @@ export default function AppSettingsScreen({ navigation }) {
         <Text className={`font-normal text-lg ${themeColors.textColor}`}>Settings & Preferences</Text>
       </View>
 
-      <ScrollView className="flex-1 px-4 py-6">
+      <ScrollView 
+        className="flex-1 px-4 py-6" 
+        contentContainerStyle={{ paddingBottom: 80 }}
+        showsVerticalScrollIndicator={false}
+      >
         {/* 🔑 SECURITY & BIOMETRICS SECTION */}
         <Text className={`font-mono text-xs uppercase tracking-widest mb-3 ${themeColors.accentColor}`}>Security & Biometrics</Text>
         <View className={`${themeColors.cardBg} border ${themeColors.borderColor} rounded-2xl p-5 mb-6`}>

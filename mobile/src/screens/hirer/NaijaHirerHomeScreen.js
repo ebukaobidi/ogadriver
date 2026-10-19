@@ -20,12 +20,12 @@ try {
 
 // Supported international & regional Hire Markets (with Nigeria as default)
 const COUNTRIES = [
-  { id: 'NG', name: 'Nigeria', flag: '🇳🇬', currency: '₦', marketTitle: 'Naija Hirer Market', proverb: '"Na who you know, no be who you be" — Connect directly with vetted, security-cleared drivers.' },
-  { id: 'GH', name: 'Ghana', flag: '🇬🇭', currency: 'GH₵', marketTitle: 'Ghana Hirer Market', proverb: '"Akwaaba! Connect with licensed chauffeurs & executive fleets across Accra & Kumasi."' },
-  { id: 'KE', name: 'Kenya', flag: '🇰🇪', currency: 'KSh', marketTitle: 'Kenya Hirer Market', proverb: '"Karibu! Book verified chauffeurs and corporate safari drivers across Nairobi & Mombasa."' },
-  { id: 'ZA', name: 'South Africa', flag: '🇿🇦', currency: 'R', marketTitle: 'Mzansi Hirer Market', proverb: '"Sharp sharp! Top vetted chauffeurs across Johannesburg, Cape Town & Durban."' },
-  { id: 'UK', name: 'United Kingdom', flag: '🇬🇧', currency: '£', marketTitle: 'UK Chauffeur Market', proverb: '"Professional executive drivers & private corporate hire across London & Manchester."' },
-  { id: 'US', name: 'United States', flag: '🇺🇸', currency: '$', marketTitle: 'US Executive Market', proverb: '"Licensed VIP chauffeurs & personal drivers on demand."' },
+  { id: 'NG', name: 'Nigeria', flag: '🇳🇬', currency: '₦', marketTitle: 'Nigeria Market' },
+  { id: 'GH', name: 'Ghana', flag: '🇬🇭', currency: 'GH₵', marketTitle: 'Ghana Market' },
+  { id: 'KE', name: 'Kenya', flag: '🇰🇪', currency: 'KSh', marketTitle: 'Kenya Market' },
+  { id: 'ZA', name: 'South Africa', flag: '🇿🇦', currency: 'R', marketTitle: 'South Africa Market' },
+  { id: 'UK', name: 'United Kingdom', flag: '🇬🇧', currency: '£', marketTitle: 'UK Market' },
+  { id: 'US', name: 'United States', flag: '🇺🇸', currency: '$', marketTitle: 'US Market' },
 ];
 
 export default function NaijaHirerHomeScreen({ navigation }) {
@@ -161,6 +161,8 @@ export default function NaijaHirerHomeScreen({ navigation }) {
     >
       <ScrollView
         className="flex-1"
+        contentContainerStyle={{ paddingBottom: 100 }}
+        showsVerticalScrollIndicator={false}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#10b981" />}
       >
         {/* Top Header */}

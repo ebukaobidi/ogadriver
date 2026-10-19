@@ -91,7 +91,11 @@ export default function TermsAndPrivacyScreen({ navigation }) {
         </View>
       </View>
 
-      <ScrollView className="flex-1 px-4" showsVerticalScrollIndicator={false}>
+      <ScrollView 
+        className="flex-1 px-4" 
+        contentContainerStyle={{ paddingBottom: 110 }}
+        showsVerticalScrollIndicator={false}
+      >
         {activeTab === 'terms' ? (
           /* TERMS OF SERVICE CONTENT */
           <View className="pb-12 pt-1">

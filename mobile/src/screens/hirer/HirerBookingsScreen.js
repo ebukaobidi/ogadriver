@@ -366,7 +366,8 @@ export default function HirerBookingsScreen({ navigation }) {
           data={bookings}
           renderItem={renderBooking}
           keyExtractor={(item) => item.id?.toString() || Math.random().toString()}
-          contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 32 }}
+          contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 110 }}
+          showsVerticalScrollIndicator={false}
           refreshControl={
             <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#10b981" />
           }

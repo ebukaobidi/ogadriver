@@ -166,7 +166,11 @@ export default function ScheduleScreen({ navigation }) {
         subtitle="Shift availability" 
       />
 
-      <ScrollView className="flex-1 px-4 pt-3 pb-12" showsVerticalScrollIndicator={false}>
+      <ScrollView 
+        className="flex-1 px-4 pt-3" 
+        contentContainerStyle={{ paddingBottom: 110 }}
+        showsVerticalScrollIndicator={false}
+      >
         {/* Screen Title */}
         <View className="mb-4">
           <Text style={{ color: themeStyles.titleText, fontSize: 26, fontWeight: 'normal' }}>

@@ -425,13 +425,14 @@ export default function ProfileScreen({ navigation, route }) {
             }}
             className="p-2 rounded-xl border"
           >
-            <Ionicons name={isDark ? 'sunny' : 'moon'} size={16} color={isDark ? '#fbbf24' : '#64748b'} />
+            <Ionicons name={isDark ? 'sunny' : 'moon'} size={16} color={isDark ? '#00e588' : '#059669'} />
           </TouchableOpacity>
         </View>
       </View>
 
       <ScrollView
-        className="flex-1 px-4 pt-4 pb-12"
+        className="flex-1 px-4 pt-4"
+        contentContainerStyle={{ paddingBottom: 110 }}
         showsVerticalScrollIndicator={false}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#10b981" />}
       >

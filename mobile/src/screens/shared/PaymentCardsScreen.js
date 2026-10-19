@@ -134,7 +134,11 @@ export default function PaymentCardsScreen({ navigation }) {
         </TouchableOpacity>
       </View>
 
-      <ScrollView className="flex-1 px-4 pt-4" showsVerticalScrollIndicator={false}>
+      <ScrollView 
+        className="flex-1 px-4 pt-4" 
+        contentContainerStyle={{ paddingBottom: 110 }}
+        showsVerticalScrollIndicator={false}
+      >
         {/* Security Shield Banner */}
         <View
           style={{

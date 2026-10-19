@@ -133,7 +133,7 @@ export default function ProposalsScreen({ navigation }) {
         <View className="mb-2">
           <View className="flex-row items-baseline mb-1">
             <Text style={{ color: themeStyles.primaryText }} className="font-black text-2xl">
-              ₦{Number(item.agreed_rate || item.amount || 250000).toLocaleString()}
+              ₦{Number(item.agreed_rate || item.amount || 0).toLocaleString()}
             </Text>
             <Text style={{ color: themeStyles.subText }} className="text-xs font-semibold ml-1">
               / {item.rate_type || 'mo'}
@@ -183,7 +183,8 @@ export default function ProposalsScreen({ navigation }) {
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: themeStyles.screenBg }}>
       <ScrollView 
-        className="flex-1 px-4 pt-3 pb-8" 
+        className="flex-1 px-4 pt-3" 
+        contentContainerStyle={{ paddingBottom: 100 }}
         showsVerticalScrollIndicator={false}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={themeStyles.brandGreen} />}
       >

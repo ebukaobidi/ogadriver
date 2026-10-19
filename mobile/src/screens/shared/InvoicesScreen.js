@@ -136,7 +136,11 @@ export default function InvoicesScreen({ navigation }) {
         </TouchableOpacity>
       </View>
 
-      <ScrollView className="flex-1 px-4 pt-4" showsVerticalScrollIndicator={false}>
+      <ScrollView 
+        className="flex-1 px-4 pt-4" 
+        contentContainerStyle={{ paddingBottom: 110 }}
+        showsVerticalScrollIndicator={false}
+      >
         {/* Total Spend Summary Card */}
         <View
           style={{

@@ -74,6 +74,8 @@ export default function ConversationsListScreen({ navigation }) {
           data={conversations}
           keyExtractor={(item, index) => item.id?.toString() || index.toString()}
           renderItem={renderConversation}
+          contentContainerStyle={{ paddingBottom: 80 }}
+          showsVerticalScrollIndicator={false}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#10b981" />}
           ListEmptyComponent={
             <View className="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-8 items-center mt-10">

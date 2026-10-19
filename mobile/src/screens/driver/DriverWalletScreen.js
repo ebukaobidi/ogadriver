@@ -364,7 +364,11 @@ export default function DriverWalletScreen({ navigation, route }) {
         subtitle="Earnings & bank cashouts" 
       />
 
-      <ScrollView className="flex-1 px-4 pt-3 pb-12" showsVerticalScrollIndicator={false}>
+      <ScrollView 
+        className="flex-1 px-4 pt-3" 
+        contentContainerStyle={{ paddingBottom: 100 }}
+        showsVerticalScrollIndicator={false}
+      >
         {/* Screen Title */}
         <View className="mb-4">
           <Text style={{ color: themeStyles.titleText, fontSize: 26, fontWeight: 'normal' }}>
@@ -396,7 +400,7 @@ export default function DriverWalletScreen({ navigation, route }) {
           </View>
 
           <Text style={{ color: themeStyles.brandGreen, fontSize: 36, fontWeight: 'normal', marginVertical: 4 }}>
-            {globalCountry?.symbol || '₦'}{(wallet?.available_balance || 48500).toLocaleString()}
+            {globalCountry?.symbol || '₦'}{(wallet?.available_balance ?? 0).toLocaleString()}
           </Text>
 
           {/* Ledger & Points Sub-Metrics */}
@@ -404,13 +408,13 @@ export default function DriverWalletScreen({ navigation, route }) {
             <View>
               <Text style={{ color: themeStyles.subText, fontSize: 10, fontWeight: 'normal' }}>LEDGER BALANCE</Text>
               <Text style={{ color: themeStyles.primaryText, fontSize: 13, fontWeight: 'normal', marginTop: 1 }}>
-                {globalCountry?.symbol || '₦'}{(wallet?.balance || 48500).toLocaleString()}
+                {globalCountry?.symbol || '₦'}{(wallet?.balance ?? 0).toLocaleString()}
               </Text>
             </View>
             <View>
               <Text style={{ color: themeStyles.subText, fontSize: 10, fontWeight: 'normal' }}>OGAPOINTS VAULT</Text>
               <Text style={{ color: themeStyles.brandGreen, fontSize: 13, fontWeight: 'normal', marginTop: 1 }}>
-                {(wallet?.points_balance || 1250).toLocaleString()} pts
+                {(wallet?.points_balance ?? 0).toLocaleString()} pts
               </Text>
             </View>
             <View>

@@ -123,7 +123,9 @@ export default function EarningsScreen({ navigation }) {
       <HeaderBar navigation={navigation} />
 
       <ScrollView
-        className="flex-1 px-4 pt-3 pb-12"
+        className="flex-1 px-4 pt-3"
+        contentContainerStyle={{ paddingBottom: 100 }}
+        showsVerticalScrollIndicator={false}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={themeStyles.heroCardBg} />}
       >
         {/* Screen Title */}
@@ -142,7 +144,7 @@ export default function EarningsScreen({ navigation }) {
             This week ({globalCountry?.currency || 'NGN'})
           </Text>
           <Text style={{ color: themeStyles.heroTextColor }} className="font-normal text-4xl mt-1 mb-8">
-            {currencySymbol}{Number(earnings.this_week || 136400).toLocaleString()}
+            {currencySymbol}{Number(earnings.this_week || 0).toLocaleString()}
           </Text>
 
           {/* Days Row */}
@@ -170,7 +172,7 @@ export default function EarningsScreen({ navigation }) {
               Rides
             </Text>
             <Text style={{ color: themeStyles.primaryText }} className="font-normal text-xl">
-              {currencySymbol}{Number(earnings.rides_earnings || 52400).toLocaleString()}
+              {currencySymbol}{Number(earnings.rides_earnings || 0).toLocaleString()}
             </Text>
           </View>
 
@@ -187,7 +189,7 @@ export default function EarningsScreen({ navigation }) {
               Hire contracts
             </Text>
             <Text style={{ color: themeStyles.primaryText }} className="font-normal text-xl">
-              {currencySymbol}{Number(earnings.hire_earnings || 84000).toLocaleString()}
+              {currencySymbol}{Number(earnings.hire_earnings || 0).toLocaleString()}
             </Text>
           </View>
         </View>

@@ -115,7 +115,11 @@ export default function VipFleetScreen({ navigation }) {
           </Text>
         </View>
       ) : (
-        <ScrollView className="flex-1 px-4 py-4" showsVerticalScrollIndicator={false}>
+        <ScrollView 
+          className="flex-1 px-4 py-4" 
+          contentContainerStyle={{ paddingBottom: 110 }}
+          showsVerticalScrollIndicator={false}
+        >
           {/* Executive Account Banner */}
           <View
             style={{

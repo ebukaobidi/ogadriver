@@ -136,22 +136,20 @@ export default function HirerNavigator({ route: parentRoute }) {
           backgroundColor: tabBg,
           borderTopWidth: 1,
           borderTopColor: tabBorder,
-          height: 56 + bottomInset,
-          paddingBottom: bottomInset,
-          paddingTop: 8,
+          height: Platform.OS === 'ios' ? 56 + bottomInset : (bottomInset > 0 ? 56 + bottomInset : 62),
+          paddingBottom: bottomInset > 0 ? bottomInset : (Platform.OS === 'ios' ? 24 : 8),
+          paddingTop: 6,
         },
         tabBarLabelStyle: {
-          fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
-          fontSize: 10,
-          fontWeight: 'normal',
-          letterSpacing: 0.5,
-          textTransform: 'uppercase',
+          fontSize: 11,
+          fontWeight: '600',
           marginTop: 2,
         },
       })}
     >
       <Tab.Screen name="Ride" component={HomeStack} />
       <Tab.Screen name="Hire" component={HireStack} />
+      <Tab.Screen name="Bookings" component={HirerBookingsScreen} />
       <Tab.Screen name="Account" component={AccountStack} initialParams={params} />
     </Tab.Navigator>
   );

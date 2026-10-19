@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, TouchableOpacity, ScrollView, FlatList, ActivityIndicator, Alert, TextInput, RefreshControl, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { jobService, bookingService, authService, driverService, api } from '../../api/api';
+import { jobService, bookingService, authService, driverService, api, extractArray } from '../../api/api';
 import { Ionicons } from '@expo/vector-icons';
 import * as Location from 'expo-location';
 
@@ -89,17 +89,8 @@ export default function DriverJobsScreen({ navigation }) {
         const hasCar = Boolean(userRes?.driver?.has_vehicle || userRes?.driver?.vehicle_make || userRes?.driver?.vehicle);
         setIsCarOwner(hasCar);
 
-        const openRidesList = (hasCar && Array.isArray(ridesRes.data?.data))
-          ? ridesRes.data.data
-          : (hasCar && Array.isArray(ridesRes.data))
-          ? ridesRes.data
-          : [];
-
-        const nearbyJobsList = Array.isArray(jobsRes.data?.data)
-          ? jobsRes.data.data
-          : Array.isArray(jobsRes.data)
-          ? jobsRes.data
-          : [];
+        const openRidesList = hasCar ? extractArray(ridesRes) : [];
+        const nearbyJobsList = extractArray(jobsRes);
 
         // If driver has NO car, strictly filter to jobs where vehicle is NOT required
         const availableJobs = hasCar ? nearbyJobsList : nearbyJobsList.filter(j => !j.vehicle_required);
@@ -112,8 +103,8 @@ export default function DriverJobsScreen({ navigation }) {
             itemType: 'ride',
             categoryLabel: 'Ride',
             title: `${r.pickup_address || r.pickup || 'Location'} → ${r.dropoff_address || r.dropoff || 'Destination'}`,
-            subtitle: `${r.distance || '18.4'} km · ${r.duration || '42'} min`,
-            price: Number(r.agreed_rate || r.fare || 9800),
+            subtitle: `${r.distance || '0'} km · ${r.duration || '0'} min`,
+            price: Number(r.agreed_rate || r.fare || 0),
             rawItem: r
           })),
           ...availableJobs.map(j => ({
@@ -122,8 +113,8 @@ export default function DriverJobsScreen({ navigation }) {
             itemType: j.vehicle_required ? 'hire_with_car' : 'hire_driver_only',
             categoryLabel: j.vehicle_required ? 'Hire · With car' : 'Hire · Driver only',
             title: `${j.location || j.city || 'Lagos'} → ${j.title || 'Contract'}`,
-            subtitle: j.schedule || j.work_hours || 'Starts tomorrow 8:00',
-            price: Number(j.daily_rate || j.monthly_rate || j.offered_salary || 45000),
+            subtitle: j.schedule || j.work_hours || 'Flexible Schedule',
+            price: Number(j.daily_rate || j.monthly_rate || j.offered_salary || 0),
             rawItem: j
           }))
         ];
@@ -132,22 +123,12 @@ export default function DriverJobsScreen({ navigation }) {
       } else if (activeMainTab === 'offers') {
         // Fetch direct proposals sent to this driver
         const response = await bookingService.getMyBookings().catch(() => ({ data: [] }));
-        const bookingsList = Array.isArray(response.data?.data)
-          ? response.data.data
-          : Array.isArray(response.data)
-          ? response.data
-          : [];
-
+        const bookingsList = extractArray(response);
         setDirectOffers(bookingsList.filter(b => b.status === 'pending'));
       } else if (activeMainTab === 'contracts') {
         // Fetch active accepted runs & ongoing contracts
         const response = await bookingService.getMyBookings().catch(() => ({ data: [] }));
-        const bookingsList = Array.isArray(response.data?.data)
-          ? response.data.data
-          : Array.isArray(response.data)
-          ? response.data
-          : [];
-
+        const bookingsList = extractArray(response);
         setActiveContracts(bookingsList.filter(b => b.status === 'accepted' || b.status === 'in_progress'));
       }
     } catch (error) {
@@ -308,7 +289,9 @@ export default function DriverJobsScreen({ navigation }) {
       </View>
 
       <ScrollView
-        className="flex-1 px-4 pt-3 pb-12"
+        className="flex-1 px-4 pt-3"
+        contentContainerStyle={{ paddingBottom: 100 }}
+        showsVerticalScrollIndicator={false}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={themeStyles.brandGreen} />}
       >
         {/* ========================================================================= */}
@@ -744,7 +727,7 @@ export default function DriverJobsScreen({ navigation }) {
 
                   <View className="flex-row justify-between items-baseline mb-3">
                     <Text style={{ color: themeStyles.primaryText }} className="font-normal text-2xl">
-                      ₦{Number(offer.agreed_rate || offer.amount || 180000).toLocaleString()}
+                      ₦{Number(offer.agreed_rate || offer.amount || 0).toLocaleString()}
                     </Text>
                     <Text style={{ color: themeStyles.subText }} className="text-xs font-normal">
                       / {offer.rate_type || 'month'}

@@ -287,7 +287,11 @@ export default function SearchDriversScreen({ navigation }) {
         </TouchableOpacity>
       </View>
 
-      <ScrollView className="flex-1 px-4 pt-3" showsVerticalScrollIndicator={false}>
+      <ScrollView 
+        className="flex-1 px-4 pt-3" 
+        contentContainerStyle={{ paddingBottom: 110 }}
+        showsVerticalScrollIndicator={false}
+      >
         {/* Search Bar */}
         <View
           style={{

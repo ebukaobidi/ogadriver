@@ -644,7 +644,7 @@ export default function NaijaDriverHomeScreen({ navigation }) {
             !isDark && { backgroundColor: '#ffffff', borderColor: '#e2e8f0' }
           ]}
         >
-          <Ionicons name="locate" size={18} color={isDark ? "#ffffff" : "#0f172a"} />
+          <Ionicons name="locate" size={18} color={isDark ? "#00e588" : "#059669"} />
         </TouchableOpacity>
         <TouchableOpacity 
           onPress={() => navigation.navigate('Schedule')}
@@ -654,7 +654,7 @@ export default function NaijaDriverHomeScreen({ navigation }) {
             !isDark && { backgroundColor: '#ffffff', borderColor: '#e2e8f0' }
           ]}
         >
-          <Ionicons name="calendar-outline" size={18} color={isDark ? "#ffffff" : "#0f172a"} />
+          <Ionicons name="calendar-outline" size={18} color={isDark ? "#00e588" : "#059669"} />
         </TouchableOpacity>
         <TouchableOpacity 
           onPress={() => navigation.navigate('Jobs')}

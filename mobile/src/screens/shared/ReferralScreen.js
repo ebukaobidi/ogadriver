@@ -90,7 +90,8 @@ export default function ReferralScreen({ navigation }) {
       />
 
       <ScrollView
-        className="flex-1 px-4 pt-3 pb-12"
+        className="flex-1 px-4 pt-3"
+        contentContainerStyle={{ paddingBottom: 110 }}
         showsVerticalScrollIndicator={false}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={themeStyles.brandGreen} />}
       >

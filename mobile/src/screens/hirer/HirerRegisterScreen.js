@@ -152,7 +152,7 @@ export default function HirerRegisterScreen({ navigation }) {
             {/* Buttons Container */}
             <View className="items-center w-full mt-2">
               <TouchableOpacity
-                className={`bg-brandMint py-4 rounded-xl items-center justify-center w-[85%] ${loading ? 'opacity-70' : ''}`}
+                className={`bg-brandMint py-4 rounded-xl items-center justify-center w-full ${loading ? 'opacity-70' : ''}`}
                 onPress={handleRegister}
                 disabled={loading}
                 activeOpacity={0.8}
@@ -166,7 +166,7 @@ export default function HirerRegisterScreen({ navigation }) {
 
               {/* Google Sign Up Button */}
               <TouchableOpacity
-                className="bg-transparent border border-slate-600 py-4 rounded-xl items-center justify-center w-[85%] mt-4 flex-row active:bg-slate-800/50"
+                className="bg-transparent border border-slate-600 py-4 rounded-xl items-center justify-center w-full mt-4 flex-row active:bg-slate-800/50"
                 disabled={loading}
                 activeOpacity={0.8}
               >

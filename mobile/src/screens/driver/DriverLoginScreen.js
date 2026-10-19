@@ -97,7 +97,7 @@ export default function DriverLoginScreen({ navigation, route }) {
             <View className="items-center w-full">
               {/* Login Button */}
               <TouchableOpacity
-                className={`bg-brandMint py-4 rounded-xl items-center justify-center w-[85%] mt-2 ${loading ? 'opacity-70' : ''}`}
+                className={`bg-brandMint py-4 rounded-xl items-center justify-center w-full mt-2 ${loading ? 'opacity-70' : ''}`}
                 onPress={handleLogin}
                 disabled={loading}
                 activeOpacity={0.8}
@@ -111,7 +111,7 @@ export default function DriverLoginScreen({ navigation, route }) {
 
               {/* Google Sign In Button */}
               <TouchableOpacity
-                className="bg-transparent border border-slate-600 py-4 rounded-xl items-center justify-center w-[85%] mt-4 flex-row active:bg-slate-800/50"
+                className="bg-transparent border border-slate-600 py-4 rounded-xl items-center justify-center w-full mt-4 flex-row active:bg-slate-800/50"
                 disabled={loading}
                 activeOpacity={0.8}
               >
