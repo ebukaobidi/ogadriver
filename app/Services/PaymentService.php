@@ -21,15 +21,15 @@ class PaymentService
         $provider = $this->provider();
 
         if ($provider === 'opay') {
-            return filled(\App\Models\ApiSetting::getValue('opaySecretKey'));
+            return filled(\App\Models\ApiSetting::getValue('opaySecretKey', env('OPAY_SECRET_KEY')));
         }
 
-        return filled(\App\Models\ApiSetting::getValue('paystackSecretKey'));
+        return filled(\App\Models\ApiSetting::getValue('paystackSecretKey') ?: config('services.paystack.secret_key', env('PAYSTACK_SECRET_KEY')));
     }
 
     protected function provider(): string
     {
-        return strtolower((string) env('PAYMENT_PROVIDER', 'opay'));
+        return strtolower((string) env('PAYMENT_PROVIDER', 'paystack'));
     }
 
     public function parsePlanAmount(SubscriptionPlan $plan): float
@@ -85,7 +85,7 @@ class PaymentService
         // Default: Paystack
         $reference = 'og_' . Str::lower(Str::random(22));
         $callbackUrl = rtrim(\App\Models\ApiSetting::getValue('paystackCallbackUrl', env('APP_URL') . '/api/payments/callback'), '/') . '?reference=' . $reference;
-        $secretKey = \App\Models\ApiSetting::getValue('paystackSecretKey');
+        $secretKey = \App\Models\ApiSetting::getValue('paystackSecretKey') ?: config('services.paystack.secret_key', env('PAYSTACK_SECRET_KEY'));
 
         if (!$secretKey) {
             throw new RuntimeException('Paystack secret key not configured. Please add it in API Settings.');
@@ -154,7 +154,7 @@ class PaymentService
         }
 
         // Default: Paystack
-        $secretKey = \App\Models\ApiSetting::getValue('paystackSecretKey');
+        $secretKey = \App\Models\ApiSetting::getValue('paystackSecretKey') ?: config('services.paystack.secret_key', env('PAYSTACK_SECRET_KEY'));
 
         if (!$secretKey) {
             throw new RuntimeException('Paystack secret key not configured. Please add it in API Settings.');
@@ -334,9 +334,164 @@ class PaymentService
                     'subscription_expires_at' => $newEndsAt,
                 ]);
             }
+            
+            // Process referral reward on first subscription
+            $this->processReferralReward($user, $amount, $paymentReference);
+            
+            // Process Regional Operations Commission (10% of subscription revenue)
+            $this->processRegionalCommission($user, $amount, $paymentReference);
 
             return $subscription->fresh();
         });
+    }
+
+    protected function processRegionalCommission(User $user, float $amount, string $reference): void
+    {
+        if ($amount <= 0) return;
+        
+        $countryId = $user->country_id;
+        $stateId = null;
+        $cityId = null;
+
+        if ($user->isDriver() && $user->driver) {
+            $stateId = $user->driver->state_id;
+            $cityId = $user->driver->city_id;
+        } elseif ($user->isHirer() && $user->hirer) {
+            $stateId = $user->hirer->state_id;
+            $cityId = $user->hirer->city_id;
+        }
+
+        if (!$stateId && $user->state_id) {
+            $stateId = $user->state_id;
+        }
+        if (!$cityId && $user->city_id) {
+            $cityId = $user->city_id;
+        }
+
+        // ══════════════════════════════════════════════════════════════════════
+        // 1. LOCAL / LGA MANAGERS (5% commission for local area oversight)
+        // ══════════════════════════════════════════════════════════════════════
+        if ($cityId) {
+            $localAdmins = User::where(function ($q) use ($cityId) {
+                $q->where('admin_city_id', $cityId)
+                  ->orWhere(function ($sub) use ($cityId) {
+                      $sub->where('admin_department', 'local')
+                          ->where('city_id', $cityId);
+                  });
+            })->where('is_active', true)->get();
+
+            if ($localAdmins->isNotEmpty()) {
+                $localTotal = $amount * 0.05; // 5% for Local / LGA Area
+                $localPerAdmin = $localTotal / $localAdmins->count();
+                foreach ($localAdmins as $admin) {
+                    $adminWallet = $this->ensureWallet($admin);
+                    $adminWallet->credit(
+                        amount: $localPerAdmin,
+                        type: 'credit',
+                        category: 'commission',
+                        description: "Local Operations Commission (LGA) - Sub: {$user->name}",
+                        reference: "LGACOM_{$reference}_{$admin->id}"
+                    );
+                }
+            }
+        }
+
+        // ══════════════════════════════════════════════════════════════════════
+        // 2. STATE MANAGERS (7% commission for state-level oversight)
+        // ══════════════════════════════════════════════════════════════════════
+        if ($stateId) {
+            $stateAdmins = User::where(function ($q) use ($stateId) {
+                $q->where('admin_state_id', $stateId)
+                  ->orWhere(function ($sub) use ($stateId) {
+                      $sub->where('admin_department', 'regional')
+                          ->where('state_id', $stateId);
+                  });
+            })->where('is_active', true)->get();
+
+            if ($stateAdmins->isNotEmpty()) {
+                $stateTotal = $amount * 0.07; // 7% for State Operations
+                $statePerAdmin = $stateTotal / $stateAdmins->count();
+                foreach ($stateAdmins as $admin) {
+                    $adminWallet = $this->ensureWallet($admin);
+                    $adminWallet->credit(
+                        amount: $statePerAdmin,
+                        type: 'credit',
+                        category: 'commission',
+                        description: "State Operations Commission - Sub: {$user->name}",
+                        reference: "STCOM_{$reference}_{$admin->id}"
+                    );
+                }
+            }
+        }
+
+        // ══════════════════════════════════════════════════════════════════════
+        // 3. COUNTRY MANAGERS (3% commission for country-wide oversight)
+        // ══════════════════════════════════════════════════════════════════════
+        $countryQuery = User::where('is_active', true)
+            ->where(function ($q) use ($countryId) {
+                $q->where('admin_department', 'country');
+                if ($countryId) {
+                    $q->orWhere('admin_country_id', $countryId)
+                      ->orWhere(function ($sub) use ($countryId) {
+                          $sub->where('country_id', $countryId)
+                              ->whereIn('admin_department', ['country', 'super']);
+                      });
+                }
+            });
+        $countryAdmins = $countryQuery->get();
+
+        if ($countryAdmins->isNotEmpty()) {
+            $countryTotal = $amount * 0.03; // 3% for Country Leadership
+            $countryPerAdmin = $countryTotal / $countryAdmins->count();
+            foreach ($countryAdmins as $admin) {
+                $adminWallet = $this->ensureWallet($admin);
+                $adminWallet->credit(
+                    amount: $countryPerAdmin,
+                    type: 'credit',
+                    category: 'commission',
+                    description: "Country Leadership Commission - Sub: {$user->name}",
+                    reference: "CTRYCOM_{$reference}_{$admin->id}"
+                );
+            }
+        }
+    }
+
+    protected function processReferralReward(User $user, float $amount, string $reference): void
+    {
+        if ($amount <= 0) return;
+        
+        if (!$user->referred_by_user_id) return;
+        
+        $referrer = User::find($user->referred_by_user_id);
+        if (!$referrer) return;
+        
+        // ══════════════════════════════════════════════════════════════════════
+        // DRIVER REFERRAL: Referring driver receives a percentage (10%)
+        // each time the referred driver subscribes to the platform
+        // ══════════════════════════════════════════════════════════════════════
+        $referralPercentage = 0.10; // 10% commission on each subscription
+        $rewardAmount = round($amount * $referralPercentage, 2);
+
+        if ($rewardAmount <= 0) return;
+
+        // Credit referrer real wallet for immediate payout / withdrawal
+        $referrerWallet = $this->ensureWallet($referrer);
+        $pctDisplay = (int) ($referralPercentage * 100);
+        $referrerRoleName = $referrer->role?->slug === 'driver' ? 'Driver' : ($referrer->isCreator() ? 'Creator' : 'Member');
+        $referrerWallet->credit(
+            amount: $rewardAmount,
+            type: 'credit',
+            category: 'commission',
+            description: "{$referrerRoleName} Referral Commission ({$pctDisplay}%) - Sub: {$user->name}",
+            reference: 'REFCOM_' . $reference . '_' . $referrer->id
+        );
+
+        // Update tracking counters
+        $pending = $referrer->referral_pending_balance ?? 0;
+        $referrer->referral_pending_balance = max(0, $pending - $rewardAmount);
+        $referrer->referral_balance = ($referrer->referral_balance ?? 0) + $rewardAmount;
+        $referrer->referral_rewarded = ($referrer->referral_rewarded ?? 0) + $rewardAmount;
+        $referrer->save();
     }
 
     protected function ensureWallet(User $user): Wallet
@@ -354,3 +509,4 @@ class PaymentService
         ]);
     }
 }
+
