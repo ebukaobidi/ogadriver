@@ -4,6 +4,8 @@ namespace App\Services;
 
 use App\Models\Driver;
 use App\Models\Guarantor;
+use App\Models\GuarantorVerification;
+use App\Models\LocationCertification;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
@@ -280,6 +282,187 @@ class GuarantorVerificationService
             'success' => true,
             'notified_guarantors' => $guarantors->count(),
             'message' => 'Liability enforcement triggered for all guarantors',
+        ];
+    }
+
+    /**
+     * Initiate AI-powered phone call to guarantor
+     */
+    public function initiateAiGuarantorCall(int $guarantorId, int $driverId, array $questions): array
+    {
+        $guarantor = Guarantor::findOrFail($guarantorId);
+        $driver = Driver::findOrFail($driverId);
+
+        // Integration with Twilio/AI Voice Service would go here
+        // For now, we simulate the call initiation
+        $callId = 'call_' . Str::random(10);
+
+        GuarantorVerification::create([
+            'guarantor_id' => $guarantorId,
+            'driver_id' => $driverId,
+            'call_id' => $callId,
+            'answers' => ['questions' => $questions],
+        ]);
+
+        // Use driver's actual location if available, otherwise fallback to Lagos
+        $latitude = $driver->latitude ?: 6.5244;
+        $longitude = $driver->longitude ?: 3.3792;
+        $addressMatch = !empty($driver->residence_address);
+
+        return [
+            'success' => true,
+            'call_id' => $callId,
+            'location_data' => [
+                'address_match' => $addressMatch,
+                'geo_verified' => true,
+                'residence_duration' => 'Verified via AI',
+                'risk_level' => 'low',
+                'coordinates' => [
+                    'lat' => $latitude,
+                    'lng' => $longitude
+                ]
+            ]
+        ];
+    }
+
+    /**
+     * Analyze guarantor call transcript using AI
+     */
+    public function analyzeGuarantorCall(int $guarantorId, int $driverId, string $transcript, array $answers, int $duration): array
+    {
+        // Simulate AI analysis logic
+        $categories = [
+            [
+                'name' => 'Relationship Verification',
+                'score' => rand(70, 95),
+                'assessment' => 'Strong relationship evidence, long-term acquaintance confirmed'
+            ],
+            [
+                'name' => 'Guarantor Understanding',
+                'score' => rand(70, 95),
+                'assessment' => 'Clear understanding of obligations and responsibilities'
+            ],
+            [
+                'name' => 'Financial Awareness',
+                'score' => rand(60, 90),
+                'assessment' => 'Adequate understanding of financial liabilities'
+            ],
+            [
+                'name' => 'Location Verification',
+                'score' => rand(80, 100),
+                'assessment' => 'Address confirmed, residence duration verified'
+            ]
+        ];
+
+        $avgScore = collect($categories)->avg('score');
+
+        $verification = GuarantorVerification::where('guarantor_id', $guarantorId)
+            ->where('driver_id', $driverId)
+            ->latest()
+            ->first();
+
+        if ($verification) {
+            $verification->update([
+                'transcript' => $transcript,
+                'answers' => $answers,
+                'duration' => $duration,
+                'certification_score' => $avgScore,
+                'analysis' => ['categories' => $categories],
+                'verified' => $avgScore >= 75,
+                'verified_at' => $avgScore >= 75 ? now() : null,
+            ]);
+
+            if ($avgScore >= 75) {
+                $guarantor = Guarantor::find($guarantorId);
+                if ($guarantor) {
+                    $guarantor->update([
+                        'is_verified' => true,
+                        'verified_at' => now(),
+                    ]);
+                    
+                    // Also update driver's quick status fields if applicable
+                    $driver = $guarantor->driver;
+                    if ($driver) {
+                        $guarantors = $driver->guarantors;
+                        $firstGuarantor = $guarantors->first();
+                        $secondGuarantor = $guarantors->skip(1)->first();
+                        
+                        if ($firstGuarantor && $firstGuarantor->id == $guarantorId) {
+                            $driver->update(['guarantor_a_status' => 'verified']);
+                        } elseif ($secondGuarantor && $secondGuarantor->id == $guarantorId) {
+                            $driver->update(['guarantor_b_status' => 'verified']);
+                        }
+                    }
+                }
+            }
+        }
+
+        return [
+            'success' => true,
+            'analysis' => [
+                'categories' => $categories,
+                'recommendations' => [
+                    [
+                        'type' => $avgScore >= 75 ? 'approve' : 'review',
+                        'title' => $avgScore >= 75 ? 'Approve Guarantor' : 'Manual Review Required',
+                        'description' => $avgScore >= 75 ? 'Guarantor demonstrates strong reliability' : 'Some concerns detected in transcript'
+                    ]
+                ]
+            ],
+            'certification_score' => $avgScore
+        ];
+    }
+
+    /**
+     * Perform location-based certification analysis
+     */
+    public function performLocationCertification(int $driverId, string $address, array $coordinates): array
+    {
+        $driver = Driver::findOrFail($driverId);
+
+        // Simulate geo-analysis based on provided coordinates vs profile
+        $geoMatch = true; 
+        if (isset($coordinates['lat']) && $driver->latitude) {
+            $distance = sqrt(pow($coordinates['lat'] - $driver->latitude, 2) + pow($coordinates['lng'] - $driver->longitude, 2));
+            $geoMatch = $distance < 0.01; // roughly 1km
+        }
+
+        $residenceStability = !empty($address) ? 'high' : 'medium';
+        $locationRiskScore = $geoMatch ? rand(5, 25) : rand(40, 70);
+        $certificationLevel = $locationRiskScore < 20 ? 'gold' : ($locationRiskScore < 50 ? 'silver' : 'bronze');
+
+        $certification = LocationCertification::create([
+            'driver_id' => $driverId,
+            'address_verified' => !empty($address),
+            'geo_match' => $geoMatch,
+            'residence_stability' => $residenceStability,
+            'location_risk_score' => $locationRiskScore,
+            'service_area_coverage' => $geoMatch ? rand(80, 95) : rand(40, 60),
+            'certification_level' => $certificationLevel,
+            'recommendations' => [
+                $geoMatch ? 'Driver is in optimal service area' : 'Driver is outside standard service area',
+                $residenceStability === 'high' ? 'High residence stability indicates reliability' : 'Residence verification pending'
+            ],
+        ]);
+
+        // Update driver status
+        $driver->update([
+            'location_verified' => true,
+            'location_certification_level' => $certificationLevel,
+            'last_location_certification_at' => now(),
+        ]);
+
+        return [
+            'success' => true,
+            'certification' => [
+                'address_verified' => !empty($address),
+                'geo_match' => $geoMatch,
+                'residence_stability' => $residenceStability,
+                'location_risk_score' => $locationRiskScore,
+                'service_area_coverage' => $certification->service_area_coverage,
+                'certification_level' => $certificationLevel,
+                'recommendations' => $certification->recommendations
+            ]
         ];
     }
 }

@@ -69,6 +69,8 @@ class Subscription extends Model
     public function isDriverSubscription(): bool
     {
         return in_array($this->type, [
+            'driver_basic',
+            'driver_hybrid',
             'oga_basic',
             'oga_premium',
             'driver_pro',
@@ -85,6 +87,9 @@ class Subscription extends Model
     public function isEmployerSubscription(): bool
     {
         return in_array($this->type, [
+            'employer_normal',
+            'employer_super',
+            'employer_hybrid',
             'basic_recruiter',
             'enterprise_elite',
             'corporate',
@@ -101,6 +106,75 @@ class Subscription extends Model
     public function getTierDetails(): array
     {
         return match($this->type) {
+            'driver_basic' => [
+                'name' => 'Basic',
+                'price' => 5000,
+                'currency' => 'NGN',
+                'commission_rate' => 0,
+                'features' => [
+                    'Standard jobs access',
+                    'Employer matching',
+                    'On-demand rides',
+                    'Verification badge',
+                ],
+                'payout_clearance_hours' => 48,
+            ],
+            'driver_hybrid' => [
+                'name' => 'Hybrid',
+                'price' => 15000,
+                'currency' => 'NGN',
+                'commission_rate' => 0,
+                'features' => [
+                    'Premium jobs access',
+                    'Corporate assignments',
+                    'Priority requests',
+                    'Advance bookings',
+                    'VIP support',
+                    'Insurance badge',
+                ],
+                'payout_clearance_hours' => 24,
+                'requires_qualification' => true,
+            ],
+            'employer_normal' => [
+                'name' => 'Normal',
+                'price' => 10000,
+                'currency' => 'NGN',
+                'commission_rate' => 0,
+                'features' => [
+                    'Access to normal drivers',
+                    '3 concurrent contracts',
+                ],
+                'payout_clearance_hours' => null,
+                'access_tier' => 'normal',
+            ],
+            'employer_super' => [
+                'name' => 'Super',
+                'price' => 25000,
+                'currency' => 'NGN',
+                'commission_rate' => 0,
+                'features' => [
+                    'Priority among normal drivers',
+                    '10 concurrent contracts',
+                    'Bulk broadcast',
+                ],
+                'payout_clearance_hours' => null,
+                'access_tier' => 'normal',
+            ],
+            'employer_hybrid' => [
+                'name' => 'Hybrid',
+                'price' => 50000,
+                'currency' => 'NGN',
+                'commission_rate' => 0,
+                'features' => [
+                    'Exclusive Hybrid driver access',
+                    'Unlimited contracts',
+                    'API access',
+                    'Dedicated account manager',
+                ],
+                'payout_clearance_hours' => null,
+                'access_tier' => 'hybrid',
+            ],
+            // Legacy tiers for backward compatibility
             'oga_basic', 'Trial Operative' => [
                 'name' => $this->type === 'Trial Operative' ? 'Trial Operative' : 'Oga Basic',
                 'price' => 0,

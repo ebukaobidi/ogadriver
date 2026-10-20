@@ -398,17 +398,30 @@ class DriverVerificationService
      */
     public function saveSimulatorResult(Driver $driver, int $score, string $difficulty): void
     {
+        $normalizedDifficulty = strtolower($difficulty);
         $driver->update([
             'simulator_high_score' => max($driver->simulator_high_score ?? 0, $score),
-            'simulator_difficulty' => $difficulty,
+            'simulator_difficulty' => $normalizedDifficulty,
         ]);
 
-        // Mark as completed if score meets minimum threshold (500 points on beginner)
-        $minScore = ($difficulty === 'beginner') ? 500 : 
-                   (($difficulty === 'intermediate') ? 750 : 
-                   (($difficulty === 'advanced') ? 1000 : 1500));
+        // Support both point threshold (500+) and percentage threshold (70%+)
+        $minScore = match ($normalizedDifficulty) {
+            'expert' => 1500,
+            'advanced' => 1000,
+            'intermediate' => 750,
+            default => 500,
+        };
 
-        if ($score >= $minScore && !$driver->simulator_completed) {
+        $minPercentage = match ($normalizedDifficulty) {
+            'expert' => 85,
+            'advanced' => 80,
+            'intermediate' => 75,
+            default => 70,
+        };
+
+        $isPassed = ($score >= $minScore) || ($score >= $minPercentage);
+
+        if ($isPassed && !$driver->simulator_completed) {
             $driver->update([
                 'simulator_completed' => true,
                 'simulator_completed_at' => now(),

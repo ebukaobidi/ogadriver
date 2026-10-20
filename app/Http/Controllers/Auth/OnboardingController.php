@@ -18,10 +18,13 @@ class OnboardingController extends Controller
     {
         $request->validate([
             'role' => 'required|in:driver,hirer',
+            'service_mode' => 'nullable|in:driver_only,driver_with_vehicle,both',
             'country_id' => 'required|integer', // We will assume the frontend sends a valid country ID
-            'phone' => 'required|string|max:20',
+            'phone' => 'required|string|max:20|unique:users,phone,' . Auth::id(),
             'nickname' => 'nullable|string|max:255',
             'gender' => 'nullable|string|in:male,female,other'
+        ], [
+            'phone.unique' => 'This phone number is already registered to another account.',
         ]);
 
         $user = Auth::user();
@@ -56,9 +59,12 @@ class OnboardingController extends Controller
 
         // Create associated profile if it doesn't exist
         if ($request->role === 'driver') {
+            $serviceMode = $request->input('service_mode', 'driver_only');
             Driver::firstOrCreate(['user_id' => $user->id], [
                 'status' => 'pending',
-                'is_verified' => false
+                'is_verified' => false,
+                'service_mode' => $serviceMode,
+                'has_vehicle' => in_array($serviceMode, ['driver_with_vehicle', 'both'])
             ]);
         } elseif ($request->role === 'hirer') {
             Hirer::firstOrCreate(['user_id' => $user->id], [

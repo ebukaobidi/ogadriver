@@ -11,101 +11,115 @@ class SubscriptionService
 {
     /**
      * Subscription tier definitions
+     * Zero commission model - revenue from subscriptions only
      */
     public function getSubscriptionTiers(): array
     {
         return [
-            'basic_oga' => [
-                'name' => 'Basic Oga',
-                'description' => 'Marketplace entry with standard job access',
+            // Driver Tiers
+            'driver_basic' => [
+                'name' => 'Basic',
+                'description' => 'Standard jobs access for verified drivers',
+                'target_role' => 'driver',
                 'monthly_price' => 5000,
                 'yearly_price' => 50000,
                 'currency' => 'NGN',
-                'settlement_hours' => 72,
+                'commission_rate' => 0, // Zero commission
+                'settlement_hours' => 48,
                 'features' => [
                     'marketplace_visibility' => true,
                     'standard_job_queue' => true,
-                    'local_jobs_only' => true,
+                    'employer_matching' => true,
+                    'on_demand_rides' => true,
                     'verification_badge' => true,
-                    'settlement_hours' => 72,
                     'priority_ranking' => false,
-                    'interstate_access' => false,
-                    'instant_withdrawal' => false,
+                    'premium_jobs' => false,
+                    'corporate_assignments' => false,
+                    'advance_bookings' => false,
+                    'higher_visibility' => false,
                 ],
             ],
-            'oga_premium' => [
-                'name' => 'Oga Premium',
-                'description' => 'Algorithmic boost with interstate priority and instant settlement',
+            'driver_hybrid' => [
+                'name' => 'Hybrid',
+                'description' => 'Premium tier for top-performing drivers - requires qualification',
+                'target_role' => 'driver',
+                'monthly_price' => 15000,
+                'yearly_price' => 150000,
+                'currency' => 'NGN',
+                'commission_rate' => 0, // Zero commission
+                'settlement_hours' => 24,
+                'requires_qualification' => true,
+                'features' => [
+                    'marketplace_visibility' => true,
+                    'standard_job_queue' => true,
+                    'employer_matching' => true,
+                    'on_demand_rides' => true,
+                    'verification_badge' => true,
+                    'priority_ranking' => true,
+                    'premium_jobs' => true,
+                    'corporate_assignments' => true,
+                    'advance_bookings' => true,
+                    'higher_visibility' => true,
+                    'priority_requests' => true,
+                    'vip_support' => true,
+                    'insurance_badge' => true,
+                ],
+            ],
+            // Employer Tiers
+            'employer_normal' => [
+                'name' => 'Normal',
+                'description' => 'Access to normal verified drivers',
+                'target_role' => 'hirer',
                 'monthly_price' => 10000,
                 'yearly_price' => 100000,
                 'currency' => 'NGN',
-                'settlement_hours' => 0, // Instant
+                'commission_rate' => 0,
                 'features' => [
-                    'marketplace_visibility' => true,
-                    'standard_job_queue' => true,
-                    'local_jobs_only' => false,
-                    'verification_badge' => true,
-                    'settlement_hours' => 0,
-                    'priority_ranking' => true,
-                    'interstate_access' => true,
-                    'interstate_priority_minutes' => 15,
-                    'instant_withdrawal' => true,
-                    'pro_badge' => true,
-                    'support_priority' => 'high',
-                    'job_alerts' => true,
-                    'analytics' => true,
-                ],
-            ],
-            'basic_recruiter' => [
-                'name' => 'Basic Recruiter',
-                'description' => 'Free tier with pay-per-view access',
-                'monthly_price' => 0,
-                'currency' => 'NGN',
-                'features' => [
-                    'profile_views_per_month' => 3,
+                    'access_tier' => 'normal',
+                    'max_concurrent_contracts' => 3,
                     'contact_details_hidden' => true,
                     'compliance_files_hidden' => true,
-                    'pay_per_view' => true,
-                    'max_concurrent_contracts' => 1,
+                    'bulk_broadcast' => false,
+                    'priority_matching' => false,
                 ],
             ],
-            'logistics_scale' => [
-                'name' => 'Logistics Scale',
-                'description' => 'For businesses with regular driver needs',
+            'employer_super' => [
+                'name' => 'Super',
+                'description' => 'Higher volume with priority among normal drivers',
+                'target_role' => 'hirer',
+                'monthly_price' => 25000,
+                'yearly_price' => 250000,
+                'currency' => 'NGN',
+                'commission_rate' => 0,
+                'features' => [
+                    'access_tier' => 'normal',
+                    'max_concurrent_contracts' => 10,
+                    'contact_details_hidden' => false,
+                    'compliance_files_hidden' => true,
+                    'bulk_broadcast' => true,
+                    'priority_matching' => true,
+                    'priority_support' => true,
+                ],
+            ],
+            'employer_hybrid' => [
+                'name' => 'Hybrid',
+                'description' => 'Exclusive access to Hybrid/top-tier drivers only',
+                'target_role' => 'hirer',
                 'monthly_price' => 50000,
                 'yearly_price' => 500000,
                 'currency' => 'NGN',
+                'commission_rate' => 0,
                 'features' => [
-                    'max_concurrent_contracts' => 20,
-                    'view_direct_contacts' => true,
-                    'bulk_broadcast' => true,
-                    'api_access' => false,
-                    'team_management' => true,
-                    'priority_support' => true,
-                    'custom_reports' => true,
-                    'compliance_files_visible' => true,
-                    'background_check_data' => true,
-                ],
-            ],
-            'enterprise_elite' => [
-                'name' => 'Enterprise Elite',
-                'description' => 'Headless API integration for ERP systems',
-                'monthly_price' => 200000,
-                'yearly_price' => 2000000,
-                'currency' => 'NGN',
-                'features' => [
+                    'access_tier' => 'hybrid',
                     'max_concurrent_contracts' => -1, // Unlimited
-                    'view_direct_contacts' => true,
+                    'contact_details_hidden' => false,
+                    'compliance_files_hidden' => false,
                     'bulk_broadcast' => true,
-                    'api_access' => true,
-                    'headless_api' => true,
-                    'team_management' => true,
+                    'priority_matching' => true,
                     'priority_support' => true,
-                    'custom_reports' => true,
-                    'compliance_files_visible' => true,
-                    'background_check_data' => true,
                     'dedicated_account_manager' => true,
-                    'sla_guarantee' => true,
+                    'api_access' => true,
+                    'custom_reports' => true,
                 ],
             ],
         ];
@@ -317,24 +331,11 @@ class SubscriptionService
 
     /**
      * Calculate platform commission based on subscription tier
+     * Zero commission model - always returns 0
      */
     public function getCommissionRate(int $userId): float
     {
-        $subscription = $this->getActiveSubscription($userId);
-        
-        if (!$subscription) {
-            return 0.20; // 20% for non-subscribers
-        }
-
-        $commissionRates = [
-            'basic_oga' => 0.15, // 15% for Basic Oga
-            'oga_premium' => 0.10, // 10% for Oga Premium
-            'basic_recruiter' => 0.15, // 15% for Basic Recruiter
-            'logistics_scale' => 0.12, // 12% for Logistics Scale
-            'enterprise_elite' => 0.08, // 8% for Enterprise Elite
-        ];
-
-        return $commissionRates[$subscription->type] ?? 0.20;
+        return 0; // Zero commission for all tiers
     }
 
     /**

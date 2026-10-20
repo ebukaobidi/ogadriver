@@ -16,8 +16,7 @@ class EscrowTest extends TestCase
     public function test_funds_can_be_held_in_escrow()
     {
         $user = User::factory()->create();
-        $hirer = Hirer::factory()->create(['user_id' => $user->id]);
-        $wallet = Wallet::factory()->create(['owner_id' => $hirer->id, 'owner_type' => Hirer::class, 'available_balance' => 50000, 'escrow_balance' => 0]);
+        $wallet = Wallet::factory()->create(['user_id' => $user->id, 'available_balance' => 50000, 'escrow_balance' => 0]);
 
         $wallet->holdInEscrow(15000);
 

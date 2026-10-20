@@ -436,7 +436,6 @@ export default function HireBookingScreen({ navigation }) {
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: isDark ? '#090d16' : '#ffffff' }}>
-      {/* TOP FLOATING BOLT NAV HEADER (Overlaying Map) */}
       {/* TOP FLOATING HEADER (Overlaying Map) */}
       <View
         style={{
@@ -447,7 +446,7 @@ export default function HireBookingScreen({ navigation }) {
         }}
       >
         <TouchableOpacity
-          onPress={() => navigation.navigate('HirerBookings')}
+          onPress={() => navigation.navigate('NaijaHirerHome')}
           style={{
             backgroundColor: isDark ? 'rgba(18,25,39,0.92)' : 'rgba(255,255,255,0.95)',
             borderColor: isDark ? '#1e293b' : '#e2e8f0',
@@ -455,8 +454,8 @@ export default function HireBookingScreen({ navigation }) {
           className="px-3.5 h-11 rounded-2xl border items-center justify-center flex-row shadow-lg shadow-black/10"
           activeOpacity={0.7}
         >
-          <Ionicons name="calendar-outline" size={16} color="#10b981" style={{ marginRight: 5 }} />
-          <Text className="text-emerald-500 font-semibold text-xs">Bookings</Text>
+          <Ionicons name="storefront-outline" size={16} color="#10b981" style={{ marginRight: 4 }} />
+          <Text className="text-emerald-500 font-semibold text-xs">Market</Text>
         </TouchableOpacity>
       </View>
 

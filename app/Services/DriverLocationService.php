@@ -24,15 +24,17 @@ class DriverLocationService
     {
         $key = "{$this->redisKey}:{$status}";
         
-        Redis::geoadd($key, $longitude, $latitude, $driverId);
-        
-        // Store additional metadata
-        Redis::hset("{$this->redisKey}:metadata:{$driverId}", [
-            'latitude' => $latitude,
-            'longitude' => $longitude,
-            'status' => $status,
-            'updated_at' => now()->toIso8601String(),
-        ]);
+        try {
+            Redis::geoadd($key, $longitude, $latitude, $driverId);
+            Redis::hset("{$this->redisKey}:metadata:{$driverId}", [
+                'latitude' => $latitude,
+                'longitude' => $longitude,
+                'status' => $status,
+                'updated_at' => now()->toIso8601String(),
+            ]);
+        } catch (\Throwable $e) {
+            // Redis unavailable or extension not loaded, fallback to MySQL
+        }
 
         // Update driver in database
         $driver = Driver::find($driverId);
@@ -87,7 +89,7 @@ class DriverLocationService
                     ];
                 }
             }
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             // Fallback for local environments without Redis
             // Using DB Haversine formula
             $fallbackDrivers = Driver::with('user')
@@ -175,6 +177,28 @@ class DriverLocationService
             $drivers = array_filter($drivers, function ($item) use ($filters) {
                 return $item['driver']->preferred_route_type === $filters['preferred_route_type'] 
                     || $item['driver']->preferred_route_type === 'both';
+            });
+        }
+
+        if (!empty($filters['pickup_time'])) {
+            $pickupDate = date('Y-m-d', strtotime($filters['pickup_time']));
+            $drivers = array_filter($drivers, function ($item) use ($pickupDate) {
+                // Return false if driver is explicitly blocked on this date
+                $blocked = \App\Models\DriverAvailability::where('driver_id', $item['driver']->id)
+                    ->where('date', $pickupDate)
+                    ->whereIn('status', ['unavailable', 'booked'])
+                    ->exists();
+                return !$blocked;
+            });
+        }
+
+        // Check if hirer strictly needs a driver WITH a vehicle
+        if (!empty($filters['has_vehicle'])) {
+            $drivers = array_filter($drivers, function ($item) {
+                // Ensure driver_vehicles relation is loaded or query it
+                return \App\Models\DriverVehicle::where('driver_id', $item['driver']->id)
+                    ->where('is_active', true)
+                    ->exists();
             });
         }
 
@@ -333,3 +357,4 @@ class DriverLocationService
         }, $drivers);
     }
 }
+

@@ -46,11 +46,19 @@ class DriverDocument extends Model
 
     public function isExpiringSoon(int $days = 30): bool
     {
-        return $this->expiry_date <= now()->addDays($days);
+        if (! $this->expiry_date) {
+            return false;
+        }
+
+        return $this->expiry_date <= now()->addDays($days) && $this->expiry_date >= now()->startOfDay();
     }
 
     public function isExpired(): bool
     {
+        if (! $this->expiry_date) {
+            return false;
+        }
+
         return $this->expiry_date < now()->startOfDay();
     }
 

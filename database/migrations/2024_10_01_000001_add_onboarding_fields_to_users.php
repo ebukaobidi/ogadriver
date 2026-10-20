@@ -9,7 +9,7 @@ return new class extends Migration {
     {
         Schema::table('users', function (Blueprint $table) {
             if (!Schema::hasColumn('users', 'country_id')) {
-                $table->unsignedBigInteger('country_id')->nullable()->after('date_of_birth');
+                $table->unsignedBigInteger('country_id')->nullable();
             }
             if (!Schema::hasColumn('users', 'terms_accepted')) {
                 $table->boolean('terms_accepted')->default(false)->after('country_id');

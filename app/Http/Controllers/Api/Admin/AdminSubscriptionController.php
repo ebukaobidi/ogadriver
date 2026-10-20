@@ -54,6 +54,14 @@ class AdminSubscriptionController extends Controller
             if ($sub->isActive()) {
                 $status = 'Active';
             }
+            
+            $driversHired = 0;
+            if ($isEmployer && $sub->user && $sub->user->hirer) {
+                $driversHired = \App\Models\TransportJob::where('hirer_id', $sub->user->hirer->id)
+                    ->whereIn('status', ['assigned', 'in_progress', 'completed'])
+                    ->distinct('driver_id')
+                    ->count();
+            }
 
             return [
                 'id' => 'ACC-' . str_pad($sub->id, 4, '0', STR_PAD_LEFT),
@@ -62,7 +70,7 @@ class AdminSubscriptionController extends Controller
                 'role' => $isEmployer ? 'employer' : 'operative',
                 'tierName' => $details['name'],
                 'driverLimit' => $driverLimit,
-                'driversHired' => $driverLimit === 'Unlimited' ? 0 : ($driverLimit === 'N/A' ? 0 : 0),
+                'driversHired' => $driversHired,
                 'status' => $status,
                 'validUntil' => $sub->ends_at ? $sub->ends_at->format('Y-m-d') : 'N/A',
                 'autoRenew' => (bool) $sub->auto_renew,

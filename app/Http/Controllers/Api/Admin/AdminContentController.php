@@ -11,9 +11,7 @@ class AdminContentController extends Controller
 {
     public function getBlogPosts()
     {
-        $posts = Cache::rememberForever('admin_blog_posts', function () {
-            return [];
-        });
+        $posts = \App\Models\BlogPost::orderBy('created_at', 'desc')->get();
 
         return response()->json([
             'status' => 'success',
@@ -30,11 +28,18 @@ class AdminContentController extends Controller
             'posts.*.slug' => 'required|string',
             'posts.*.author' => 'required|string',
             'posts.*.status' => 'required|string',
+            'posts.*.category' => 'nullable|string',
             'posts.*.views' => 'nullable|integer',
-            'posts.*.date' => 'nullable|date'
+            'posts.*.excerpt' => 'nullable|string',
+            'posts.*.content' => 'nullable|string',
         ]);
 
-        Cache::forever('admin_blog_posts', $validated['posts']);
+        foreach ($validated['posts'] as $postData) {
+            $id = $postData['id'] ?? null;
+            unset($postData['id']);
+            
+            \App\Models\BlogPost::updateOrCreate(['id' => $id], $postData);
+        }
 
         return response()->json([
             'status' => 'success',
@@ -45,35 +50,32 @@ class AdminContentController extends Controller
     public function getSiteContent()
     {
         $content = SiteContent::all();
-        $grouped = [];
+        $keyed = [];
         foreach ($content as $item) {
-            if (!isset($grouped[$item->section_key])) {
-                $grouped[$item->section_key] = [];
-            }
-            $grouped[$item->section_key][$item->key_name] = $item->value;
+            $keyed[$item->key_name] = $item->value;
         }
 
         return response()->json([
             'status' => 'success',
-            'data' => $content
+            'data' => (object)$keyed
         ]);
     }
 
     public function updateSiteContent(Request $request)
     {
-        $request->validate([
-            'updates' => 'required|array',
-            'updates.*.section_key' => 'required|string',
-            'updates.*.key_name' => 'required|string',
-            'updates.*.value' => 'required|string'
-        ]);
-
-        foreach ($request->updates as $update) {
+        $data = $request->all();
+        
+        foreach ($data as $key => $value) {
+            if (is_array($value)) {
+                $value = json_encode($value);
+            }
+            
             SiteContent::updateOrCreate(
-                ['section_key' => $update['section_key'], 'key_name' => $update['key_name']],
+                ['key_name' => $key],
                 [
-                    'value' => $update['value'],
-                    'type' => $update['type'] ?? 'text'
+                    'value' => $value,
+                    'section_key' => 'general', // Default section
+                    'type' => 'text'
                 ]
             );
         }

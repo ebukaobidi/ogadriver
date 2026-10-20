@@ -38,6 +38,7 @@ class SearchController extends Controller
             'min_rating' => 'nullable|numeric|min:0|max:5',
             'min_experience' => 'nullable|integer|min:0',
             'preferred_route_type' => 'nullable|in:long_haul,short_haul,both',
+            'has_vehicle' => 'nullable|boolean',
             'limit' => 'nullable|integer|min:1|max:100',
         ]);
 
@@ -51,6 +52,7 @@ class SearchController extends Controller
             'min_rating' => $request->input('min_rating'),
             'min_experience' => $request->input('min_experience'),
             'preferred_route_type' => $request->input('preferred_route_type'),
+            'has_vehicle' => filter_var($request->input('has_vehicle'), FILTER_VALIDATE_BOOLEAN),
         ];
 
         // Find nearby drivers with filters

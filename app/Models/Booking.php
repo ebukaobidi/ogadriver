@@ -12,6 +12,7 @@ class Booking extends Model
         'driver_id',
         'title',
         'description',
+        'route_description',
         'vehicle_type',
         'pickup_location',
         'pickup_latitude',
@@ -20,10 +21,19 @@ class Booking extends Model
         'dropoff_latitude',
         'dropoff_longitude',
         'pickup_time',
+        'start_date',
+        'end_date',
         'estimated_completion_time',
         'distance_km',
         'agreed_rate',
+        'proposed_salary',
         'pricing_type',
+        'payment_cycle',
+        'shift_preference',
+        'accommodation_required',
+        'vehicle_required',
+        'include_tolls',
+        'booking_mode',
         'contract_type',
         'shift_start_time',
         'shift_end_time',
@@ -57,6 +67,12 @@ class Booking extends Model
         'sms_failover_activated_at',
         'blackout_duration_minutes',
         'special_requirements',
+        'stops',
+        'payment_method',
+        'offer_price',
+        'suggested_price',
+        'counter_offer_price',
+        'negotiation_status',
         'metadata',
     ];
 
@@ -91,7 +107,17 @@ class Booking extends Model
         'shift_end_time' => 'datetime',
         'shift_fence_active' => 'boolean',
         'special_requirements' => 'array',
+        'stops' => 'array',
+        'offer_price' => 'decimal:2',
+        'suggested_price' => 'decimal:2',
+        'counter_offer_price' => 'decimal:2',
         'metadata' => 'array',
+        'accommodation_required' => 'boolean',
+        'vehicle_required' => 'boolean',
+        'include_tolls' => 'boolean',
+        'start_date' => 'date',
+        'end_date' => 'date',
+        'proposed_salary' => 'decimal:2',
     ];
 
     public function hirer(): BelongsTo
@@ -126,7 +152,13 @@ class Booking extends Model
 
     public function isInProgress(): bool
     {
-        return $this->status === 'in_progress';
+        return in_array($this->status, [
+            'in_progress',
+            'driver_en_route',
+            'arrived',
+            'active',
+            'accepted',
+        ], true);
     }
 
     public function isCompleted(): bool
@@ -182,7 +214,7 @@ class Booking extends Model
         $pin = str_pad(random_int(0, 9999), 4, '0', STR_PAD_LEFT);
         
         $this->update([
-            'security_pin' => $pin,
+            'security_pin' => \Illuminate\Support\Facades\Hash::make($pin),
             'pin_generated_at' => now(),
         ]);
 
@@ -199,7 +231,7 @@ class Booking extends Model
             return false;
         }
 
-        if ($this->security_pin === $pin) {
+        if (\Illuminate\Support\Facades\Hash::check($pin, $this->security_pin)) {
             $this->update([
                 'pin_verified_at' => now(),
             ]);

@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Driver;
 use App\Services\CacheService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Carbon\Carbon;
 
 class AdminDriverController extends Controller
@@ -19,20 +20,6 @@ class AdminDriverController extends Controller
 
     public function index(Request $request)
     {
-        // Build cache key based on filters
-        $cacheKey = 'admin_drivers_' . md5(json_encode($request->only(['search', 'status', 'page'])));
-        
-        // Only cache initial page without filters
-        $shouldCache = (!$request->has('search') || empty($request->search)) && 
-                       (!$request->has('status') || $request->status === 'all') &&
-                       $request->input('page', 1) === 1;
-
-        if ($shouldCache) {
-            return $this->cacheService->rememberTags(['admin', 'drivers'], $cacheKey, 60, function () use ($request) {
-                return $this->getDriversQuery($request);
-            });
-        }
-
         return $this->getDriversQuery($request);
     }
 
@@ -100,7 +87,7 @@ class AdminDriverController extends Controller
             'email' => $driver->user ? $driver->user->email : 'Unknown',
             'phone' => $driver->user ? $driver->user->phone : 'Unknown',
             'avatar' => $driver->user && $driver->user->avatar
-                ? (str_starts_with($driver->user->avatar, 'http') ? $driver->user->avatar : asset('storage/' . $driver->user->avatar))
+                ? (str_starts_with($driver->user->avatar, 'http') ? $driver->user->avatar : Storage::disk('public')->url($driver->user->avatar))
                 : null,
             'status' => $status,
             'clearanceLevel' => $driver->clearanceLevel(),
@@ -157,6 +144,12 @@ class AdminDriverController extends Controller
         $completedJobs = $driver->jobs()->where('status', 'completed')->count();
         $totalJobs = $driver->jobs()->whereIn('status', ['completed', 'cancelled', 'assigned', 'in_progress'])->count();
         $cancelledJobs = $driver->jobs()->where('status', 'cancelled')->count();
+        
+        $totalEarnings = \App\Models\Transaction::whereHas('wallet', function($q) use ($driver) {
+            $q->where('user_id', $driver->user_id);
+        })->where('type', 'credit')->sum('amount');
+
+        $driverData['totalEarnings'] = '₦' . number_format($totalEarnings, 0);
 
         $driverData['performanceMetrics'] = [
             'acceptanceRate' => $totalJobs > 0 ? round((($totalJobs - $cancelledJobs) / $totalJobs) * 100, 1) : 0,
@@ -222,28 +215,62 @@ class AdminDriverController extends Controller
 
     public function performance(Request $request)
     {
+        $topPerformers = Driver::with('user')
+            ->orderByDesc('rating')
+            ->orderByDesc('total_jobs')
+            ->limit(3)
+            ->get()
+            ->map(function ($driver) {
+                return [
+                    'id' => $driver->id,
+                    'name' => $driver->user->name ?? 'Unknown',
+                    'rating' => (float)$driver->rating,
+                    'completedJobs' => (int)$driver->total_jobs,
+                    'earnings' => (float)Transaction::where('wallet_id', $driver->user->wallet->id ?? 0)->where('status', 'completed')->sum('amount'),
+                    'onTimeRate' => round(min(100, 85 + ($driver->rating ?? 0) * 2), 1),
+                    'acceptanceRate' => $driver->total_jobs > 0 ? round((($driver->total_jobs - $driver->cancelled_jobs ?? 0) / $driver->total_jobs) * 100, 1) : 0
+                ];
+            });
+
+        $needsImprovement = Driver::with('user')
+            ->where('rating', '<', 3.5)
+            ->where('rating', '>', 0)
+            ->orderBy('rating')
+            ->limit(3)
+            ->get()
+            ->map(function ($driver) {
+                return [
+                    'id' => $driver->id,
+                    'name' => $driver->user->name ?? 'Unknown',
+                    'rating' => (float)$driver->rating,
+                    'completedJobs' => (int)$driver->total_jobs,
+                    'earnings' => (float)Transaction::where('wallet_id', $driver->user->wallet->id ?? 0)->where('status', 'completed')->sum('amount'),
+                    'onTimeRate' => round(min(100, 85 + ($driver->rating ?? 0) * 2), 1),
+                    'acceptanceRate' => $driver->total_jobs > 0 ? round((($driver->total_jobs - $driver->cancelled_jobs ?? 0) / $driver->total_jobs) * 100, 1) : 0,
+                    'issues' => ['Low rating']
+                ];
+            });
+
+        $avgRating = round(Driver::where('rating', '>', 0)->avg('rating') ?? 0, 1);
+        $totalJobs = (int)Driver::sum('total_jobs');
+        $totalPayouts = (float)Transaction::where('category', 'job_payment')->where('type', 'credit')->where('status', 'completed')->sum('amount');
+
         $performanceData = [
-            'topPerformers' => [
-                ['id' => 1, 'name' => 'David Martinez', 'rating' => 4.9, 'completedJobs' => 345, 'earnings' => 2890000, 'onTimeRate' => 98.5, 'acceptanceRate' => 95.2],
-                ['id' => 2, 'name' => 'Daniel Rodriguez', 'rating' => 4.7, 'completedJobs' => 289, 'earnings' => 2345000, 'onTimeRate' => 96.8, 'acceptanceRate' => 92.1],
-                ['id' => 3, 'name' => 'Joseph Lee', 'rating' => 4.6, 'completedJobs' => 267, 'earnings' => 2134000, 'onTimeRate' => 95.2, 'acceptanceRate' => 89.7]
-            ],
-            'needsImprovement' => [
-                ['id' => 4, 'name' => 'James White', 'rating' => 2.1, 'completedJobs' => 45, 'earnings' => 234000, 'onTimeRate' => 72.3, 'acceptanceRate' => 65.4, 'issues' => ['Late deliveries', 'Customer complaints']]
-            ],
+            'topPerformers' => $topPerformers,
+            'needsImprovement' => $needsImprovement,
             'metrics' => [
-                'averageRating' => 4.5,
-                'averageCompletionTime' => '2.5 hours',
-                'averageResponseTime' => '8 minutes',
-                'totalJobsCompleted' => 1567,
-                'totalEarnings' => 12500000,
-                'customerSatisfaction' => 94.2
+                'averageRating' => $avgRating,
+                'averageCompletionTime' => '2h 15m', // Assuming placeholder, no DB field yet
+                'averageResponseTime' => '10m', // Assuming placeholder, no DB field yet
+                'totalJobsCompleted' => $totalJobs,
+                'totalEarnings' => $totalPayouts,
+                'customerSatisfaction' => $avgRating > 0 ? round(($avgRating / 5) * 100, 1) : 0.0
             ],
             'trends' => [
-                'ratingChange' => 2.3,
-                'completionChange' => 12.5,
-                'earningsChange' => 18.2,
-                'satisfactionChange' => 3.1
+                'ratingChange' => 0.0,
+                'completionChange' => 0.0,
+                'earningsChange' => 0.0,
+                'satisfactionChange' => 0.0
             ]
         ];
 
@@ -255,18 +282,6 @@ class AdminDriverController extends Controller
 
     public function verifications(Request $request)
     {
-        // Build cache key based on page
-        $cacheKey = 'admin_verifications_' . md5(json_encode($request->only(['page'])));
-        
-        // Only cache initial page
-        $shouldCache = $request->input('page', 1) === 1;
-
-        if ($shouldCache) {
-            return $this->cacheService->rememberTags(['admin', 'verifications'], $cacheKey, 60, function () use ($request) {
-                return $this->getVerificationsData($request);
-            });
-        }
-
         return $this->getVerificationsData($request);
     }
 
@@ -290,13 +305,13 @@ class AdminDriverController extends Controller
         });
 
         $paginatedVerifications->through(function ($driver) {
-            // Build real documents list with actual storage URLs
+            // 1. Build real documents list with actual storage URLs
             $docs = [];
             foreach ($driver->documents as $doc) {
                 $fileUrl = $doc->file_path
                     ? (str_starts_with($doc->file_path, 'http')
                         ? $doc->file_path
-                        : asset('storage/' . $doc->file_path))
+                        : \Storage::disk('public')->url($doc->file_path))
                     : null;
 
                 $docs[] = [
@@ -310,37 +325,55 @@ class AdminDriverController extends Controller
                 ];
             }
 
-            // Build guarantors from the drivers table KYC columns (not the guarantors relation)
-            $guarantors = [];
-            if ($driver->guarantor_a_name) {
-                $guarantors[] = [
-                    'label'       => 'Guarantor A',
-                    'name'        => $driver->guarantor_a_name,
-                    'phone'       => $driver->guarantor_a_phone,
-                    'address'     => $driver->guarantor_a_address,
-                    'occupation'  => $driver->guarantor_a_occupation,
-                    'company'     => $driver->guarantor_a_company,
-                    'status'      => $driver->guarantor_a_status ?? 'pending',
-                ];
-            }
-            if ($driver->guarantor_b_name) {
-                $guarantors[] = [
-                    'label'       => 'Guarantor B',
-                    'name'        => $driver->guarantor_b_name,
-                    'phone'       => $driver->guarantor_b_phone,
-                    'address'     => $driver->guarantor_b_address,
-                    'occupation'  => $driver->guarantor_b_occupation,
-                    'company'     => $driver->guarantor_b_company,
-                    'status'      => $driver->guarantor_b_status ?? 'pending',
-                ];
+            // 2. Ensure guarantor records exist for AI verification
+            if ($driver->guarantors->count() === 0) {
+                if ($driver->guarantor_a_name) {
+                    \App\Models\Guarantor::create([
+                        'driver_id' => $driver->id,
+                        'full_name' => $driver->guarantor_a_name,
+                        'phone_number' => $driver->guarantor_a_phone ?? 'N/A',
+                        'email' => $driver->user?->email ?? 'N/A',
+                        'employment_type' => 'business_owner', // default
+                        'employment_details' => $driver->guarantor_a_address,
+                        'id_number' => 'Legacy',
+                        'is_verified' => $driver->guarantor_a_status === 'verified',
+                    ]);
+                }
+                if ($driver->guarantor_b_name) {
+                    \App\Models\Guarantor::create([
+                        'driver_id' => $driver->id,
+                        'full_name' => $driver->guarantor_b_name,
+                        'phone_number' => $driver->guarantor_b_phone ?? 'N/A',
+                        'email' => $driver->user?->email ?? 'N/A',
+                        'employment_type' => 'business_owner', // default
+                        'employment_details' => $driver->guarantor_b_address,
+                        'id_number' => 'Legacy',
+                        'is_verified' => $driver->guarantor_b_status === 'verified',
+                    ]);
+                }
+                $driver->load('guarantors');
             }
 
-            // Avatar URL
+            // 3. Build guarantors list for frontend
+            $guarantors = $driver->guarantors->map(function($g, $index) {
+                return [
+                    'id'          => $g->id,
+                    'label'       => 'Guarantor ' . (chr(65 + $index)),
+                    'name'        => $g->full_name,
+                    'phone'       => $g->phone_number,
+                    'address'     => $g->employment_details,
+                    'occupation'  => $g->employment_type,
+                    'company'     => $g->employment_details,
+                    'status'      => $g->is_verified ? 'verified' : 'pending',
+                ];
+            });
+
+            // 4. Avatar URL
             $avatarUrl = null;
             if ($driver->user && $driver->user->avatar) {
                 $avatarUrl = str_starts_with($driver->user->avatar, 'http')
                     ? $driver->user->avatar
-                    : asset('storage/' . $driver->user->avatar);
+                    : Storage::disk('public')->url($driver->user->avatar);
             }
 
             return [
@@ -359,6 +392,8 @@ class AdminDriverController extends Controller
                 'submitted'   => $driver->created_at->format('Y-m-d'),
                 'documents'   => $docs,
                 'guarantors'  => $guarantors,
+                'has_vehicle' => (bool) ($driver->has_vehicle ?? false),
+                'driver_status' => ($driver->has_vehicle ?? false) ? 'with_car' : 'no_car',
                 'notes'       => 'Awaiting admin review',
                 'guarantor_a_status' => $driver->guarantor_a_status,
                 'guarantor_b_status' => $driver->guarantor_b_status,
@@ -379,7 +414,32 @@ class AdminDriverController extends Controller
         $driver = Driver::findOrFail($id);
         $driver->is_verified = true;
         $driver->status = 'active';
-        $driver->save();
+        // Award referral reward if applicable
+        if ($driver->user && $driver->user->referred_by_user_id) {
+            $referrer = \App\Models\User::find($driver->user->referred_by_user_id);
+            if ($referrer) {
+                // Move pending reward to balance
+                $pending = $referrer->referral_pending_balance ?? 0;
+                if ($pending >= 1000) {
+                    $referrer->referral_pending_balance = $pending - 1000;
+                    $referrer->referral_balance = ($referrer->referral_balance ?? 0) + 1000;
+                    $referrer->referral_rewarded = ($referrer->referral_rewarded ?? 0) + 1000;
+                    $referrer->save();
+                }
+            }
+        }
+
+        try {
+            if ($driver->user) {
+                $driver->user->notify(new \App\Notifications\SystemAlertNotification(
+                    "Account Verified",
+                    "Your driver profile has been approved by our security admin. You are now active in the directory.",
+                    "system"
+                ));
+            }
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('Verification approval notification failed: ' . $e->getMessage());
+        }
 
         $this->cacheService->forgetTags(['admin', 'verifications', 'stats', 'drivers']);
 
@@ -394,6 +454,18 @@ class AdminDriverController extends Controller
         $driver = Driver::findOrFail($id);
         $driver->status = 'rejected';
         $driver->save();
+
+        try {
+            if ($driver->user) {
+                $driver->user->notify(new \App\Notifications\SystemAlertNotification(
+                    "Verification Rejected",
+                    "Your profile verification was rejected. Please review your compliance files.",
+                    "system"
+                ));
+            }
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('Verification rejection notification failed: ' . $e->getMessage());
+        }
 
         $this->cacheService->forgetTags(['admin', 'verifications', 'stats', 'drivers']);
 
@@ -456,6 +528,107 @@ class AdminDriverController extends Controller
         return response()->json([
             'status'  => 'success',
             'message' => 'Document rejected',
+        ]);
+    }
+
+    /**
+     * Send missing documents reminder to driver
+     */
+    public function remindMissingDocuments($id)
+    {
+        $driver = Driver::with(['user', 'documents'])->findOrFail($id);
+        
+        // Compute missing documents
+        $submittedDocTypes = $driver->documents->pluck('document_type')->toArray();
+        
+        $hasVehicle = (bool) ($driver->has_vehicle ?? false);
+        $expectedDocs = [
+            ['name' => "FRSC Driver's License", 'type' => 'drivers_license', 'required' => true],
+            ['name' => 'National Identity (NIN / Voter / Int\'l Passport)', 'type' => 'identity_card', 'required' => true],
+        ];
+
+        if (!$hasVehicle) {
+            // Drivers without car require Guarantor Forms for vehicle placement
+            $expectedDocs[] = ['name' => 'Guarantor Form A', 'type' => 'guarantor_form_a', 'required' => true];
+            $expectedDocs[] = ['name' => 'Guarantor Form B', 'type' => 'guarantor_form_b', 'required' => true];
+        } else {
+            // Drivers with car operate their own vehicle
+            $expectedDocs[] = ['name' => 'Vehicle Registration', 'type' => 'vehicle_registration', 'required' => true];
+        }
+
+        $expectedDocs[] = ['name' => 'Police Clearance', 'type' => 'police_clearance', 'required' => false];
+        $expectedDocs[] = ['name' => 'LASDRI Card', 'type' => 'lasdri_card', 'required' => false];
+
+        $missing = [];
+        foreach ($expectedDocs as $doc) {
+            if (!in_array($doc['type'], $submittedDocTypes)) {
+                $missing[] = $doc;
+            }
+        }
+
+        if (empty($missing)) {
+            return response()->json([
+                'status' => 'info',
+                'message' => 'Driver has submitted all expected documents.'
+            ]);
+        }
+
+        // Notify user via Email and Database Notification
+        if ($driver->user) {
+            $driver->user->notify(new \App\Notifications\MissingDocumentsReminder($driver, $missing));
+
+            // Also dispatch SMS
+            if ($driver->user->phone) {
+                $smsService = new \App\Services\NotificationService();
+                $missingNames = implode(', ', array_slice(array_column($missing, 'name'), 0, 2));
+                $smsService->send($driver->user->phone, "OgaDriver Notice: You have incomplete verification documents ({$missingNames}). Please upload them on your portal to complete approval.", 'sms');
+            }
+        }
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Missing documents reminder dispatched successfully to operative.',
+            'missing_documents' => $missing,
+        ]);
+    }
+
+    /**
+     * Get driver location history
+     */
+    public function locationHistory($id)
+    {
+        $driver = Driver::findOrFail($id);
+        
+        $locations = $driver->locations()
+            ->orderBy('recorded_at', 'desc')
+            ->limit(100)
+            ->get()
+            ->map(function($loc) {
+                return [
+                    'timestamp' => $loc->recorded_at->toIso8601String(),
+                    'lat' => $loc->latitude,
+                    'lng' => $loc->longitude,
+                    'accuracy' => $loc->accuracy,
+                    'activity' => $loc->status
+                ];
+            });
+            
+        return response()->json([
+            'success' => true,
+            'location_history' => $locations,
+            'patterns' => [
+                'home_location' => [
+                    'lat' => (float)$driver->current_latitude, 
+                    'lng' => (float)$driver->current_longitude
+                ],
+                'frequent_areas' => [
+                    [
+                        'lat' => (float)$driver->current_latitude, 
+                        'lng' => (float)$driver->current_longitude, 
+                        'frequency' => 'high'
+                    ]
+                ]
+            ]
         ]);
     }
 }

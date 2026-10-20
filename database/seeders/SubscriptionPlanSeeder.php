@@ -81,6 +81,21 @@ class SubscriptionPlanSeeder extends Seeder
             ],
             [
                 'target_role' => 'operative',
+                'name' => 'Employment Seeker',
+                'price' => '₦1,500',
+                'period' => 'Monthly',
+                'limits' => 'Access to Job Board',
+                'status' => 'active',
+                'isPopular' => true,
+                'features' => [
+                    'Apply to Fleet Owner job vacancies',
+                    'Digital Guarantor Verification',
+                    'Police Clearance Uploads',
+                    'Direct Employer Messaging'
+                ]
+            ],
+            [
+                'target_role' => 'operative',
                 'name' => 'Standard Operative',
                 'price' => '₦5,000',
                 'period' => 'Monthly',
@@ -102,7 +117,7 @@ class SubscriptionPlanSeeder extends Seeder
                 'period' => 'Monthly',
                 'limits' => 'Unlimited Premium Jobs',
                 'status' => 'active',
-                'isPopular' => true,
+                'isPopular' => false,
                 'features' => [
                     'Top Tier Placement in Employer Searches',
                     'Instant Algorithm Matching',

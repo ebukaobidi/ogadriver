@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\Admin;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Hirer;
+use Illuminate\Support\Facades\Storage;
 
 class AdminHirerController extends Controller
 {
@@ -45,7 +46,8 @@ class AdminHirerController extends Controller
             elseif ($hirer->jobs_count > 3) $accessTier = 'Premium';
 
             return [
-                'id' => 'EMP-' . str_pad($hirer->id, 4, '0', STR_PAD_LEFT),
+                'id' => $hirer->id,
+                'formatted_id' => 'EMP-' . str_pad($hirer->id, 4, '0', STR_PAD_LEFT),
                 'name' => $hirer->user ? $hirer->user->name : 'Unknown',
                 'company' => $hirer->company_name ?? 'Individual',
                 'type' => $hirer->company_name ? 'Corporate' : 'Individual',
@@ -56,7 +58,7 @@ class AdminHirerController extends Controller
                 'joinedDate' => $hirer->created_at ? $hirer->created_at->format('Y-m-d') : 'N/A',
                 'totalJobs' => $hirer->jobs_count, // No longer an N+1 query!
                 'activeContracts' => $hirer->active_jobs_count, // No longer an N+1 query!
-                'avatar' => $hirer->user && $hirer->user->avatar ? (str_starts_with($hirer->user->avatar, 'http') ? $hirer->user->avatar : asset('storage/' . $hirer->user->avatar)) : null
+                'avatar' => $hirer->user && $hirer->user->avatar ? (str_starts_with($hirer->user->avatar, 'http') ? $hirer->user->avatar : Storage::disk('public')->url($hirer->user->avatar)) : null
             ];
         });
 
@@ -92,7 +94,7 @@ class AdminHirerController extends Controller
                 'joinedDate' => $hirer->created_at ? $hirer->created_at->format('Y-m-d') : 'N/A',
                 'totalJobs' => $hirer->jobs()->count(),
                 'activeContracts' => $hirer->jobs()->whereIn('status', ['assigned', 'in_progress'])->count(),
-                'avatar' => $hirer->user && $hirer->user->avatar ? asset('storage/' . $hirer->user->avatar) : null,
+                'avatar' => $hirer->user && $hirer->user->avatar ? Storage::disk('public')->url($hirer->user->avatar) : null,
                 'address' => $hirer->address ?? 'N/A',
             ]
         ]);

@@ -70,14 +70,24 @@ class SubscriptionController extends Controller
             ->where('price', '!=', '₦0') // Exclude free plans from subscription list
             ->orderBy('id')
             ->get()
-            ->map(function (SubscriptionPlan $plan) {
+            ->map(function (SubscriptionPlan $plan) use ($user) {
                 $amount = $this->paymentService->parsePlanAmount($plan);
+                $userCountry = $user->country ?? $user->driver?->country ?? $user->hirer?->country ?? '';
+
+                $currency = $plan->currency ?? match(strtolower($userCountry)) {
+                    'ghana', 'gh' => 'GHS',
+                    'kenya', 'ke' => 'KES',
+                    'south africa', 'za' => 'ZAR',
+                    'united states', 'us' => 'USD',
+                    default => 'NGN'
+                };
 
                 return [
                     'id' => $plan->id,
                     'name' => $plan->name,
                     'price' => $plan->price,
                     'amount' => $amount,
+                    'currency' => $currency,
                     'period' => $plan->period,
                     'limits' => $plan->limits,
                     'status' => $plan->status,
@@ -124,8 +134,32 @@ class SubscriptionController extends Controller
 
         try {
             $wallet = $user->wallet;
+            if (!$wallet) {
+                $wallet = \App\Models\Wallet::create([
+                    'user_id' => $user->id,
+                    'balance' => 0,
+                    'available_balance' => 0,
+                    'currency' => 'NGN',
+                ]);
+            }
             $canPayFromWallet = $wallet && $wallet->hasAvailableBalance($amount);
-            $useWallet = $preferredMethod === 'wallet' || ($preferredMethod !== 'paystack' && $canPayFromWallet);
+            $forceWallet = $preferredMethod === 'wallet';
+            $useWallet = $forceWallet || ($preferredMethod !== 'paystack' && $preferredMethod !== 'opay' && $canPayFromWallet);
+
+            // Explicit wallet pay with empty/low balance
+            if ($forceWallet && !$canPayFromWallet) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Insufficient balance. Please credit your account.',
+                    'insufficient_balance' => true,
+                    'credit_wallet' => true,
+                    'required_amount' => $amount,
+                    'wallet' => [
+                        'balance' => (float) $wallet->balance,
+                        'available_balance' => (float) $wallet->available_balance,
+                    ],
+                ], 422);
+            }
 
             // Wallet debit
             if ($useWallet && $canPayFromWallet) {
@@ -155,6 +189,21 @@ class SubscriptionController extends Controller
                 ]);
             }
 
+            // No gateway configured and cannot pay from wallet
+            if (!$this->paymentService->isConfigured() && !$canPayFromWallet) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Insufficient balance. Please credit your account.',
+                    'insufficient_balance' => true,
+                    'credit_wallet' => true,
+                    'required_amount' => $amount,
+                    'wallet' => [
+                        'balance' => (float) $wallet->balance,
+                        'available_balance' => (float) $wallet->available_balance,
+                    ],
+                ], 422);
+            }
+
             // Gateway checkout
             $payment = $this->paymentService->initialize(
                 user: $user,
@@ -175,11 +224,23 @@ class SubscriptionController extends Controller
                 'reference' => $payment->reference,
                 'amount' => (float) $payment->amount,
                 'plan' => $plan->name,
+                // Hint UI when wallet is empty so user can top up instead
+                'wallet_shortfall' => !$canPayFromWallet,
+                'insufficient_balance' => !$canPayFromWallet,
+                'credit_wallet' => !$canPayFromWallet,
+                'wallet' => [
+                    'balance' => (float) $wallet->balance,
+                    'available_balance' => (float) $wallet->available_balance,
+                ],
             ]);
         } catch (RuntimeException $e) {
+            $msg = $e->getMessage();
+            $isFunds = stripos($msg, 'insufficient') !== false || stripos($msg, 'balance') !== false;
             return response()->json([
                 'success' => false,
-                'message' => $e->getMessage(),
+                'message' => $isFunds ? 'Insufficient balance. Please credit your account.' : $msg,
+                'insufficient_balance' => $isFunds,
+                'credit_wallet' => $isFunds,
             ], 422);
         } catch (\Throwable $e) {
             return response()->json([
@@ -234,6 +295,62 @@ class SubscriptionController extends Controller
         return $this->subscribe($request);
     }
 
+    /**
+     * Charge recurring subscription using Paystack Authorization Code
+     */
+    public function chargeRecurringSubscription(Request $request)
+    {
+        $request->validate([
+            'authorization_code' => 'required|string',
+            'email' => 'required|email',
+            'amount' => 'required|numeric|min:100',
+            'plan_name' => 'nullable|string',
+        ]);
+
+        $paystackSecret = env('PAYSTACK_SECRET_KEY');
+        if (!$paystackSecret) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Paystack secret key is not configured on the server.',
+            ], 500);
+        }
+
+        try {
+            $response = \Illuminate\Support\Facades\Http::withHeaders([
+                'Authorization' => "Bearer {$paystackSecret}",
+                'Content-Type' => 'application/json',
+            ])->post('https://api.paystack.co/transaction/charge_authorization', [
+                'authorization_code' => $request->authorization_code,
+                'email' => $request->email,
+                'amount' => intval($request->amount * 100),
+                'metadata' => [
+                    'plan_name' => $request->input('plan_name', 'Commute Subscription'),
+                    'type' => 'recurring_direct_debit',
+                ],
+            ]);
+
+            $resData = $response->json();
+
+            if (isset($resData['status']) && $resData['status'] === true) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Recurring subscription debited successfully via Paystack.',
+                    'transaction' => $resData['data'],
+                ]);
+            } else {
+                return response()->json([
+                    'success' => false,
+                    'message' => $resData['message'] ?? 'Paystack recurring charge failed.',
+                ], 400);
+            }
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to process recurring payment: ' . $e->getMessage(),
+            ], 500);
+        }
+    }
+
     protected function notify($user, string $planName): void
     {
         if (!$user->phone) {
@@ -242,5 +359,33 @@ class SubscriptionController extends Controller
 
         $roleLabel = $user->isHirer() ? 'employer' : ($user->isDriver() ? 'driver' : 'user');
         $this->notificationService->notifySubscriptionSuccess($user->phone, $planName, $roleLabel);
+    }
+
+    /**
+     * Toggle subscription shield protection.
+     */
+    public function toggleShield(Request $request)
+    {
+        $user = Auth::user();
+        $subscription = Subscription::where('user_id', $user->id)
+            ->where('ends_at', '>', now())
+            ->orderBy('ends_at', 'desc')
+            ->first();
+
+        if (!$subscription) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No active subscription found.',
+            ], 404);
+        }
+
+        $subscription->shield_enabled = !($subscription->shield_enabled ?? false);
+        $subscription->save();
+
+        return response()->json([
+            'success' => true,
+            'shield_enabled' => $subscription->shield_enabled,
+            'message' => $subscription->shield_enabled ? 'Shield protection enabled.' : 'Shield protection disabled.',
+        ]);
     }
 }

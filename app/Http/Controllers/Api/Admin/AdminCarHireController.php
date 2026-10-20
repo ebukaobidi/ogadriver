@@ -92,7 +92,7 @@ class AdminCarHireController extends Controller
 
         if ($request->has('deleted_images')) {
             foreach ($request->deleted_images as $deletedPath) {
-                $cleanPath = str_replace(['/storage/', asset('storage/')], '', $deletedPath);
+                $cleanPath = str_replace(['/storage/', Storage::disk('public')->url('')], '', $deletedPath);
                 if (($key = array_search($cleanPath, $images)) !== false) {
                     unset($images[$key]);
                     Storage::disk('public')->delete($cleanPath);

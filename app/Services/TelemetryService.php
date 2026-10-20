@@ -113,8 +113,9 @@ class TelemetryService
             'transaction_volume_month' => DB::table('transactions')
                 ->where('created_at', '>=', now()->startOfMonth())
                 ->sum('amount'),
+            // Zero commission model - platform revenue from subscriptions only
             'platform_revenue_month' => DB::table('transactions')
-                ->where('category', 'commission')
+                ->where('category', 'subscription')
                 ->where('created_at', '>=', now()->startOfMonth())
                 ->sum('amount'),
         ];

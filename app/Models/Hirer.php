@@ -28,6 +28,7 @@ class Hirer extends Model
         'emergency_contact_name',
         'emergency_contact_phone',
         'verification_status',
+        'accommodation_preference',
     ];
 
     protected function casts(): array
@@ -78,12 +79,54 @@ class Hirer extends Model
         return $this->subscription_tier === 'enterprise';
     }
 
-    public function canPostJob(): bool
+    public function isHybridEmployer(): bool
+    {
+        return $this->subscription_tier === 'employer_hybrid';
+    }
+
+    public function getDriverAccessTier(): string
+    {
+        // Check subscription from subscription service
+        $subscription = $this->user?->activeSubscription;
+        
+        if ($subscription && isset($subscription->features['access_tier'])) {
+            return $subscription->features['access_tier'];
+        }
+
+        // Fallback to subscription_tier field
+        return match($this->subscription_tier) {
+            'employer_hybrid' => 'hybrid',
+            'employer_super', 'employer_normal' => 'normal',
+            default => 'normal',
+        };
+    }
+
+    public function canPostJob(int $requestedCount = 1): bool
     {
         if ($this->isEnterprise()) return true;
-        
+
         $activeJobs = $this->jobs()->whereIn('status', ['published', 'assigned', 'in_progress'])->count();
-        return $activeJobs < $this->max_concurrent_contracts;
+        return ($activeJobs + $requestedCount) <= $this->max_concurrent_contracts;
+    }
+
+    /**
+     * Check if employer can access a specific driver based on tier
+     */
+    public function canAccessDriver(Driver $driver): bool
+    {
+        $accessTier = $this->getDriverAccessTier();
+
+        // Hybrid employers can only access Hybrid drivers
+        if ($accessTier === 'hybrid') {
+            return $driver->subscription_tier === 'driver_hybrid' || $driver->isElite();
+        }
+
+        // Normal/Super employers can access all non-Hybrid drivers
+        if ($accessTier === 'normal') {
+            return $driver->subscription_tier !== 'driver_hybrid';
+        }
+
+        return true; // Default fallback
     }
 
     public function generateApiKey(): string

@@ -9,11 +9,12 @@ export default defineConfig({
     VitePWA({
       registerType: 'prompt',
       injectRegister: null,
+      manifestFilename: 'manifest.json',
       workbox: {
         navigateFallbackDenylist: [/^\/admin/, /^\/api/],
         cleanupOutdatedCaches: true,
-        skipWaiting: false,
-        clientsClaim: false,
+        skipWaiting: true,
+        clientsClaim: true,
         // Force service worker update on every build
         runtimeCaching: [
           {

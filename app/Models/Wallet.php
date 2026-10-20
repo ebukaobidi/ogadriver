@@ -62,7 +62,7 @@ class Wallet extends Model
                 'category' => $category,
                 'amount' => $amount,
                 'balance_before' => $balanceBefore,
-                'balance_after' => $this->balance,
+                'balance_after' => $lockedWallet->balance,
                 'description' => $description,
                 'reference' => $reference ?? uniqid('txn_'),
                 'status' => 'completed',
@@ -91,7 +91,7 @@ class Wallet extends Model
                 'category' => $category,
                 'amount' => $amount,
                 'balance_before' => $balanceBefore,
-                'balance_after' => $this->balance,
+                'balance_after' => $lockedWallet->balance,
                 'description' => $description,
                 'reference' => $reference ?? uniqid('txn_'),
                 'status' => 'completed',
@@ -99,4 +99,49 @@ class Wallet extends Model
         });
     }
 
-    public function 
+    public function freeze(string $reason): void
+    {
+        $this->update([
+            'is_frozen' => true,
+            'frozen_at' => now(),
+            'freeze_reason' => $reason,
+        ]);
+    }
+
+    public function unfreeze(): void
+    {
+        $this->update([
+            'is_frozen' => false,
+            'frozen_at' => null,
+            'freeze_reason' => null,
+        ]);
+    }
+
+    public function holdInEscrow(float $amount): void
+    {
+        DB::transaction(function () use ($amount) {
+            $lockedWallet = self::where('id', $this->id)->lockForUpdate()->first();
+
+            if (!$lockedWallet->hasAvailableBalance($amount)) {
+                throw new InsufficientFundsException('Insufficient available balance to hold in escrow');
+            }
+
+            $lockedWallet->decrement('available_balance', $amount);
+            $lockedWallet->increment('escrow_balance', $amount);
+        });
+    }
+
+    public function releaseFromEscrow(float $amount): void
+    {
+        DB::transaction(function () use ($amount) {
+            $lockedWallet = self::where('id', $this->id)->lockForUpdate()->first();
+
+            if ($lockedWallet->escrow_balance < $amount) {
+                throw new InsufficientFundsException('Insufficient escrow balance to release');
+            }
+
+            $lockedWallet->decrement('escrow_balance', $amount);
+            $lockedWallet->increment('available_balance', $amount);
+        });
+    }
+}

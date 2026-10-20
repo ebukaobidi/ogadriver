@@ -12,9 +12,43 @@ class AdminSecurityController extends Controller
 {
     public function getAuditLogs()
     {
-        $logs = Cache::rememberForever('admin_audit_logs', function () {
-            return [];
+        $drivers = Driver::with('user')->orderBy('created_at', 'desc')->limit(20)->get()->map(function($d) {
+            return [
+                'id' => 'LOG-DR-' . $d->id,
+                'timestamp' => $d->created_at->format('Y-m-d H:i:s'),
+                'action' => 'driver_registration',
+                'user' => $d->user->name ?? 'System',
+                'details' => 'New driver registration: ' . ($d->user->email ?? 'N/A'),
+                'ip' => '127.0.0.1',
+                'status' => 'success'
+            ];
         });
+
+        $blacklists = Blacklist::with('bannedBy')->orderBy('created_at', 'desc')->limit(20)->get()->map(function($b) {
+            return [
+                'id' => 'LOG-BL-' . $b->id,
+                'timestamp' => $b->created_at->format('Y-m-d H:i:s'),
+                'action' => 'driver_blacklist',
+                'user' => $b->bannedBy->name ?? 'Admin',
+                'details' => 'Entity blacklisted: ' . $b->entity_identifier . ' Reason: ' . $b->reason,
+                'ip' => '127.0.0.1',
+                'status' => 'success'
+            ];
+        });
+
+        $transactions = \App\Models\Transaction::with('wallet.user')->orderBy('created_at', 'desc')->limit(20)->get()->map(function($t) {
+            return [
+                'id' => 'LOG-TX-' . $t->id,
+                'timestamp' => $t->created_at->format('Y-m-d H:i:s'),
+                'action' => 'payment_received',
+                'user' => $t->wallet->user->name ?? 'System',
+                'details' => 'Transaction ' . $t->reference . ' of NGN ' . number_format($t->amount),
+                'ip' => '127.0.0.1',
+                'status' => 'success'
+            ];
+        });
+
+        $logs = $drivers->concat($blacklists)->concat($transactions)->sortByDesc('timestamp')->values()->all();
 
         return response()->json([
             'status' => 'success',
@@ -56,29 +90,37 @@ class AdminSecurityController extends Controller
 
     public function getBlacklist(Request $request)
     {
-        $query = Driver::with('user')->where('status', 'blacklisted');
+        $query = Blacklist::with(['user', 'bannedBy']);
 
         if ($request->has('search') && !empty($request->search)) {
             $search = $request->search;
-            $query->whereHas('user', function($q) use ($search) {
-                $q->where('name', 'like', "%{$search}%")
-                  ->orWhere('email', 'like', "%{$search}%");
+            $query->where(function($q) use ($search) {
+                $q->where('entity_identifier', 'like', "%{$search}%")
+                  ->orWhere('reason', 'like', "%{$search}%")
+                  ->orWhereHas('user', function($qu) use ($search) {
+                      $qu->where('name', 'like', "%{$search}%")
+                        ->orWhere('email', 'like', "%{$search}%");
+                  });
             });
         }
 
-        $paginated = $query->orderBy('updated_at', 'desc')->paginate(10);
+        if ($request->has('type') && $request->type !== 'all') {
+            $query->where('entity_type', $request->type);
+        }
 
-        $paginated->through(function ($driver) {
+        $paginated = $query->orderBy('created_at', 'desc')->paginate(10);
+
+        $paginated->through(function ($item) {
             return [
-                'id' => $driver->id,
-                'name' => $driver->user ? $driver->user->name : 'Unknown',
-                'email' => $driver->user ? $driver->user->email : 'N/A',
-                'phone' => $driver->user ? $driver->user->phone : 'N/A',
-                'dateBlacklisted' => $driver->updated_at->format('Y-m-d'),
-                'reasonType' => 'Policy Violation',
-                'reasonDetails' => 'Operative was suspended and blacklisted from the directory.',
-                'adminName' => 'System Admin',
-                'severity' => 'Critical'
+                'id' => $item->id,
+                'type' => $item->entity_type,
+                'value' => $item->entity_identifier,
+                'reason' => $item->reason,
+                'addedBy' => $item->bannedBy ? $item->bannedBy->name : 'System',
+                'addedDate' => $item->created_at->format('Y-m-d'),
+                'status' => $item->isActive() ? 'Active' : 'Expired',
+                'severity' => ucfirst($item->severity),
+                'notes' => $item->notes
             ];
         });
 
@@ -88,32 +130,63 @@ class AdminSecurityController extends Controller
         ]);
     }
 
+    public function removeFromBlacklist($id)
+    {
+        $item = Blacklist::findOrFail($id);
+        
+        // If it's a driver, we might want to restore their status
+        if ($item->entity_type === 'driver') {
+            $driver = Driver::find((int)$item->entity_identifier);
+            if ($driver && $driver->status === 'blacklisted') {
+                $driver->status = 'active'; // Or whatever default status
+                $driver->save();
+            }
+        }
+
+        $item->delete();
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Item removed from blacklist'
+        ]);
+    }
+
     public function addToBlacklist(Request $request)
     {
         $validated = $request->validate([
-            'driver_id' => 'required|exists:drivers,id',
+            'type' => 'nullable|string|in:driver,hirer,email,phone,ip,domain',
+            'driver_id' => 'nullable|exists:drivers,id',
+            'value' => 'nullable|string',
             'reason' => 'required|string|max:500',
-            'severity' => 'nullable|in:permanent,temporary',
+            'severity' => 'nullable|in:permanent,temporary,warning',
             'notes' => 'nullable|string'
         ]);
 
-        $driver = Driver::findOrFail($validated['driver_id']);
-        $driver->status = 'blacklisted';
-        $driver->save();
+        $entityType = $validated['type'] ?? 'driver';
+        $entityIdentifier = $validated['value'] ?? '';
+        $userId = null;
+
+        if ($entityType === 'driver' && isset($validated['driver_id'])) {
+            $driver = Driver::findOrFail($validated['driver_id']);
+            $driver->status = 'blacklisted';
+            $driver->save();
+            $entityIdentifier = (string)$driver->id;
+            $userId = $driver->user_id;
+        }
 
         Blacklist::blacklistEntity(
-            'driver',
-            (string)$driver->id,
+            $entityType,
+            $entityIdentifier,
             $validated['reason'],
             $validated['severity'] ?? 'permanent',
-            $driver->user_id,
+            $userId,
             auth()->id(),
             $validated['notes'] ?? null
         );
 
         return response()->json([
             'status' => 'success',
-            'message' => 'Driver blacklisted successfully'
+            'message' => ucfirst($entityType) . ' blacklisted successfully'
         ]);
     }
 }

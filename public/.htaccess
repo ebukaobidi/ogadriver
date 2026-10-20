@@ -1,3 +1,12 @@
+<IfModule mod_headers.c>
+    # Prevent caching of index.html and sw.js so PWA updates reflect instantly
+    <FilesMatch "^(index\.html|sw\.js)$">
+        Header set Cache-Control "no-cache, no-store, must-revalidate"
+        Header set Pragma "no-cache"
+        Header set Expires "0"
+    </FilesMatch>
+</IfModule>
+
 <IfModule mod_rewrite.c>
 Options +FollowSymlinks
     <IfModule mod_negotiation.c>
@@ -6,8 +15,16 @@ Options +FollowSymlinks
 
     RewriteEngine On
 
-    # Force HTTPS
+    # ---------------------------------------------------------------
+    # Force HTTPS — cPanel/shared hosting compatible
+    # On most shared hosts, SSL is terminated at the proxy/load balancer,
+    # so %{HTTPS} is always "off" even for real HTTPS requests.
+    # We check X-Forwarded-Proto (set by the proxy) instead to avoid
+    # an infinite redirect loop on production.
+    # ---------------------------------------------------------------
+    RewriteCond %{HTTP_HOST} !^(localhost|127\.0\.0\.1)(:\d+)?$ [NC]
     RewriteCond %{HTTPS} off
+    RewriteCond %{HTTP:X-Forwarded-Proto} !https
     RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
 
     # Handle Authorization Header
@@ -22,6 +39,9 @@ Options +FollowSymlinks
     RewriteCond %{REQUEST_FILENAME} !-d
     RewriteCond %{REQUEST_URI} (.+)/$
     RewriteRule ^ %1 [L,R=301]
+
+    # --- Laravel Sanctum CSRF Cookie (MUST go to PHP, not the SPA) ---
+    RewriteRule ^sanctum/csrf-cookie$ index.php [L]
 
     # --- API Routes: Send to Laravel's index.php ---
     RewriteRule ^api/.*$ index.php [L]
@@ -48,6 +68,5 @@ Options +FollowSymlinks
     RewriteRule ^ - [L]
 
     # --- Everything else: Serve the React SPA ---
-    # If frontend dist is deployed into public/ directly:
     RewriteRule ^ index.html [L]
 </IfModule>

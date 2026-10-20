@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Services\TelemetryService;
+use App\Events\TelemetryUpdated;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 
@@ -162,6 +163,22 @@ class TelemetryController extends Controller
             'created_at' => now(),
             'updated_at' => now()
         ]);
+
+        // Security Audit Logging using spatie/laravel-activitylog
+        activity('mobile_api')
+            ->causedBy($request->user())
+            ->withProperties([
+                'booking_id' => $booking->id, 
+                'lat' => $request->latitude, 
+                'lng' => $request->longitude,
+                'device_model' => $request->header('User-Agent'),
+                'app_version' => $request->header('X-App-Version', 'unknown')
+            ])
+            ->event('gps_ping')
+            ->log('Mobile device GPS ping ingested');
+
+        // 3. Broadcast real-time telemetry to authorized hirers
+        broadcast(new TelemetryUpdated($booking->id, $request->all()))->toOthers();
 
         return response()->json([
             'status' => 'recorded',

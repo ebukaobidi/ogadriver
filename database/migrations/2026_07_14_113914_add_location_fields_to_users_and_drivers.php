@@ -12,13 +12,23 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('users', function (Blueprint $table) {
-            $table->foreignId('country_id')->nullable()->constrained()->onDelete('set null');
+            if (!Schema::hasColumn('users', 'country_id')) {
+                $table->foreignId('country_id')->nullable()->constrained()->onDelete('set null');
+            } else {
+                $table->foreign('country_id')->references('id')->on('countries')->onDelete('set null');
+            }
         });
 
         Schema::table('drivers', function (Blueprint $table) {
-            $table->foreignId('state_id')->nullable()->constrained()->onDelete('set null');
-            $table->foreignId('city_id')->nullable()->constrained()->onDelete('set null');
-            $table->string('police_clearance_url')->nullable();
+            if (!Schema::hasColumn('drivers', 'state_id')) {
+                $table->foreignId('state_id')->nullable()->constrained()->onDelete('set null');
+            }
+            if (!Schema::hasColumn('drivers', 'city_id')) {
+                $table->foreignId('city_id')->nullable()->constrained()->onDelete('set null');
+            }
+            if (!Schema::hasColumn('drivers', 'police_clearance_url')) {
+                $table->string('police_clearance_url')->nullable();
+            }
         });
     }
 

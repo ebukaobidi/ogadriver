@@ -18,12 +18,25 @@ class GoogleOAuthService
 
     public function __construct()
     {
-        $this->clientId = config('services.google.client_id') ?? '';
-        $this->clientSecret = config('services.google.client_secret') ?? '';
-        $this->redirectUri = config('services.google.redirect_uri') ?? '';
+        $this->clientId = config('services.google.client_id')
+            ?: (\class_exists('\App\Models\ApiSetting') ? (\App\Models\ApiSetting::getValue('googleClientId') ?? '') : '');
+        $this->clientSecret = config('services.google.client_secret')
+            ?: (\class_exists('\App\Models\ApiSetting') ? (\App\Models\ApiSetting::getValue('googleClientSecret') ?? '') : '');
+        $this->redirectUri = config('services.google.redirect_uri')
+            ?: (\class_exists('\App\Models\ApiSetting') ? (\App\Models\ApiSetting::getValue('googleRedirectUri') ?? '') : '');
+        
+        if (empty($this->redirectUri)) {
+            $this->redirectUri = rtrim(config('app.url', 'https://ogadriver.ng'), '/') . '/auth/google/callback';
+        }
+
         $this->authUrl = 'https://accounts.google.com/o/oauth2/v2/auth';
         $this->tokenUrl = 'https://oauth2.googleapis.com/token';
         $this->userInfoUrl = 'https://www.googleapis.com/oauth2/v2/userinfo';
+    }
+
+    public function getClientId(): string
+    {
+        return $this->clientId;
     }
 
     /**
@@ -90,6 +103,32 @@ class GoogleOAuthService
     }
 
     /**
+     * Verify Google ID Token directly (used by Mobile Apps & Native SDKs)
+     */
+    public function verifyIdToken(string $idToken): array
+    {
+        $response = Http::get('https://oauth2.googleapis.com/tokeninfo', [
+            'id_token' => $idToken,
+        ]);
+
+        if (!$response->successful()) {
+            Log::error('Google ID token verification failed', [
+                'status' => $response->status(),
+                'body' => $response->body(),
+            ]);
+            throw new \Exception('Invalid or expired Google ID token');
+        }
+
+        $data = $response->json();
+        return [
+            'id' => $data['sub'] ?? null,
+            'email' => $data['email'] ?? null,
+            'name' => $data['name'] ?? ($data['given_name'] ?? 'Google User'),
+            'picture' => $data['picture'] ?? null,
+        ];
+    }
+
+    /**
      * Find or create user from Google OAuth data
      */
     public function findOrCreateUser(array $userInfo, string $googleId, array $tokenData = []): User
@@ -104,12 +143,14 @@ class GoogleOAuthService
 
         if ($user) {
             // Update tokens if provided
-            if (!empty($tokenData)) {
-                $user->update([
-                    'google_token' => $tokenData['access_token'] ?? $user->google_token,
-                    'google_refresh_token' => $tokenData['refresh_token'] ?? $user->google_refresh_token,
-                ]);
+            $updateData = [
+                'google_token' => $tokenData['access_token'] ?? $user->google_token,
+                'google_refresh_token' => $tokenData['refresh_token'] ?? $user->google_refresh_token,
+            ];
+            if (empty($user->avatar) && !empty($userInfo['picture'])) {
+                $updateData['avatar'] = $userInfo['picture'];
             }
+            $user->update($updateData);
             return $user;
         }
 
@@ -118,26 +159,36 @@ class GoogleOAuthService
 
         if ($user) {
             // Link Google account to existing user
-            $user->update([
+            $updateData = [
                 'google_id' => $googleId,
                 'google_token' => $tokenData['access_token'] ?? null,
                 'google_refresh_token' => $tokenData['refresh_token'] ?? null,
-            ]);
+            ];
+            if (empty($user->avatar) && !empty($userInfo['picture'])) {
+                $updateData['avatar'] = $userInfo['picture'];
+            }
+            $user->update($updateData);
             return $user;
         }
 
         // Create new user
-        return User::create([
-            'name' => $userInfo['name'],
+        $user = User::create([
+            'name' => $userInfo['name'] ?? ($userInfo['given_name'] ?? 'User'),
             'email' => $userInfo['email'],
+            'phone' => 'G-' . rand(100000, 999999) . rand(1000, 9999), // Dummy phone to satisfy NOT NULL
+            'avatar' => $userInfo['picture'] ?? null,
             'google_id' => $googleId,
             'google_token' => $tokenData['access_token'] ?? null,
             'google_refresh_token' => $tokenData['refresh_token'] ?? null,
             'password' => bcrypt(\Illuminate\Support\Str::random(32)), // Random password since they use OAuth
             'email_verified_at' => now(),
+            'phone_verified_at' => now(), // Auto-verify phone for Google users
+            'is_active' => true, // Auto-activate Google users
             'profile_completed' => false,
             'terms_accepted' => false,
         ]);
+        
+        return $user;
     }
 
     /**

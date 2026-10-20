@@ -8,54 +8,50 @@ use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Broadcasting\PresenceChannel;
 use Illuminate\Broadcasting\PrivateChannel;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
+use Illuminate\Contracts\Broadcasting\ShouldBroadcastNow;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
 
-class JobBroadcasted implements ShouldBroadcast
+class JobBroadcasted implements ShouldBroadcastNow
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
-    public function __construct(
-        public TransportJob $job,
-        public array $nearbyDriverIds
-    ) {}
+    public $job;
 
-    public function broadcastOn(): array
+    /**
+     * Create a new event instance.
+     */
+    public function __construct(TransportJob $job)
     {
-        $channels = [];
-        
-        // Broadcast to each nearby driver's private channel
-        foreach ($this->nearbyDriverIds as $driverId) {
-            $channels[] = new PrivateChannel('driver.' . $driverId);
-        }
-        
-        return $channels;
+        $this->job = $job;
     }
 
+    /**
+     * Get the channels the event should broadcast on.
+     *
+     * @return array<int, \Illuminate\Broadcasting\Channel>
+     */
+    public function broadcastOn(): array
+    {
+        return [
+            new Channel('nearby-jobs'),
+        ];
+    }
+    
     public function broadcastWith(): array
     {
         return [
-            'job_id' => $this->job->id,
+            'id' => $this->job->id,
             'title' => $this->job->title,
             'description' => $this->job->description,
-            'vehicle_type' => $this->job->vehicle_type,
             'amount' => $this->job->amount,
             'pickup_location' => $this->job->pickup_location,
-            'pickup_latitude' => $this->job->pickup_latitude,
-            'pickup_longitude' => $this->job->pickup_longitude,
-            'dropoff_location' => $this->job->dropoff_location,
-            'pickup_time' => $this->job->pickup_time->toIso8601String(),
-            'distance_km' => $this->job->distance_km,
-            'is_early_access' => $this->job->is_early_access,
+            'pickup_lat' => $this->job->pickup_lat,
+            'pickup_lng' => $this->job->pickup_lng,
+            'pickup_time' => $this->job->pickup_time,
+            'vehicle_type' => $this->job->vehicle_type,
             'is_surge_pricing' => $this->job->is_surge_pricing,
             'surge_multiplier' => $this->job->surge_multiplier,
-            'required_certifications' => $this->job->required_certifications,
-            'created_at' => now()->toIso8601String(),
         ];
-    }
-
-    public function broadcastAs(): string
-    {
-        return 'job.broadcasted';
     }
 }

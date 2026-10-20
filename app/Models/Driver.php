@@ -22,6 +22,9 @@ class Driver extends Model
         'status',
         'subscription_tier',
         'subscription_expires_at',
+        'boost_tier',
+        'boost_multiplier',
+        'boosted_until',
         'preferred_route_type',
         'current_latitude',
         'current_longitude',
@@ -31,6 +34,8 @@ class Driver extends Model
         'city_id',
         'preferred_locations',
         'employment_types',
+        'skills',
+        'endorsements',
         'languages',
         'guarantor_a_code',
         'guarantor_a_status',
@@ -58,17 +63,54 @@ class Driver extends Model
         'delisted_reason',
         'verification_fee_paid',
         'verification_fee_paid_at',
+        'accommodation_needed',
+        'has_vehicle',
+        'service_mode',
+        'accommodation_notes',
+        'destination_mode_active',
+        'destination_label',
+        'destination_address',
+        'destination_latitude',
+        'destination_longitude',
+        'destination_max_detour_km',
+    
+        'biometric_login',
+        'available_for_interstate',
+        'open_to_accommodation',
+        'saved_places',
+        'notification_preferences',
     ];
 
-    protected $appends = ['is_pro', 'is_hybrid', 'formatted_id'];
+    protected $appends = ['is_pro', 'is_hybrid', 'formatted_id', 'operative_tier'];
+
+    public function getOperativeTierAttribute(): string
+    {
+        $jobs = $this->completed_jobs_count ?? $this->total_jobs ?? 0;
+        $rating = (float)($this->rating ?? 0);
+        $simScore = (int)($this->simulator_score ?? 0);
+
+        if ($jobs >= 50 && $rating >= 4.8 && $simScore >= 85) {
+            return 'Platinum VIP';
+        }
+        if ($jobs >= 20 && $rating >= 4.6 && $simScore >= 70) {
+            return 'Gold Executive';
+        }
+        if ($jobs >= 5 && $rating >= 4.2) {
+            return 'Silver Certified';
+        }
+        return 'Bronze Operative';
+    }
 
     protected function casts(): array
     {
         return [
             'license_expiry' => 'date',
             'rating' => 'decimal:2',
+            'is_verified' => 'boolean',
+            'is_online' => 'boolean',
             'last_location_update' => 'datetime',
             'subscription_expires_at' => 'datetime',
+            'boosted_until' => 'datetime',
             'trial_started_at' => 'datetime',
             'trial_ends_at' => 'datetime',
             'listed_at' => 'datetime',
@@ -76,15 +118,29 @@ class Driver extends Model
             'vehicle_certifications' => 'array',
             'preferred_locations' => 'array',
             'employment_types' => 'array',
+            'skills' => 'array',
+            'endorsements' => 'array',
             'languages' => 'array',
             'verification_fee_paid' => 'boolean',
             'verification_fee_paid_at' => 'datetime',
+            'accommodation_needed' => 'boolean',
+            'has_vehicle' => 'boolean',
+            'biometric_login' => 'boolean',
+            'available_for_interstate' => 'boolean',
+            'open_to_accommodation' => 'boolean',
+            'saved_places' => 'array',
+            'notification_preferences' => 'array',
         ];
     }
 
     public function user()
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function vehicle()
+    {
+        return $this->hasOne(DriverVehicle::class);
     }
 
     public function state()
@@ -280,5 +336,30 @@ class Driver extends Model
             "ST_Distance_Sphere(POINT(current_longitude, current_latitude), POINT(?, ?)) <= ?",
             [$longitude, $latitude, $radiusKm * 1000]
         );
+    }
+
+    public function scopeByTier($query, string $tier)
+    {
+        return $query->where('subscription_tier', $tier);
+    }
+
+    public function scopeHybridTier($query)
+    {
+        return $query->where('subscription_tier', 'driver_hybrid');
+    }
+
+    public function scopeBasicTier($query)
+    {
+        return $query->where('subscription_tier', 'driver_basic');
+    }
+
+    public function scopeAccessibleToEmployer($query, string $employerAccessTier)
+    {
+        if ($employerAccessTier === 'hybrid') {
+            return $query->where('subscription_tier', 'driver_hybrid');
+        }
+
+        // Normal access tier can see non-Hybrid drivers
+        return $query->where('subscription_tier', '!=', 'driver_hybrid');
     }
 }

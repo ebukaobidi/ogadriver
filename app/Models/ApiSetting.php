@@ -64,7 +64,7 @@ class ApiSetting extends Model
     /**
      * Set a setting value by key
      */
-    public static function setValue(string $key, $value, string $category = 'general', bool $encrypt = true, string $description = null)
+    public static function setValue(string $key, $value, string $category = 'general', bool $encrypt = true, ?string $description = null)
     {
         return static::updateOrCreate(
             ['key' => $key],

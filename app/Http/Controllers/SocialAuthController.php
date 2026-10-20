@@ -12,33 +12,48 @@ class SocialAuthController extends Controller
     /**
      * Redirect the user to the Google authentication page.
      */
-    public function redirectToGoogle()
+    public function redirectToGoogle(Request $request)
     {
-        return Socialite::driver('google')->redirect();
+        $role = $request->query('role', 'hirer'); // default to hirer (client) if unspecified
+        // Pass the requested role through Google's state parameter so it returns in the callback
+        return Socialite::driver('google')->stateless()->with(['state' => $role])->redirect();
     }
 
     /**
      * Obtain the user information from Google.
      */
-    public function handleGoogleCallback()
+    public function handleGoogleCallback(Request $request)
     {
         try {
+            // Retrieve the role from the returned state parameter (fallback to hirer)
+            $intendedRole = $request->input('state', 'hirer');
+            $validRole = in_array($intendedRole, ['driver', 'hirer']) ? $intendedRole : 'hirer';
+
             $googleUser = Socialite::driver('google')->stateless()->user();
             
             // Check if user exists
             $user = User::where('email', $googleUser->getEmail())->first();
             
             if (!$user) {
-                // Determine role based on intent (this would usually be passed via state or frontend redirect)
-                // For this example, we default to driver, but it can be handled dynamically
                 $user = User::create([
                     'name' => $googleUser->getName(),
                     'email' => $googleUser->getEmail(),
-                    'password' => bcrypt(str_random(16)),
-                    'role' => 'driver', // Or 'hirer'
+                    'password' => bcrypt(\Illuminate\Support\Str::random(16)),
+                    'role' => $validRole,
                     'email_verified_at' => now(),
-                    // other needed fields
+                    'google_id' => $googleUser->getId(),
+                    'avatar' => $googleUser->getAvatar(),
                 ]);
+            } else {
+                // Link google ID if not set
+                if (!$user->google_id) {
+                    $user->update([
+                        'google_id' => $googleUser->getId(),
+                        'avatar' => $user->avatar ?? $googleUser->getAvatar(),
+                    ]);
+                }
+                // If a returning user clicks "Sign up as Driver" but they are a hirer, you might want to upgrade their role here, 
+                // but for now, we leave their existing role intact to prevent accidental overwrites.
             }
             
             Auth::login($user);

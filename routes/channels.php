@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Broadcast;
 use App\Models\Booking;
+use App\Models\Conversation;
 
 /*
 |--------------------------------------------------------------------------
@@ -14,6 +15,33 @@ use App\Models\Booking;
 | given channel.
 |
 */
+
+/**
+ * Authorize the private channel for a specific driver
+ */
+Broadcast::channel('driver.{driverId}', function ($user, $driverId) {
+    return $user->driver && (int) $user->driver->id === (int) $driverId;
+});
+
+/**
+ * Authorize the private channel for a specific hirer
+ */
+Broadcast::channel('hirer.{hirerId}', function ($user, $hirerId) {
+    return $user->hirer && (int) $user->hirer->id === (int) $hirerId;
+});
+
+/**
+ * Authorize the private chat channel for both participants
+ */
+Broadcast::channel('chat.{conversationId}', function ($user, $conversationId) {
+    $conversation = Conversation::find($conversationId);
+    if (!$conversation) {
+        return false;
+    }
+    
+    return ($user->driver && (int) $user->driver->id === (int) $conversation->driver_id) ||
+           ($user->hirer && (int) $user->hirer->id === (int) $conversation->hirer_id);
+});
 
 /**
  * Authorize the live tracking channel strictly for the hiring employer

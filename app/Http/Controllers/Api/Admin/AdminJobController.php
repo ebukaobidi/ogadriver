@@ -121,6 +121,7 @@ class AdminJobController extends Controller
         $paginated->through(function ($job) {
             return [
                 'id' => 'CON-' . str_pad($job->id, 4, '0', STR_PAD_LEFT),
+                'title' => $job->title ?: 'Commercial Match',
                 'employer' => $job->hirer && $job->hirer->user ? $job->hirer->user->name : 'Unknown',
                 'operative' => $job->driver && $job->driver->user ? $job->driver->user->name : 'Unassigned',
                 'agreedRate' => $job->currency . number_format($job->amount, 2),
@@ -130,7 +131,10 @@ class AdminJobController extends Controller
                 'status' => $job->status === 'in_progress' ? 'live' : 'en_route',
                 'telemetryStatus' => $job->driver && $job->driver->is_online ? 'Active' : 'Offline',
                 'lastPing' => $job->driver && $job->driver->is_online ? 'Just now' : 'N/A',
-                'location' => 'Tracking active'
+                'location' => $job->pickup_location ? ($job->pickup_location . ' → ' . $job->dropoff_location) : 'Tracking active',
+                'pickup_location' => $job->pickup_location,
+                'dropoff_location' => $job->dropoff_location,
+                'driver_must_provide_vehicle' => $job->driver_must_provide_vehicle
             ];
         });
 

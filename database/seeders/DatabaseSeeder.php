@@ -16,8 +16,12 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // No test data - production deployment
         $this->call([
+            RoleSeeder::class,
+            SuperAdminSeeder::class,
+            SubscriptionPlanSeeder::class,
+            PlatformDefaultsSeeder::class,
+            SiteContentSeeder::class,
             DrivingSchoolSeeder::class,
             ExecutiveCarHireSeeder::class,
         ]);

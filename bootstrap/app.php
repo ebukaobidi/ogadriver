@@ -13,16 +13,17 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->api(prepend: \Illuminate\Http\Middleware\HandleCors::class);
+        $middleware->api(append: \App\Http\Middleware\CheckMaintenanceMode::class);
         
-        // Register custom API token middleware
+        // Register custom middlewares
         $middleware->alias([
-            'api.token' => \App\Http\Middleware\ApiTokenAuth::class,
             'admin' => \App\Http\Middleware\AdminMiddleware::class,
-            'role' => \App\Http\Middleware\EnsureAdminRole::class,
+            'role' => \App\Http\Middleware\CheckRole::class,
+            'admin.dept' => \App\Http\Middleware\EnsureAdminDepartment::class,
         ]);
         
-        // Disable stateful API (requires Sanctum)
-        // $middleware->statefulApi();
+        // Enable stateful API (Sanctum SPA authentication)
+        $middleware->statefulApi();
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //

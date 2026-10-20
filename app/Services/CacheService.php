@@ -12,7 +12,7 @@ class CacheService
     /**
      * Get cached data or execute callback
      */
-    public function remember(string $key, callable $callback, int $ttl = null): mixed
+    public function remember(string $key, callable $callback, ?int $ttl = null): mixed
     {
         $ttl = $ttl ?? $this->defaultTtl;
         return Cache::remember($key, $ttl, $callback);

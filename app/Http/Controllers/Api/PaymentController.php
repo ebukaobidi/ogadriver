@@ -73,7 +73,7 @@ class PaymentController extends Controller
         }
 
         try {
-            $payment = $this->paymentService->initialize($user, 1000, 'verification_fee');
+            $payment = $this->paymentService->initialize($user, 3000, 'verification_fee');
             return response()->json([
                 'success' => true,
                 'payment' => $payment

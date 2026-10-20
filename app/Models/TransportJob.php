@@ -10,6 +10,7 @@ class TransportJob extends Model
     use HasFactory;
 
     protected $fillable = [
+        'parent_job_id',
         'hirer_id',
         'driver_id',
         'title',
@@ -26,9 +27,12 @@ class TransportJob extends Model
         'estimated_delivery_time',
         'distance_km',
         'amount',
+        'payment_method',
         'currency',
         'is_surge_pricing',
         'surge_multiplier',
+        'required_operatives',
+        'driver_must_provide_vehicle',
         'status',
         'is_early_access',
         'early_access_expires_at',
@@ -38,6 +42,15 @@ class TransportJob extends Model
         'completed_at',
         'search_radius_km',
         'metadata',
+        'vacancy_type',
+        'prefill_driver_id',
+        'stops',
+        'is_vip_convoy',
+        'requires_cpo',
+        'requires_police_escort',
+        'stealth_mode',
+        'nda_signed_at',
+        'convoy_vehicle_ids',
     ];
 
     protected function casts(): array
@@ -58,7 +71,14 @@ class TransportJob extends Model
             'started_at' => 'datetime',
             'completed_at' => 'datetime',
             'required_certifications' => 'array',
+            'stops' => 'array',
             'metadata' => 'array',
+            'is_vip_convoy' => 'boolean',
+            'requires_cpo' => 'boolean',
+            'requires_police_escort' => 'boolean',
+            'stealth_mode' => 'boolean',
+            'nda_signed_at' => 'datetime',
+            'convoy_vehicle_ids' => 'array',
         ];
     }
 
@@ -70,6 +90,11 @@ class TransportJob extends Model
     public function driver()
     {
         return $this->belongsTo(Driver::class);
+    }
+
+    public function prefillDriver()
+    {
+        return $this->belongsTo(Driver::class, 'prefill_driver_id');
     }
 
     public function applications()

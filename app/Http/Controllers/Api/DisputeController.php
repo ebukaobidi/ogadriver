@@ -17,7 +17,7 @@ class DisputeController extends Controller
      */
     public function index(Request $request): JsonResponse
     {
-        $query = Dispute::with(['job.hirer.user', 'raisedBy.user', 'againstUser.user', 'assignedTo.user']);
+        $query = Dispute::with(['job.hirer.user', 'raisedBy', 'againstUser', 'assignedTo']);
 
         // Filters
         if ($request->has('status')) {
@@ -79,7 +79,7 @@ class DisputeController extends Controller
 
         return response()->json([
             'success' => true,
-            'data' => $dispute->load('job', 'raisedBy.user', 'againstUser.user'),
+            'data' => $dispute->load('job', 'raisedBy', 'againstUser'),
             'message' => 'Dispute created successfully',
         ], 201);
     }
@@ -92,9 +92,9 @@ class DisputeController extends Controller
         $dispute = Dispute::with([
             'job.hirer.user',
             'job.driver.user',
-            'raisedBy.user',
-            'againstUser.user',
-            'assignedTo.user',
+            'raisedBy',
+            'againstUser',
+            'assignedTo',
             'job.locations'
         ])->findOrFail($id);
 
@@ -154,7 +154,7 @@ class DisputeController extends Controller
 
         return response()->json([
             'success' => true,
-            'data' => $dispute->load('assignedTo.user'),
+            'data' => $dispute->load('assignedTo'),
             'message' => 'Dispute updated successfully',
         ]);
     }
@@ -182,7 +182,7 @@ class DisputeController extends Controller
 
         return response()->json([
             'success' => true,
-            'data' => $dispute->load('assignedTo.user'),
+            'data' => $dispute->load('assignedTo'),
             'message' => 'Dispute assigned successfully',
         ]);
     }
@@ -287,7 +287,7 @@ class DisputeController extends Controller
     /**
      * Remove the specified dispute
      */
-    public function destroy(string $id): JsonResponse
+    public function destroy(Request $request, string $id): JsonResponse
     {
         $dispute = Dispute::findOrFail($id);
         $user = $request->user();

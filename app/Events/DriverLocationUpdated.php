@@ -26,8 +26,8 @@ class DriverLocationUpdated implements ShouldBroadcast
         // Broadcast to all hirers who have this driver as favorite
         $channels = [];
         
-        $favoriteHirers = $driver->favoriteDrivers()->pluck('hirer_id');
-        foreach ($favoriteHirers as $hirerId) {
+        $favoriteHirerIds = $this->driver->favorites()->pluck('hirer_id');
+        foreach ($favoriteHirerIds as $hirerId) {
             $channels[] = new PrivateChannel('hirer.' . $hirerId);
         }
 

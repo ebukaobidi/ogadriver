@@ -410,29 +410,6 @@ export default function RideBookingScreen({ navigation }) {
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: isDark ? '#090d16' : '#ffffff' }}>
-      {/* TOP FLOATING HEADER (Overlaying Map) */}
-      <View
-        style={{
-          position: 'absolute',
-          top: Math.max(insets.top + 8, 16),
-          right: 16,
-          zIndex: 40,
-        }}
-      >
-        <TouchableOpacity
-          onPress={() => navigation.navigate('HirerBookings')}
-          style={{
-            backgroundColor: isDark ? 'rgba(18,25,39,0.92)' : 'rgba(255,255,255,0.95)',
-            borderColor: isDark ? '#1e293b' : '#e2e8f0',
-          }}
-          className="px-3.5 h-11 rounded-2xl border items-center justify-center flex-row shadow-lg shadow-black/10"
-          activeOpacity={0.7}
-        >
-          <Ionicons name="calendar-outline" size={16} color="#10b981" style={{ marginRight: 5 }} />
-          <Text className="text-emerald-500 font-semibold text-xs">Bookings</Text>
-        </TouchableOpacity>
-      </View>
-
       {/* FULL-SCREEN BOLT BACKGROUND MAP CANVAS (80%+ Screen View) */}
       <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }} className="bg-[#f8fafc]">
         {Platform.OS !== 'web' && MapView && isGoogleMapsConfigured() ? (

@@ -12,10 +12,36 @@ use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
 
-class HeadlessApiController extends Controller
+use Illuminate\Routing\Controllers\HasMiddleware;
+use Illuminate\Routing\Controllers\Middleware;
+
+class HeadlessApiController extends Controller implements HasMiddleware
 {
     protected SubscriptionService $subscriptionService;
     protected DriverLocationService $locationService;
+
+    public static function middleware(): array
+    {
+        return [
+            new Middleware(function ($request, $next) {
+                $user = $request->user();
+                if (!$user) {
+                    return response()->json(['success' => false, 'message' => 'Unauthenticated'], 401);
+                }
+                $subscriptionService = app(SubscriptionService::class);
+                $subscription = $subscriptionService->getActiveSubscription($user->id);
+
+                if (!$subscription || $subscription->type !== 'enterprise_elite') {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Headless API access requires Enterprise Elite subscription',
+                    ], 403);
+                }
+
+                return $next($request);
+            }),
+        ];
+    }
 
     public function __construct(
         SubscriptionService $subscriptionService,
@@ -23,21 +49,6 @@ class HeadlessApiController extends Controller
     ) {
         $this->subscriptionService = $subscriptionService;
         $this->locationService = $locationService;
-        
-        // Middleware to check Enterprise Elite subscription
-        $this->middleware(function ($request, $next) {
-            $user = $request->user();
-            $subscription = $this->subscriptionService->getActiveSubscription($user->id);
-            
-            if (!$subscription || $subscription->type !== 'enterprise_elite') {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Headless API access requires Enterprise Elite subscription',
-                ], 403);
-            }
-            
-            return $next($request);
-        });
     }
 
     /**

@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Booking;
 use App\Models\HandoverChecklist;
+use App\Events\HandoverSubmitted;
+use App\Events\HandoverVerified;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
@@ -61,6 +63,8 @@ class HandoverController extends Controller
             ]
         );
 
+        broadcast(new HandoverSubmitted($checklist));
+
         return response()->json([
             'success' => true,
             'message' => 'Handover checklist submitted successfully. Awaiting employer verification.',
@@ -85,6 +89,8 @@ class HandoverController extends Controller
         $checklist->update([
             'verified_at' => now(),
         ]);
+
+        broadcast(new HandoverVerified($checklist));
             
         return response()->json([
             'success' => true,
