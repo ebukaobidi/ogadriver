@@ -182,26 +182,34 @@ export default function RideBookingScreen({ navigation }) {
 
   const panResponder = React.useRef(
     PanResponder.create({
-      onStartShouldSetPanResponder: () => false,
-      onMoveShouldSetPanResponder: (_, gesture) => Math.abs(gesture.dy) > 10,
+      onStartShouldSetPanResponder: () => true,
+      onMoveShouldSetPanResponder: (_, gesture) => Math.abs(gesture.dy) > 4,
       onPanResponderGrant: () => {
-        sheetHeightAnim.stopAnimation();
+        sheetHeightAnim.stopAnimation((val) => {
+          if (typeof val === 'number') currentHeightRef.current = val;
+        });
       },
       onPanResponderMove: (_, gesture) => {
         const nextHeight = Math.min(
-          SNAP_EXPANDED + 30,
-          Math.max(SNAP_COLLAPSED - 20, currentHeightRef.current - gesture.dy)
+          SNAP_EXPANDED + 15,
+          Math.max(SNAP_COLLAPSED - 10, currentHeightRef.current - gesture.dy)
         );
         sheetHeightAnim.setValue(nextHeight);
       },
       onPanResponderRelease: (_, gesture) => {
-        const projectedHeight = currentHeightRef.current - gesture.dy - gesture.vy * 50;
-        if (projectedHeight > (SNAP_MIDDLE + SNAP_EXPANDED) / 2) {
+        // Tap gesture detection (< 7px drag)
+        if (Math.abs(gesture.dy) < 7 && Math.abs(gesture.dx) < 7) {
+          snapSheetTo(sheetState === 'collapsed' ? 'middle' : (sheetState === 'middle' ? 'expanded' : 'collapsed'));
+          return;
+        }
+
+        const projected = (currentHeightRef.current - gesture.dy) - (gesture.vy * 60);
+        if (gesture.vy < -0.4 || projected > (SNAP_MIDDLE + SNAP_EXPANDED) / 2) {
           snapSheetTo('expanded');
-        } else if (projectedHeight > (SNAP_COLLAPSED + SNAP_MIDDLE) / 2) {
-          snapSheetTo('middle');
-        } else {
+        } else if (gesture.vy > 0.4 || projected < (SNAP_COLLAPSED + SNAP_MIDDLE) / 2) {
           snapSheetTo('collapsed');
+        } else {
+          snapSheetTo('middle');
         }
       },
     })
@@ -499,18 +507,16 @@ export default function RideBookingScreen({ navigation }) {
           borderColor: isDark ? '#1e293b' : '#f1f5f9',
         }}
       >
-        {/* DRAG / TAP HANDLE (Clean Bolt minimal handle) */}
-        <TouchableOpacity
-          activeOpacity={0.9}
-          onPress={() => snapSheetTo(sheetState === 'collapsed' ? 'middle' : (sheetState === 'middle' ? 'expanded' : 'collapsed'))}
+        {/* DRAG / TAP HANDLE (Clean Bolt minimal handle with direct slide & tap response) */}
+        <View
           {...panResponder.panHandlers}
-          className="w-full pt-3 pb-2.5 items-center justify-center bg-transparent"
+          className="w-full py-3.5 items-center justify-center bg-transparent"
         >
           <View
             style={{ backgroundColor: isDark ? '#475569' : '#cbd5e1' }}
-            className="w-12 h-1.5 rounded-full"
+            className="w-14 h-1.5 rounded-full"
           />
-        </TouchableOpacity>
+        </View>
 
         {/* ROUTE INPUT SECTION (ALWAYS VISIBLE: STARTING SPOT, STOPS, DESTINATION & ADD STOP) */}
         <View className="px-4 pt-1 pb-2">

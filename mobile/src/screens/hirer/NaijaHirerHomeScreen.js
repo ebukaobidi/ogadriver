@@ -413,9 +413,6 @@ export default function NaijaHirerHomeScreen({ navigation }) {
                 <Text style={{ color: isDark ? '#ffffff' : '#0f172a' }} className="font-normal text-sm">
                   Active Area Tactical Map
                 </Text>
-                <Text style={{ color: isDark ? '#94a3b8' : '#64748b' }} className="text-xs font-normal mt-0.5">
-                  Point-to-point dispatch & chauffeur coverage
-                </Text>
               </View>
               <View className="px-3 py-1.5 rounded-xl bg-emerald-500">
                 <Text className="text-white font-normal text-xs">Request Ride</Text>
@@ -525,9 +522,6 @@ export default function NaijaHirerHomeScreen({ navigation }) {
             <View>
               <Text style={{ color: isDark ? '#ffffff' : '#0f172a' }} className="font-normal text-sm">
                 {`${selectedCountry.name} Executive Hire Fleets`}
-              </Text>
-              <Text style={{ color: isDark ? '#94a3b8' : '#64748b' }} className="text-[11px] font-normal">
-                Directly vetted and authorized by Admin
               </Text>
             </View>
 
@@ -656,9 +650,6 @@ export default function NaijaHirerHomeScreen({ navigation }) {
             <View>
               <Text style={{ color: isDark ? '#ffffff' : '#0f172a' }} className="font-normal text-sm">
                 Verified Chauffeurs Ready for Dispatch
-              </Text>
-              <Text style={{ color: isDark ? '#94a3b8' : '#64748b' }} className="text-[11px] font-normal">
-                Security-vetted drivers available in your vicinity
               </Text>
             </View>
             <TouchableOpacity

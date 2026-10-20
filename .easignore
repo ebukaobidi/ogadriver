@@ -1,0 +1,43 @@
+# Ignore git history & IDE configs from EAS archive
+.git
+.git/**
+.idea
+.idea/**
+.vscode
+.vscode/**
+.claude
+.claude/**
+
+# Explicitly ignore Laravel backend & root assets
+/app/
+/backend/
+/bootstrap/
+/config/
+/database/
+/frontend/
+/public/
+/resources/
+/routes/
+/storage/
+/tests/
+/vendor/
+/python Scripts/
+/scratch/
+/*.zip
+/*.sql
+/*.py
+/*.php
+/*.xml
+/*.sh
+/*.txt
+
+# Mobile exclusions
+mobile/node_modules/
+mobile/.expo/
+mobile/android/
+mobile/ios/
+mobile/dist/
+mobile/vendor/
+mobile/temp_*
+mobile/build_logs*
+mobile/*.log

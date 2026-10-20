@@ -78,7 +78,7 @@ export default function AppSettingsScreen({ navigation }) {
             >
               <View className="flex-row items-center">
                 <Ionicons name="moon-outline" size={20} color={themeMode === 'dark' ? '#10b981' : '#64748b'} />
-                <Text className={`font-normal text-sm ml-3 ${themeMode === 'dark' ? 'text-brandMint' : themeColors.textColor}`}>🌙 Dark Mode (Default)</Text>
+                <Text className={`font-normal text-sm ml-3 ${themeMode === 'dark' ? 'text-brandMint' : themeColors.textColor}`}>Dark Mode</Text>
               </View>
               {themeMode === 'dark' && <Ionicons name="checkmark-circle" size={20} color="#10b981" />}
             </TouchableOpacity>
@@ -90,7 +90,7 @@ export default function AppSettingsScreen({ navigation }) {
             >
               <View className="flex-row items-center">
                 <Ionicons name="sunny-outline" size={20} color={themeMode === 'light' ? '#059669' : '#64748b'} />
-                <Text className={`font-normal text-sm ml-3 ${themeMode === 'light' ? 'text-emerald-700' : themeColors.textColor}`}>☀️ Light Mode</Text>
+                <Text className={`font-normal text-sm ml-3 ${themeMode === 'light' ? 'text-emerald-700' : themeColors.textColor}`}>Light Mode</Text>
               </View>
               {themeMode === 'light' && <Ionicons name="checkmark-circle" size={20} color="#059669" />}
             </TouchableOpacity>
@@ -102,7 +102,7 @@ export default function AppSettingsScreen({ navigation }) {
             >
               <View className="flex-row items-center">
                 <Ionicons name="phone-portrait-outline" size={20} color={themeMode === 'system' ? '#10b981' : '#64748b'} />
-                <Text className={`font-normal text-sm ml-3 ${themeMode === 'system' ? 'text-brandMint' : themeColors.textColor}`}>📱 System Default</Text>
+                <Text className={`font-normal text-sm ml-3 ${themeMode === 'system' ? 'text-brandMint' : themeColors.textColor}`}>System Default</Text>
               </View>
               {themeMode === 'system' && <Ionicons name="checkmark-circle" size={20} color="#10b981" />}
             </TouchableOpacity>

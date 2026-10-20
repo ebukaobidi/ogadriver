@@ -394,9 +394,6 @@ export default function ProfileScreen({ navigation, route }) {
             <Text style={{ color: isDark ? '#ffffff' : '#0f172a' }} className="font-normal text-lg tracking-tight">
               Client Account
             </Text>
-            <Text style={{ color: isDark ? '#94a3b8' : '#64748b' }} className="text-[11px] font-normal">
-              Employer & Passenger Portal
-            </Text>
           </View>
         </View>
 
@@ -561,7 +558,7 @@ export default function ProfileScreen({ navigation, route }) {
             ₦{walletBalance.toLocaleString()}
           </Text>
           <Text style={{ color: '#ffffff' }} className="text-xs mb-4 opacity-90">
-            Spend this month: ₦{monthlySpend.toLocaleString()} • 0% transaction surcharges
+            Spend this month: ₦{monthlySpend.toLocaleString()}
           </Text>
 
           {/* 3 Action Buttons for Wallet */}
@@ -915,20 +912,13 @@ export default function ProfileScreen({ navigation, route }) {
               onPress={() => navigation.navigate('KycVerification')}
             >
               <View className="flex-row items-center flex-1 mr-2">
-                <View className="w-9 h-9 rounded-xl bg-emerald-500/15 items-center justify-center mr-3 border border-emerald-500/30">
-                  <Ionicons name="shield-checkmark" size={18} color="#10b981" />
-                </View>
-                <View className="flex-1">
-                  <View className="flex-row items-center">
-                    <Text style={{ color: isDark ? '#ffffff' : '#0f172a' }} className="font-semibold text-xs">
-                      KYC & Identity Verification
-                    </Text>
-                    <View className="ml-2 bg-emerald-500/15 border border-emerald-500/30 px-1.5 py-0.5 rounded">
-                      <Text className="text-emerald-500 font-black text-[8px] uppercase">
-                        {kycData?.status === 'verified' ? 'Tier 2 Certified' : 'Action Needed'}
-                      </Text>
-                    </View>
-                  </View>
+                <Text style={{ color: isDark ? '#ffffff' : '#0f172a' }} className="font-semibold text-xs">
+                  KYC & Identity Verification
+                </Text>
+                <View className="ml-2 bg-emerald-500/15 border border-emerald-500/30 px-1.5 py-0.5 rounded">
+                  <Text className="text-emerald-500 font-black text-[8px] uppercase">
+                    {kycData?.status === 'verified' ? 'Tier 2 Certified' : 'Action Needed'}
+                  </Text>
                 </View>
               </View>
               <Ionicons name="chevron-forward" size={16} color="#64748b" />
@@ -938,12 +928,9 @@ export default function ProfileScreen({ navigation, route }) {
               className="flex-row items-center justify-between p-4 border-b border-slate-700/20"
               onPress={() => navigation.navigate('AppSettings')}
             >
-              <View className="flex-row items-center">
-                <Ionicons name="shield-checkmark-outline" size={18} color="#10b981" />
-                <Text style={{ color: isDark ? '#ffffff' : '#0f172a' }} className="font-semibold text-xs ml-3">
-                  App Lock & Biometric PIN
-                </Text>
-              </View>
+              <Text style={{ color: isDark ? '#ffffff' : '#0f172a' }} className="font-semibold text-xs">
+                App Lock & Biometric PIN
+              </Text>
               <Ionicons name="chevron-forward" size={16} color="#64748b" />
             </TouchableOpacity>
 
@@ -951,12 +938,9 @@ export default function ProfileScreen({ navigation, route }) {
               className="flex-row items-center justify-between p-4 border-b border-slate-700/20"
               onPress={() => setConciergeModalVisible(true)}
             >
-              <View className="flex-row items-center">
-                <Ionicons name="headset-outline" size={18} color="#10b981" />
-                <Text style={{ color: isDark ? '#ffffff' : '#0f172a' }} className="font-semibold text-xs ml-3">
-                  24/7 Client Concierge Hotline
-                </Text>
-              </View>
+              <Text style={{ color: isDark ? '#ffffff' : '#0f172a' }} className="font-semibold text-xs">
+                24/7 Client Concierge Hotline
+              </Text>
               <Ionicons name="chevron-forward" size={16} color="#64748b" />
             </TouchableOpacity>
 
@@ -964,12 +948,9 @@ export default function ProfileScreen({ navigation, route }) {
               className="flex-row items-center justify-between p-4"
               onPress={() => navigation.navigate('TermsAndPrivacy')}
             >
-              <View className="flex-row items-center">
-                <Ionicons name="document-text-outline" size={18} color="#10b981" />
-                <Text style={{ color: isDark ? '#ffffff' : '#0f172a' }} className="font-semibold text-xs ml-3">
-                  Terms of Service & Privacy
-                </Text>
-              </View>
+              <Text style={{ color: isDark ? '#ffffff' : '#0f172a' }} className="font-semibold text-xs">
+                Terms of Service & Privacy
+              </Text>
               <Ionicons name="chevron-forward" size={16} color="#64748b" />
             </TouchableOpacity>
           </View>
