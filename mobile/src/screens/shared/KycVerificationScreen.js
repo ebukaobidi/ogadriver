@@ -569,7 +569,7 @@ export default function KycVerificationScreen({ navigation }) {
                 <View className="flex-row items-center">
                   <Ionicons name="checkmark-done-circle" size={18} color="#ffffff" style={{ marginRight: 6 }} />
                   <Text className="text-white font-semibold text-sm">
-                    Save & Submit KYC
+                    Save
                   </Text>
                 </View>
               )}
