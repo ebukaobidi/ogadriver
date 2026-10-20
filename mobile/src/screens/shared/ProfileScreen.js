@@ -988,7 +988,7 @@ export default function ProfileScreen({ navigation, route }) {
       </ScrollView>
 
       {/* MODAL 1: ADD FUNDS / WALLET TOP-UP */}
-      <Modal visible={addFundsVisible} transparent animationType="slide">
+      <Modal visible={addFundsVisible} transparent animationType="slide" onRequestClose={() => setAddFundsVisible(false)}>
         <View className="flex-1 bg-black/60 justify-end">
           <View
             style={{
@@ -1081,7 +1081,7 @@ export default function ProfileScreen({ navigation, route }) {
       </Modal>
 
       {/* MODAL 2: EDIT PROFILE INFORMATION */}
-      <Modal visible={editProfileVisible} transparent animationType="slide">
+      <Modal visible={editProfileVisible} transparent animationType="slide" onRequestClose={() => setEditProfileVisible(false)}>
         <View className="flex-1 bg-black/60 justify-end">
           <View
             style={{
@@ -1229,7 +1229,7 @@ export default function ProfileScreen({ navigation, route }) {
       </Modal>
 
       {/* MODAL 3: COUNTRY & CURRENCY SELECTOR */}
-      <Modal visible={countryModalVisible} transparent animationType="slide">
+      <Modal visible={countryModalVisible} transparent animationType="slide" onRequestClose={() => setCountryModalVisible(false)}>
         <View className="flex-1 bg-black/60 justify-end">
           <View
             style={{
@@ -1296,7 +1296,7 @@ export default function ProfileScreen({ navigation, route }) {
       </Modal>
 
       {/* MODAL 4: 24/7 VIP CLIENT CONCIERGE HOTLINE */}
-      <Modal visible={conciergeModalVisible} transparent animationType="slide">
+      <Modal visible={conciergeModalVisible} transparent animationType="slide" onRequestClose={() => setConciergeModalVisible(false)}>
         <View className="flex-1 bg-black/70 justify-end">
           <View
             style={{
@@ -1448,7 +1448,7 @@ export default function ProfileScreen({ navigation, route }) {
       </Modal>
 
       {/* MODAL 5: ADD NEW SAVED PLACE */}
-      <Modal visible={addPlaceModalVisible} transparent animationType="slide">
+      <Modal visible={addPlaceModalVisible} transparent animationType="slide" onRequestClose={() => setAddPlaceModalVisible(false)}>
         <View className="flex-1 bg-black/70 justify-end">
           <View
             style={{

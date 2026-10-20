@@ -15,6 +15,7 @@ import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons';
 import { authService, driverService, radioService, extractArray } from '../../api/api';
 import { useTheme } from '../../context/ThemeContext';
+import { isGoogleMapsConfigured } from '../../utils/maps';
 
 // Safe MapView imports for native platforms
 let MapView, Marker, PROVIDER_GOOGLE;
@@ -517,7 +518,7 @@ export default function NaijaDriverHomeScreen({ navigation }) {
     <SafeAreaView style={styles.container}>
       {/* 1. FULL-SCREEN MAP BACKGROUND */}
       <View style={StyleSheet.absoluteFillObject}>
-        {Platform.OS === 'web' ? (
+        {Platform.OS === 'web' || !MapView || !isGoogleMapsConfigured() ? (
           <View style={[styles.webMapContainer, !isDark && { backgroundColor: '#f1f5f9' }]}>
             {/* Street Grid Background Pattern with White/Slate Cartography in Light Mode */}
             <View style={[styles.gridOverlay, !isDark && { opacity: 0.35 }]}>

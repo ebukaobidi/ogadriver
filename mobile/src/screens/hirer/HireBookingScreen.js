@@ -19,6 +19,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { bookingService } from '../../api/api';
 import { useTheme } from '../../context/ThemeContext';
 import loyaltyService from '../../services/loyaltyService';
+import { isGoogleMapsConfigured } from '../../utils/maps';
 
 let MapView, Marker, PROVIDER_GOOGLE;
 let DateTimePicker;
@@ -484,7 +485,7 @@ export default function HireBookingScreen({ navigation }) {
 
       {/* FULL-SCREEN BOLT BACKGROUND MAP CANVAS (80%+ Screen View) */}
       <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }} className="bg-[#f8fafc]">
-        {Platform.OS !== 'web' && MapView ? (
+        {Platform.OS !== 'web' && MapView && isGoogleMapsConfigured() ? (
           <MapView
             style={{ width: '100%', height: '100%' }}
             initialRegion={region}
@@ -1302,7 +1303,7 @@ export default function HireBookingScreen({ navigation }) {
       </Animated.View>
 
       {/* CHAUFFEUR HIRE TRIP SUMMARY MODAL - FLOATING SAFELY ABOVE ANDROID NAVIGATION BUTTONS */}
-      <Modal visible={showTripSummaryModal} transparent animationType="slide">
+      <Modal visible={showTripSummaryModal} transparent animationType="slide" onRequestClose={() => setShowTripSummaryModal(false)}>
         <View
           style={{
             paddingBottom: Platform.OS === 'android' ? Math.max(insets.bottom, 48) + 32 : Math.max(insets.bottom, 20) + 16,
@@ -1474,7 +1475,7 @@ export default function HireBookingScreen({ navigation }) {
       </Modal>
 
       {/* FLEXIBLE DATE PICKER MODAL - FLOATING SAFELY ABOVE ANDROID NAVIGATION BUTTONS */}
-      <Modal visible={showDatePickerModal} transparent animationType="slide">
+      <Modal visible={showDatePickerModal} transparent animationType="slide" onRequestClose={() => setShowDatePickerModal(false)}>
         <View
           style={{
             paddingBottom: Platform.OS === 'android' ? Math.max(insets.bottom, 48) + 32 : Math.max(insets.bottom, 20) + 16,

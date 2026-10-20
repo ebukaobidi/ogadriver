@@ -266,7 +266,7 @@ export default function PaymentCardsScreen({ navigation }) {
       </ScrollView>
 
       {/* ADD CARD MODAL */}
-      <Modal visible={modalVisible} transparent animationType="slide">
+      <Modal visible={modalVisible} transparent animationType="slide" onRequestClose={() => setModalVisible(false)}>
         <View className="flex-1 bg-black/60 justify-end">
           <View
             style={{

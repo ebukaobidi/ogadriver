@@ -52,7 +52,7 @@ export default function DeadManSwitchModal({ visible, jobId, onVerified }) {
     };
 
     return (
-        <Modal visible={visible} transparent={true} animationType="fade">
+        <Modal visible={visible} transparent={true} animationType="fade" onRequestClose={() => {}}>
             <View className="flex-1 bg-black/90 justify-center px-6">
                 <View className="bg-slate-900 border-2 border-red-500 rounded-2xl p-6 items-center">
                     <Text className="text-red-500 font-black text-2xl uppercase mb-2 text-center">Security Halt</Text>

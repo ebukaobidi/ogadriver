@@ -6,6 +6,7 @@ import * as Location from 'expo-location';
 import { useTheme } from '../../context/ThemeContext';
 import { useCountry } from '../../context/CountryContext';
 import { api, authService, bookingService, extractArray } from '../../api/api';
+import { isGoogleMapsConfigured } from '../../utils/maps';
 
 let MapView, Marker;
 try {
@@ -751,7 +752,7 @@ export default function NaijaHirerHomeScreen({ navigation }) {
       </ScrollView>
 
       {/* INTERNATIONAL COUNTRY HIRE MARKET SELECTOR MODAL */}
-      <Modal visible={showCountryModal} transparent animationType="slide">
+      <Modal visible={showCountryModal} transparent animationType="slide" onRequestClose={() => setShowCountryModal(false)}>
         <View className="flex-1 bg-black/60 justify-end">
           <View
             style={{
@@ -861,8 +862,8 @@ export default function NaijaHirerHomeScreen({ navigation }) {
             </View>
 
             <ScrollView className="py-4" showsVerticalScrollIndicator={false}>
-              {/* Native MapView if available */}
-              {Platform.OS !== 'web' && MapView ? (
+              {/* Native MapView if available and key configured */}
+              {Platform.OS !== 'web' && MapView && isGoogleMapsConfigured() ? (
                 <View className="h-56 rounded-2xl overflow-hidden mb-3 border border-slate-200 dark:border-slate-700">
                   <MapView
                     style={{ flex: 1 }}
@@ -877,7 +878,7 @@ export default function NaijaHirerHomeScreen({ navigation }) {
                 </View>
               ) : null}
 
-              {Platform.OS !== 'web' && MapView ? (
+              {Platform.OS !== 'web' && MapView && isGoogleMapsConfigured() ? (
                 <TouchableOpacity
                   onPress={async () => {
                     try {

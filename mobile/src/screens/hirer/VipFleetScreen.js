@@ -233,7 +233,7 @@ export default function VipFleetScreen({ navigation }) {
       )}
 
       {/* Booking Modal */}
-      <Modal visible={bookingModalVisible} transparent animationType="slide">
+      <Modal visible={bookingModalVisible} transparent animationType="slide" onRequestClose={() => setBookingModalVisible(false)}>
         <View className="flex-1 bg-black/60 justify-end">
           <View
             style={{

@@ -1,7 +1,8 @@
 import React, { useState, useRef } from 'react';
-import { View, Text, TouchableOpacity, Animated, PanResponder } from 'react-native';
+import { View, Text, TouchableOpacity, Animated, PanResponder, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import MapView, { Marker, Circle, Polygon } from 'react-native-maps';
+import { isGoogleMapsConfigured } from '../utils/maps';
 
 export default function MapCommandCenter({ userLocation, nearbyDrivers, onDriverSelect, onLocationPress }) {
   const [mapRegion, setMapRegion] = useState({
@@ -17,7 +18,8 @@ export default function MapCommandCenter({ userLocation, nearbyDrivers, onDriver
   return (
     <View className="flex-1 relative">
       {/* Tactical Map View */}
-      <MapView
+      {Platform.OS !== 'web' && isGoogleMapsConfigured() ? (
+        <MapView
         style={{ flex: 1 }}
         region={mapRegion}
         onRegionChangeComplete={setMapRegion}
@@ -111,6 +113,22 @@ export default function MapCommandCenter({ userLocation, nearbyDrivers, onDriver
           />
         )}
       </MapView>
+      ) : (
+        <View className="flex-1 bg-slate-950 items-center justify-center relative overflow-hidden">
+          <View className="absolute inset-0 opacity-20">
+            <View className="absolute w-full h-12 bg-slate-800 top-1/4 -rotate-12" />
+            <View className="absolute w-full h-14 bg-slate-800 top-1/2 rotate-6" />
+            <View className="absolute h-full w-12 bg-slate-800 left-1/3 rotate-12" />
+            <View className="absolute h-full w-14 bg-slate-800 right-1/4 -rotate-6" />
+          </View>
+          <View className="w-24 h-24 rounded-full border border-emerald-500/30 items-center justify-center">
+            <View className="w-16 h-16 rounded-full bg-emerald-500/10 border border-emerald-500/60 items-center justify-center">
+              <Ionicons name="navigate" size={24} color="#10b981" />
+            </View>
+          </View>
+          <Text className="text-slate-400 font-semibold text-xs mt-3 tracking-wider uppercase">Command Center Radar</Text>
+        </View>
+      )}
 
       {/* Floating Command Panel - Top */}
       <View className="absolute top-4 left-4 right-4">

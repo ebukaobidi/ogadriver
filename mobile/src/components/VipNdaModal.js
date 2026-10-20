@@ -29,7 +29,7 @@ export default function VipNdaModal({ visible, jobId, onSigned, onCancel }) {
  };
 
  return (
- <Modal visible={visible} transparent={true} animationType="slide">
+ <Modal visible={visible} transparent={true} animationType="slide" onRequestClose={onCancel}>
  <View style={styles.overlay}>
  <View style={styles.modalContainer}>
  <View style={styles.header}>

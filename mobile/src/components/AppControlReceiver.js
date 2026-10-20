@@ -42,7 +42,7 @@ export default function AppControlReceiver({ children }) {
   return (
     <>
       {children}
-      <Modal visible={updateRequired} animationType="slide" transparent={false}>
+      <Modal visible={updateRequired} animationType="slide" transparent={false} onRequestClose={() => {}}>
         <View className="flex-1 bg-slate-950 justify-center px-6">
           <View className="w-16 h-16 bg-amber-500/20 rounded-2xl border border-amber-500/50 items-center justify-center mb-6">
             <Text className="text-3xl">🚀</Text>
