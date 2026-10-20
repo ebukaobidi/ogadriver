@@ -196,13 +196,14 @@ export default function HireBookingScreen({ navigation }) {
 
   // Bolt-style Bottom Sheet Animation & Snapping for Hire
   const { height: screenHeight } = Dimensions.get('window');
-  const SNAP_COLLAPSED = Math.max(180, Math.round(screenHeight * 0.25));
-  const SNAP_MIDDLE = Math.round(screenHeight * 0.60); // Middle height (60%)
+  const SNAP_COLLAPSED = 115; // Clean "Where to?" peek pill only
+  const SNAP_MIDDLE = Math.round(screenHeight * 0.58); // Middle height (58%)
   const SNAP_EXPANDED = Math.round(screenHeight * 0.88); // Full top screen (88%)
 
-  const [sheetState, setSheetState] = useState('middle'); // Open at middle so user sees options immediately
-  const sheetHeightAnim = React.useRef(new Animated.Value(SNAP_MIDDLE)).current;
-  const currentHeightRef = React.useRef(SNAP_MIDDLE);
+  const [sheetState, setSheetState] = useState('collapsed'); // Default to clean peek pill
+  const sheetHeightAnim = React.useRef(new Animated.Value(SNAP_COLLAPSED)).current;
+  const currentHeightRef = React.useRef(SNAP_COLLAPSED);
+  const pickupInputRef = React.useRef(null);
 
   const snapSheetTo = (stateName) => {
     let target = SNAP_COLLAPSED;
@@ -246,22 +247,30 @@ export default function HireBookingScreen({ navigation }) {
 
         // Quick tap: toggle state (< 10px drag)
         if (Math.abs(finalDy) < 10 && Math.abs(gesture.dx) < 10) {
-          snapSheetTo(sheetState === 'collapsed' ? 'middle' : (sheetState === 'middle' ? 'expanded' : 'collapsed'));
+          if (sheetState === 'collapsed') {
+            snapSheetTo('expanded');
+            setTimeout(() => pickupInputRef.current?.focus(), 250);
+          } else if (sheetState === 'expanded') {
+            snapSheetTo('collapsed');
+          } else {
+            snapSheetTo('expanded');
+          }
           return;
         }
 
         // Swiped UP
-        if (finalVy < -0.3 || finalDy < -50) {
+        if (finalVy < -0.25 || finalDy < -35) {
           if (sheetState === 'collapsed') {
-            snapSheetTo('middle');
+            snapSheetTo('expanded');
+            setTimeout(() => pickupInputRef.current?.focus(), 250);
           } else {
             snapSheetTo('expanded');
           }
         }
         // Swiped DOWN
-        else if (finalVy > 0.3 || finalDy > 50) {
+        else if (finalVy > 0.25 || finalDy > 35) {
           if (sheetState === 'expanded') {
-            snapSheetTo('middle');
+            snapSheetTo('collapsed');
           } else {
             snapSheetTo('collapsed');
           }
@@ -549,11 +558,11 @@ export default function HireBookingScreen({ navigation }) {
           borderColor: isDark ? '#1e293b' : '#f1f5f9',
         }}
       >
-        {/* DRAG / TAP HANDLE (Clean Bolt minimal handle with direct slide & tap response) */}
+        {/* DRAG / TAP HANDLE */}
         <View
           {...panResponder.panHandlers}
           collapsable={false}
-          style={{ width: '100%', height: 44, alignItems: 'center', justifyContent: 'center', backgroundColor: 'transparent' }}
+          style={{ width: '100%', height: 32, alignItems: 'center', justifyContent: 'center', backgroundColor: 'transparent' }}
         >
           <View
             style={{ backgroundColor: isDark ? '#475569' : '#cbd5e1' }}
@@ -561,129 +570,154 @@ export default function HireBookingScreen({ navigation }) {
           />
         </View>
 
-        {/* REPORTING LOCATION & ITINERARY (ALWAYS VISIBLE FORM) */}
-        <View className="px-4 pt-1 pb-2">
-          {/* Reporting Location Input */}
-          <View
-            style={{
-              backgroundColor: isDark ? '#121927' : '#ffffff',
-              borderColor: activeInput === 'pickup' ? '#10b981' : isDark ? '#1e293b' : '#e2e8f0',
-            }}
-            className="flex-row items-center border rounded-2xl px-3.5 py-2.5 mb-1.5 shadow-sm"
-          >
-            <View className="w-3.5 h-3.5 rounded-full bg-emerald-500 mr-2.5 items-center justify-center">
-              <View className="w-1.5 h-1.5 rounded-full bg-white" />
-            </View>
-            <TextInput
-              placeholder="Where should the driver meet you?"
-              placeholderTextColor={isDark ? '#64748b' : '#94a3b8'}
-              value={pickup}
-              onChangeText={(text) => {
-                setPickup(text);
-                setActiveInput('pickup');
-                fetchLiveSuggestions(text);
-              }}
-              onFocus={() => {
-                setActiveInput('pickup');
-                if (sheetState === 'collapsed') snapSheetTo('middle');
-              }}
-              style={{ color: isDark ? '#ffffff' : '#0f172a' }}
-              className="flex-1 text-xs font-normal"
-            />
-            {/* Switching between Clear/Cancel and Map Location Icon */}
-            {pickup ? (
-              <TouchableOpacity onPress={() => setPickup('')} className="p-1">
-                <Ionicons name="close-circle" size={17} color="#ef4444" />
-              </TouchableOpacity>
-            ) : (
-              <TouchableOpacity
-                onPress={() => {
-                  handlePickOnMap();
-                  if (sheetState === 'collapsed') snapSheetTo('middle');
-                }}
-                className="p-1"
-              >
-                <Ionicons name="location" size={17} color="#10b981" />
-              </TouchableOpacity>
-            )}
-          </View>
-          {activeInput === 'pickup' && renderSuggestions()}
-
-          {/* CENTER ADD STOP ACTION BAR */}
-          <View className="my-2 flex-row items-center justify-center">
-            <View className="flex-1 h-[1px] bg-slate-200 dark:bg-slate-800" />
+        {sheetState === 'collapsed' ? (
+          /* COLLAPSED VIEW: ONLY THE "WHERE TO?" SEARCH PILL (MATCHING BENCHMARK DESIGN) */
+          <View {...panResponder.panHandlers} collapsable={false} className="px-4 pb-4">
             <TouchableOpacity
-              onPress={addStop}
-              className="mx-3 flex-row items-center py-1.5 px-3.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 active:bg-emerald-500/20"
+              activeOpacity={0.88}
+              onPress={() => {
+                snapSheetTo('expanded');
+                setTimeout(() => pickupInputRef.current?.focus(), 250);
+              }}
+              style={{
+                backgroundColor: isDark ? '#121927' : '#f1f5f9',
+                borderColor: isDark ? '#1e293b' : '#e2e8f0',
+              }}
+              className="flex-row items-center border rounded-2xl px-4 py-3.5 shadow-sm"
             >
-              <Ionicons name="add-circle" size={14} color="#10b981" style={{ marginRight: 4 }} />
-              <Text className="text-emerald-500 font-normal text-xs">
-                + Add Stop (Stop & Continue)
+              <Ionicons name="search" size={20} color={isDark ? '#ffffff' : '#0f172a'} style={{ marginRight: 12 }} />
+              <Text
+                style={{ color: pickup ? (isDark ? '#ffffff' : '#0f172a') : (isDark ? '#94a3b8' : '#64748b') }}
+                className="text-base font-medium flex-1"
+                numberOfLines={1}
+              >
+                {pickup || 'Where do you need a driver?'}
               </Text>
             </TouchableOpacity>
-            <View className="flex-1 h-[1px] bg-slate-200 dark:bg-slate-800" />
           </View>
+        ) : (
+          /* EXPANDED VIEW: HEADER WITH MINIMIZE BTN + FULL REPORTING INPUTS & FORM */
+          <View className="flex-1">
+            <View {...panResponder.panHandlers} collapsable={false} className="px-4 pb-2 pt-1 flex-row items-center justify-between">
+              <Text style={{ color: isDark ? '#ffffff' : '#0f172a' }} className="font-semibold text-base">
+                Hire a Professional Driver
+              </Text>
+              <TouchableOpacity
+                onPress={() => snapSheetTo('collapsed')}
+                className="flex-row items-center py-1.5 px-3 rounded-full bg-slate-100 dark:bg-slate-800"
+              >
+                <Ionicons name="chevron-down" size={16} color={isDark ? '#cbd5e1' : '#475569'} style={{ marginRight: 4 }} />
+                <Text style={{ color: isDark ? '#cbd5e1' : '#475569' }} className="text-xs font-medium">
+                  Minimize
+                </Text>
+              </TouchableOpacity>
+            </View>
 
-          {/* ITINERARY STOPS (STOP & CONTINUE) */}
-          {stops.map((stopItem, index) => (
-            <View key={stopItem.id} className="mb-1.5">
+            {/* REPORTING LOCATION & ITINERARY */}
+            <View className="px-4 pt-1 pb-2">
+              {/* Reporting Location Input */}
               <View
                 style={{
                   backgroundColor: isDark ? '#121927' : '#ffffff',
-                  borderColor: isDark ? '#1e293b' : '#e2e8f0',
+                  borderColor: activeInput === 'pickup' ? '#10b981' : isDark ? '#1e293b' : '#e2e8f0',
                 }}
-                className="flex-row items-center border rounded-2xl px-3.5 py-2.5 shadow-sm"
+                className="flex-row items-center border rounded-2xl px-3.5 py-2.5 mb-1.5 shadow-sm"
               >
-                <View className="w-3.5 h-3.5 rounded-full bg-sky-500 mr-2.5 items-center justify-center">
-                  <Text className="text-[8px] text-white font-normal">{index + 1}</Text>
+                <View className="w-3.5 h-3.5 rounded-full bg-emerald-500 mr-2.5 items-center justify-center">
+                  <View className="w-1.5 h-1.5 rounded-full bg-white" />
                 </View>
                 <TextInput
-                  placeholder={`Stop ${index + 1} / Destination spot`}
+                  ref={pickupInputRef}
+                  placeholder="Where should the driver meet you?"
                   placeholderTextColor={isDark ? '#64748b' : '#94a3b8'}
-                  value={stopItem.address}
-                  onChangeText={(text) => updateStop(stopItem.id, text)}
+                  value={pickup}
+                  onChangeText={(text) => {
+                    setPickup(text);
+                    setActiveInput('pickup');
+                    fetchLiveSuggestions(text);
+                  }}
                   onFocus={() => {
-                    if (sheetState === 'collapsed') snapSheetTo('middle');
+                    setActiveInput('pickup');
                   }}
                   style={{ color: isDark ? '#ffffff' : '#0f172a' }}
                   className="flex-1 text-xs font-normal"
                 />
-                {stopItem.address ? (
-                  <TouchableOpacity onPress={() => updateStop(stopItem.id, '')} className="p-1 mr-1">
-                    <Ionicons name="close-circle" size={16} color="#94a3b8" />
+                {/* Switching between Clear/Cancel and Map Location Icon */}
+                {pickup ? (
+                  <TouchableOpacity onPress={() => setPickup('')} className="p-1">
+                    <Ionicons name="close-circle" size={17} color="#ef4444" />
                   </TouchableOpacity>
                 ) : (
                   <TouchableOpacity
-                    onPress={() => updateStop(stopItem.id, 'Chauffeur Destination Pin')}
-                    className="p-1 mr-1"
+                    onPress={() => {
+                      handlePickOnMap();
+                    }}
+                    className="p-1"
                   >
-                    <Ionicons name="location" size={16} color="#0284c7" />
+                    <Ionicons name="location" size={17} color="#10b981" />
                   </TouchableOpacity>
                 )}
-                <TouchableOpacity onPress={() => removeStop(stopItem.id)} className="p-1">
-                  <Ionicons name="trash-outline" size={16} color="#ef4444" />
-                </TouchableOpacity>
               </View>
+              {activeInput === 'pickup' && renderSuggestions()}
+
+              {/* CENTER ADD STOP ACTION BAR */}
+              <View className="my-1.5 flex-row items-center justify-center">
+                <View className="flex-1 h-[1px] bg-slate-200 dark:bg-slate-800" />
+                <TouchableOpacity
+                  onPress={addStop}
+                  className="mx-3 flex-row items-center py-1 px-3 rounded-full bg-emerald-500/10 border border-emerald-500/30 active:bg-emerald-500/20"
+                >
+                  <Ionicons name="add-circle" size={13} color="#10b981" style={{ marginRight: 4 }} />
+                  <Text className="text-emerald-500 font-normal text-[11px]">
+                    + Add Stop (Stop & Continue)
+                  </Text>
+                </TouchableOpacity>
+                <View className="flex-1 h-[1px] bg-slate-200 dark:bg-slate-800" />
+              </View>
+
+              {/* ITINERARY STOPS (STOP & CONTINUE) */}
+              {stops.map((stopItem, index) => (
+                <View key={stopItem.id} className="mb-1.5">
+                  <View
+                    style={{
+                      backgroundColor: isDark ? '#121927' : '#ffffff',
+                      borderColor: isDark ? '#1e293b' : '#e2e8f0',
+                    }}
+                    className="flex-row items-center border rounded-2xl px-3.5 py-2.5 shadow-sm"
+                  >
+                    <View className="w-3.5 h-3.5 rounded-full bg-sky-500 mr-2.5 items-center justify-center">
+                      <Text className="text-[8px] text-white font-normal">{index + 1}</Text>
+                    </View>
+                    <TextInput
+                      placeholder={`Stop ${index + 1} / Destination spot`}
+                      placeholderTextColor={isDark ? '#64748b' : '#94a3b8'}
+                      value={stopItem.address}
+                      onChangeText={(text) => updateStop(stopItem.id, text)}
+                      style={{ color: isDark ? '#ffffff' : '#0f172a' }}
+                      className="flex-1 text-xs font-normal"
+                    />
+                    {stopItem.address ? (
+                      <TouchableOpacity onPress={() => updateStop(stopItem.id, '')} className="p-1 mr-1">
+                        <Ionicons name="close-circle" size={16} color="#94a3b8" />
+                      </TouchableOpacity>
+                    ) : (
+                      <TouchableOpacity
+                        onPress={() => updateStop(stopItem.id, 'Chauffeur Destination Pin')}
+                        className="p-1 mr-1"
+                      >
+                        <Ionicons name="location" size={16} color="#0284c7" />
+                      </TouchableOpacity>
+                    )}
+                    <TouchableOpacity onPress={() => removeStop(stopItem.id)} className="p-1">
+                      <Ionicons name="trash-outline" size={16} color="#ef4444" />
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              ))}
             </View>
-          ))}
 
-          {/* QUICK SNAP CHEVRON IN COLLAPSED */}
-          {sheetState === 'collapsed' ? (
-            <TouchableOpacity
-              onPress={() => snapSheetTo('middle')}
-              className="flex-row items-center justify-center mt-2 py-1 px-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 self-center"
-            >
-              <Text style={{ color: isDark ? '#94a3b8' : '#64748b' }} className="font-normal text-[11px] mr-1">
-                Hire Options
-              </Text>
-              <Ionicons name="chevron-up" size={12} color={isDark ? '#94a3b8' : '#64748b'} />
-            </TouchableOpacity>
-          ) : null}
-        </View>
-
-        {/* EXPANDED / MIDDLE SCROLLABLE HIRE FORM (ONLY VISIBLE WHEN EXPANDED OR MIDDLE) */}
-        {sheetState !== 'collapsed' ? (
-          <ScrollView
+            {/* EXPANDED / MIDDLE SCROLLABLE HIRE FORM */}
+            <ScrollView
             className="flex-1 px-4 pt-1"
             contentContainerStyle={{ paddingBottom: 110 }}
             bounces={true}
@@ -1263,18 +1297,25 @@ export default function HireBookingScreen({ navigation }) {
               </Text>
             </TouchableOpacity>
           </ScrollView>
-        ) : null}
+        </View>
+      )}
       </Animated.View>
 
-      {/* CHAUFFEUR HIRE TRIP SUMMARY MODAL */}
+      {/* CHAUFFEUR HIRE TRIP SUMMARY MODAL - FLOATING SAFELY ABOVE ANDROID NAVIGATION BUTTONS */}
       <Modal visible={showTripSummaryModal} transparent animationType="slide">
-        <View className="flex-1 bg-black/60 justify-end">
+        <View
+          style={{
+            paddingBottom: Platform.OS === 'android' ? Math.max(insets.bottom, 48) + 32 : Math.max(insets.bottom, 20) + 16,
+          }}
+          className="flex-1 bg-black/60 justify-end px-3"
+        >
           <View
             style={{
               backgroundColor: isDark ? '#090d16' : '#ffffff',
               borderColor: isDark ? '#1e293b' : '#e2e8f0',
+              maxHeight: '85%',
             }}
-            className="rounded-t-3xl p-6 border-t"
+            className="rounded-3xl p-6 border shadow-2xl"
           >
             <View className="flex-row items-center justify-between mb-4">
               <View className="flex-row items-center">
@@ -1432,15 +1473,20 @@ export default function HireBookingScreen({ navigation }) {
         </View>
       </Modal>
 
-      {/* FLEXIBLE DATE PICKER MODAL */}
+      {/* FLEXIBLE DATE PICKER MODAL - FLOATING SAFELY ABOVE ANDROID NAVIGATION BUTTONS */}
       <Modal visible={showDatePickerModal} transparent animationType="slide">
-        <View className="flex-1 bg-black/60 justify-end">
+        <View
+          style={{
+            paddingBottom: Platform.OS === 'android' ? Math.max(insets.bottom, 48) + 32 : Math.max(insets.bottom, 20) + 16,
+          }}
+          className="flex-1 bg-black/60 justify-end px-3"
+        >
           <View
             style={{
               backgroundColor: isDark ? '#090d16' : '#ffffff',
               borderColor: isDark ? '#1e293b' : '#e2e8f0',
             }}
-            className="rounded-t-3xl p-6 border-t"
+            className="rounded-3xl p-6 border shadow-2xl"
           >
             <View className="flex-row items-center justify-between mb-4">
               <Text style={{ color: isDark ? '#ffffff' : '#0f172a' }} className="text-lg font-black tracking-tight">
