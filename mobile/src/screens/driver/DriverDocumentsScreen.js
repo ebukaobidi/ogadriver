@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, ScrollView, Alert, ActivityIndicator, RefreshControl, Modal, TextInput, Platform, Share } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { driverService, authService } from '../../api/api';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
@@ -10,6 +10,7 @@ import { useTheme } from '../../context/ThemeContext';
 import HeaderBar from '../../components/HeaderBar';
 
 export default function DriverDocumentsScreen({ navigation }) {
+  const insets = useSafeAreaInsets();
   const { isDark } = useTheme();
   const [documents, setDocuments] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -642,14 +643,20 @@ export default function DriverDocumentsScreen({ navigation }) {
         visible={uploadModalVisible}
         onRequestClose={() => setUploadModalVisible(false)}
       >
-        <View className="flex-1 justify-end bg-black/70">
+        <View
+          style={{
+            paddingBottom: Platform.OS === 'android' ? Math.max(insets.bottom, 48) + 16 : Math.max(insets.bottom, 16) + 8,
+          }}
+          className="flex-1 justify-end bg-black/70 px-3"
+        >
           <View 
             style={{
               backgroundColor: themeStyles.cardBg,
               borderColor: themeStyles.cardBorder,
-              borderTopWidth: 1
+              borderWidth: 1,
+              maxHeight: '85%'
             }}
-            className="rounded-t-3xl p-6"
+            className="rounded-3xl p-6 shadow-2xl"
           >
             <View className="flex-row justify-between items-center mb-4">
               <Text style={{ color: themeStyles.primaryText, fontSize: 16, fontWeight: 'normal' }}>
@@ -789,14 +796,20 @@ export default function DriverDocumentsScreen({ navigation }) {
         visible={ninModalVisible}
         onRequestClose={() => setNinModalVisible(false)}
       >
-        <View className="flex-1 justify-end bg-black/70">
+        <View
+          style={{
+            paddingBottom: Platform.OS === 'android' ? Math.max(insets.bottom, 48) + 16 : Math.max(insets.bottom, 16) + 8,
+          }}
+          className="flex-1 justify-end bg-black/70 px-3"
+        >
           <View 
-            style={{
-              backgroundColor: themeStyles.cardBg,
-              borderColor: themeStyles.cardBorder,
-              borderWidth: 1
+            style={{ 
+              backgroundColor: themeStyles.cardBg, 
+              borderColor: themeStyles.cardBorder, 
+              borderWidth: 1,
+              maxHeight: '85%'
             }}
-            className="rounded-t-[2.5rem] p-6 pb-10 shadow-2xl"
+            className="rounded-3xl p-6 shadow-2xl"
           >
             <View className="flex-row items-center justify-between mb-4">
               <View className="flex-row items-center">

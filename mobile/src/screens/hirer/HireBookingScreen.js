@@ -464,13 +464,7 @@ export default function HireBookingScreen({ navigation }) {
         </View>
 
         <TouchableOpacity
-          onPress={() => {
-            try {
-              navigation.navigate('HirerBookings');
-            } catch (err) {
-              navigation.navigate('Account', { screen: 'HirerBookings' });
-            }
-          }}
+          onPress={() => navigation.navigate('NaijaHirerHome')}
           style={{
             backgroundColor: isDark ? 'rgba(18,25,39,0.92)' : 'rgba(255,255,255,0.95)',
             borderColor: isDark ? '#1e293b' : '#e2e8f0',
@@ -478,8 +472,8 @@ export default function HireBookingScreen({ navigation }) {
           className="px-3.5 h-11 rounded-2xl border items-center justify-center flex-row shadow-lg shadow-black/10"
           activeOpacity={0.7}
         >
-          <Ionicons name="calendar-outline" size={16} color="#10b981" style={{ marginRight: 4 }} />
-          <Text className="text-emerald-500 font-normal text-xs">Bookings</Text>
+          <Ionicons name="storefront-outline" size={16} color="#10b981" style={{ marginRight: 4 }} />
+          <Text className="text-emerald-500 font-semibold text-xs">Market</Text>
         </TouchableOpacity>
       </View>
 
@@ -1306,7 +1300,7 @@ export default function HireBookingScreen({ navigation }) {
       <Modal visible={showTripSummaryModal} transparent animationType="slide" onRequestClose={() => setShowTripSummaryModal(false)}>
         <View
           style={{
-            paddingBottom: Platform.OS === 'android' ? Math.max(insets.bottom, 48) + 32 : Math.max(insets.bottom, 20) + 16,
+            paddingBottom: Platform.OS === 'android' ? Math.max(insets.bottom, 48) + 16 : Math.max(insets.bottom, 20) + 12,
           }}
           className="flex-1 bg-black/60 justify-end px-3"
         >
@@ -1330,14 +1324,15 @@ export default function HireBookingScreen({ navigation }) {
               </TouchableOpacity>
             </View>
 
-            {/* Reporting & Itinerary Card */}
-            <View
-              style={{
-                backgroundColor: isDark ? '#121927' : '#f8fafc',
-                borderColor: isDark ? '#1e293b' : '#e2e8f0',
-              }}
-              className="p-4 rounded-2xl border mb-4"
-            >
+            <ScrollView showsVerticalScrollIndicator={false} bounces={false} contentContainerStyle={{ paddingBottom: 8 }}>
+              {/* Reporting & Itinerary Card */}
+              <View
+                style={{
+                  backgroundColor: isDark ? '#121927' : '#f8fafc',
+                  borderColor: isDark ? '#1e293b' : '#e2e8f0',
+                }}
+                className="p-4 rounded-2xl border mb-4"
+              >
               {/* Pickup / Reporting Spot */}
               <View className="flex-row items-start mb-3">
                 <View className="w-3.5 h-3.5 rounded-full bg-emerald-500 mr-3 mt-0.5 items-center justify-center">
@@ -1470,6 +1465,7 @@ export default function HireBookingScreen({ navigation }) {
                 Confirm & Request Chauffeur Hire
               </Text>
             </TouchableOpacity>
+            </ScrollView>
           </View>
         </View>
       </Modal>
@@ -1478,7 +1474,7 @@ export default function HireBookingScreen({ navigation }) {
       <Modal visible={showDatePickerModal} transparent animationType="slide" onRequestClose={() => setShowDatePickerModal(false)}>
         <View
           style={{
-            paddingBottom: Platform.OS === 'android' ? Math.max(insets.bottom, 48) + 32 : Math.max(insets.bottom, 20) + 16,
+            paddingBottom: Platform.OS === 'android' ? Math.max(insets.bottom, 48) + 16 : Math.max(insets.bottom, 20) + 12,
           }}
           className="flex-1 bg-black/60 justify-end px-3"
         >
@@ -1486,6 +1482,7 @@ export default function HireBookingScreen({ navigation }) {
             style={{
               backgroundColor: isDark ? '#090d16' : '#ffffff',
               borderColor: isDark ? '#1e293b' : '#e2e8f0',
+              maxHeight: '85%',
             }}
             className="rounded-3xl p-6 border shadow-2xl"
           >
@@ -1497,6 +1494,8 @@ export default function HireBookingScreen({ navigation }) {
                 <Ionicons name="close-circle" size={26} color="#64748b" />
               </TouchableOpacity>
             </View>
+
+            <ScrollView showsVerticalScrollIndicator={false} bounces={false} contentContainerStyle={{ paddingBottom: 8 }}>
 
             <Text style={{ color: isDark ? '#94a3b8' : '#64748b' }} className="text-xs mb-4">
               Select when you need your chauffeur to report for duty:
@@ -1591,6 +1590,7 @@ export default function HireBookingScreen({ navigation }) {
             >
               <Text className="text-white font-black text-sm uppercase">Reset to Immediate (Now)</Text>
             </TouchableOpacity>
+            </ScrollView>
           </View>
         </View>
       </Modal>

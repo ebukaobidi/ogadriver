@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, Modal, ScrollView, TextInput, KeyboardAvoidingView, Platform } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../context/ThemeContext';
 
 export default function PriceNegotiationCard({ driver, onNegotiate, onAccept }) {
+  const insets = useSafeAreaInsets();
   const { isDark } = useTheme();
   const [modalVisible, setModalVisible] = useState(false);
   const [offerPrice, setOfferPrice] = useState('');
@@ -91,14 +93,18 @@ export default function PriceNegotiationCard({ driver, onNegotiate, onAccept }) 
       >
         <KeyboardAvoidingView
           behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-          className="flex-1 bg-black/60 justify-end"
+          style={{
+            paddingBottom: Platform.OS === 'android' ? Math.max(insets.bottom, 48) + 16 : Math.max(insets.bottom, 16) + 8,
+          }}
+          className="flex-1 bg-black/60 justify-end px-3"
         >
           <View
             style={{
               backgroundColor: isDark ? '#121927' : '#ffffff',
               borderColor: isDark ? '#1e293b' : '#e2e8f0',
+              maxHeight: '85%',
             }}
-            className="rounded-t-3xl border-t p-5 max-h-[90%]"
+            className="rounded-3xl border p-5 shadow-2xl"
           >
             {/* Header */}
             <View className="flex-row items-center justify-between pb-3.5 border-b border-slate-200 dark:border-slate-800">

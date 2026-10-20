@@ -993,15 +993,20 @@ export default function NaijaDriverHomeScreen({ navigation }) {
               transparent={true}
               onRequestClose={() => setRadioModalVisible(false)}
             >
-              <View className="flex-1 justify-end bg-black/80">
+              <View
+                style={{
+                  paddingBottom: Platform.OS === 'android' ? Math.max(insets.bottom, 48) + 16 : Math.max(insets.bottom, 16) + 8,
+                }}
+                className="flex-1 justify-end bg-black/80 px-3"
+              >
                 <View 
                   style={{ 
                     backgroundColor: isDark ? '#0f172a' : '#ffffff', 
                     borderColor: isDark ? '#1e293b' : '#e2e8f0', 
                     borderWidth: 1,
-                    maxHeight: '90%'
+                    maxHeight: '85%'
                   }}
-                  className="rounded-t-[2.5rem] p-6 pb-10 shadow-2xl"
+                  className="rounded-3xl p-6 shadow-2xl"
                 >
                   {/* Modal Header */}
                   <View className="flex-row justify-between items-center mb-3">

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, ScrollView, ActivityIndicator, Alert, TextInput, Modal, Clipboard, Platform } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as SecureStore from 'expo-secure-store';
 import { walletService, authService, api, extractArray } from '../../api/api';
 import HeaderBar from '../../components/HeaderBar';
@@ -29,6 +29,7 @@ const Storage = {
 };
 
 export default function DriverWalletScreen({ navigation, route }) {
+  const insets = useSafeAreaInsets();
   const { isDark } = useTheme();
   const { country: globalCountry, getBanksForCountry, formatAmount } = useCountry();
   const [wallet, setWallet] = useState(null);
@@ -943,14 +944,20 @@ export default function DriverWalletScreen({ navigation, route }) {
         animationType="slide"
         onRequestClose={() => setShowAddBankModal(false)}
       >
-        <View className="flex-1 justify-end bg-black/70">
+        <View
+          style={{
+            paddingBottom: Platform.OS === 'android' ? Math.max(insets.bottom, 48) + 16 : Math.max(insets.bottom, 16) + 8,
+          }}
+          className="flex-1 justify-end bg-black/70 px-3"
+        >
           <View 
             style={{
               backgroundColor: themeStyles.cardBg,
               borderColor: themeStyles.cardBorder,
-              borderTopWidth: 1
+              borderWidth: 1,
+              maxHeight: '85%'
             }}
-            className="rounded-t-3xl p-6 max-h-[85%]"
+            className="rounded-3xl p-6 shadow-2xl"
           >
             <View className="flex-row justify-between items-center mb-4">
               <Text style={{ color: themeStyles.primaryText, fontSize: 16, fontWeight: 'normal' }}>

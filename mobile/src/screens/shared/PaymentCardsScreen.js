@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, ScrollView, Modal, TextInput, Alert } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { View, Text, TouchableOpacity, ScrollView, Modal, TextInput, Alert, Platform } from 'react-native';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../context/ThemeContext';
 
 export default function PaymentCardsScreen({ navigation }) {
   const { isDark } = useTheme();
+  const insets = useSafeAreaInsets();
 
   // Saved Cards State
   const [cards, setCards] = useState([
@@ -267,13 +268,19 @@ export default function PaymentCardsScreen({ navigation }) {
 
       {/* ADD CARD MODAL */}
       <Modal visible={modalVisible} transparent animationType="slide" onRequestClose={() => setModalVisible(false)}>
-        <View className="flex-1 bg-black/60 justify-end">
+        <View
+          style={{
+            paddingBottom: Platform.OS === 'android' ? Math.max(insets.bottom, 48) + 16 : Math.max(insets.bottom, 16) + 8,
+          }}
+          className="flex-1 bg-black/60 justify-end px-3"
+        >
           <View
             style={{
               backgroundColor: isDark ? '#090d16' : '#ffffff',
               borderColor: isDark ? '#1e293b' : '#e2e8f0',
+              maxHeight: '85%',
             }}
-            className="rounded-t-3xl p-6 border-t"
+            className="rounded-3xl p-6 border shadow-2xl"
           >
             <View className="flex-row items-center justify-between mb-4">
               <View>

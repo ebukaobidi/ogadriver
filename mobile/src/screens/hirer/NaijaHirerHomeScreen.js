@@ -753,13 +753,19 @@ export default function NaijaHirerHomeScreen({ navigation }) {
 
       {/* INTERNATIONAL COUNTRY HIRE MARKET SELECTOR MODAL */}
       <Modal visible={showCountryModal} transparent animationType="slide" onRequestClose={() => setShowCountryModal(false)}>
-        <View className="flex-1 bg-black/60 justify-end">
+        <View
+          style={{
+            paddingBottom: Platform.OS === 'android' ? Math.max(insets.bottom, 48) + 16 : Math.max(insets.bottom, 16) + 8,
+          }}
+          className="flex-1 bg-black/60 justify-end px-3"
+        >
           <View
             style={{
               backgroundColor: isDark ? '#090d16' : '#ffffff',
               borderColor: isDark ? '#1e293b' : '#e2e8f0',
+              maxHeight: '85%',
             }}
-            className="rounded-t-3xl p-6 border-t max-h-[80%]"
+            className="rounded-3xl p-6 border shadow-2xl"
           >
             <View className="flex-row items-center justify-between mb-4">
               <View>
@@ -835,13 +841,19 @@ export default function NaijaHirerHomeScreen({ navigation }) {
         animationType="slide"
         onRequestClose={() => setShowMapModal(false)}
       >
-        <View className="flex-1 bg-black/60 justify-end">
+        <View
+          style={{
+            paddingBottom: Platform.OS === 'android' ? Math.max(insets.bottom, 48) + 16 : Math.max(insets.bottom, 16) + 8,
+          }}
+          className="flex-1 bg-black/60 justify-end px-3"
+        >
           <View
             style={{
               backgroundColor: isDark ? '#121927' : '#ffffff',
               borderColor: isDark ? '#1e293b' : '#e2e8f0',
+              maxHeight: '85%',
             }}
-            className="rounded-t-3xl border-t p-5 max-h-[85%]"
+            className="rounded-3xl border p-5 shadow-2xl"
           >
             {/* Header */}
             <View className="flex-row items-center justify-between pb-3.5 border-b border-slate-200 dark:border-slate-800">

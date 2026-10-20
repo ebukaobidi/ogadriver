@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, ScrollView, Image, ActivityIndicator, Alert, Linking, Modal, TextInput, Switch } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { View, Text, TouchableOpacity, ScrollView, Image, ActivityIndicator, Alert, Linking, Modal, TextInput, Switch, Platform } from 'react-native';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { authService, driverService } from '../../api/api';
 import * as ImagePicker from 'expo-image-picker';
 import { Ionicons } from '@expo/vector-icons';
@@ -20,6 +20,7 @@ import {
 } from '../../utils/vehicleFleetData';
 
 export default function DriverProfileScreen({ navigation, route }) {
+  const insets = useSafeAreaInsets();
   const { isDark, themeMode, updateThemeMode } = useTheme();
   const [user, setUser] = useState(null);
   const [driver, setDriver] = useState(null);
@@ -812,15 +813,20 @@ export default function DriverProfileScreen({ navigation, route }) {
           transparent={true}
           onRequestClose={() => setEditModalVisible(false)}
         >
-          <View className="flex-1 justify-end bg-black/70">
+          <View
+            style={{
+              paddingBottom: Platform.OS === 'android' ? Math.max(insets.bottom, 48) + 16 : Math.max(insets.bottom, 16) + 8,
+            }}
+            className="flex-1 justify-end bg-black/70 px-3"
+          >
             <View 
               style={{ 
                 backgroundColor: themeStyles.cardBg, 
                 borderColor: themeStyles.cardBorder, 
                 borderWidth: 1,
-                maxHeight: '90%'
+                maxHeight: '85%'
               }}
-              className="rounded-t-[2.5rem] p-6 pb-10 shadow-2xl"
+              className="rounded-3xl p-6 shadow-2xl"
             >
               <View className="flex-row justify-between items-center mb-3">
                 <Text style={{ color: themeStyles.primaryText }} className="font-normal text-xl">
@@ -964,14 +970,20 @@ export default function DriverProfileScreen({ navigation, route }) {
           transparent={true}
           onRequestClose={() => setCountryModalVisible(false)}
         >
-          <View className="flex-1 justify-end bg-black/70">
+          <View
+            style={{
+              paddingBottom: Platform.OS === 'android' ? Math.max(insets.bottom, 48) + 16 : Math.max(insets.bottom, 16) + 8,
+            }}
+            className="flex-1 justify-end bg-black/70 px-3"
+          >
             <View 
               style={{
                 backgroundColor: themeStyles.cardBg,
                 borderColor: themeStyles.cardBorder,
-                borderTopWidth: 1
+                borderWidth: 1,
+                maxHeight: '85%'
               }}
-              className="rounded-t-3xl p-6"
+              className="rounded-3xl p-6 shadow-2xl"
             >
               <View className="flex-row justify-between items-center mb-5">
                 <View>
@@ -1033,15 +1045,20 @@ export default function DriverProfileScreen({ navigation, route }) {
           transparent={true}
           onRequestClose={() => setVehicleModalVisible(false)}
         >
-          <View className="flex-1 justify-end bg-black/75">
+          <View
+            style={{
+              paddingBottom: Platform.OS === 'android' ? Math.max(insets.bottom, 48) + 16 : Math.max(insets.bottom, 16) + 8,
+            }}
+            className="flex-1 justify-end bg-black/75 px-3"
+          >
             <View 
               style={{ 
                 backgroundColor: themeStyles.cardBg, 
                 borderColor: themeStyles.cardBorder, 
                 borderWidth: 1,
-                maxHeight: '88%'
+                maxHeight: '85%'
               }}
-              className="rounded-t-[2.5rem] p-6 pb-10 shadow-2xl"
+              className="rounded-3xl p-6 shadow-2xl"
             >
               <View className="flex-row justify-between items-center mb-3">
                 <View className="flex-1 mr-2">
@@ -1817,15 +1834,23 @@ export default function DriverProfileScreen({ navigation, route }) {
           animationType="slide"
           onRequestClose={() => setProfileBrandModalVisible(false)}
         >
-          <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'flex-end' }}>
+          <View
+            style={{
+              flex: 1,
+              backgroundColor: 'rgba(0,0,0,0.6)',
+              justifyContent: 'flex-end',
+              paddingBottom: Platform.OS === 'android' ? Math.max(insets.bottom, 48) + 16 : Math.max(insets.bottom, 16) + 8,
+              paddingHorizontal: 12,
+            }}
+          >
             <View 
               style={{ 
                 backgroundColor: isDark ? '#121927' : '#ffffff', 
-                borderTopColor: themeStyles.cardBorder, 
-                borderTopWidth: 1,
+                borderColor: themeStyles.cardBorder, 
+                borderWidth: 1,
                 maxHeight: '80%'
               }}
-              className="rounded-t-3xl p-5"
+              className="rounded-3xl p-5 shadow-2xl"
             >
               <View className="flex-row items-center justify-between mb-3 pb-2 border-b border-slate-700/20">
                 <Text style={{ color: themeStyles.primaryText }} className="font-normal text-base">
@@ -1894,15 +1919,23 @@ export default function DriverProfileScreen({ navigation, route }) {
           animationType="slide"
           onRequestClose={() => setProfileModelModalVisible(false)}
         >
-          <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'flex-end' }}>
+          <View
+            style={{
+              flex: 1,
+              backgroundColor: 'rgba(0,0,0,0.6)',
+              justifyContent: 'flex-end',
+              paddingBottom: Platform.OS === 'android' ? Math.max(insets.bottom, 48) + 16 : Math.max(insets.bottom, 16) + 8,
+              paddingHorizontal: 12,
+            }}
+          >
             <View 
               style={{ 
                 backgroundColor: isDark ? '#121927' : '#ffffff', 
-                borderTopColor: themeStyles.cardBorder, 
-                borderTopWidth: 1,
+                borderColor: themeStyles.cardBorder, 
+                borderWidth: 1,
                 maxHeight: '80%'
               }}
-              className="rounded-t-3xl p-5"
+              className="rounded-3xl p-5 shadow-2xl"
             >
               <View className="flex-row items-center justify-between mb-3 pb-2 border-b border-slate-700/20">
                 <View>

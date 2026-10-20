@@ -14,7 +14,7 @@ import {
   Share,
   Linking
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { authService, api, walletService } from '../../api/api';
 import * as SecureStore from 'expo-secure-store';
 import * as ImagePicker from 'expo-image-picker';
@@ -41,6 +41,7 @@ const Storage = {
 
 export default function ProfileScreen({ navigation, route }) {
   const onLogout = route.params?.onLogout;
+  const insets = useSafeAreaInsets();
   const { isDark, themeMode, updateThemeMode, themeColors } = useTheme();
 
   const [user, setUser] = useState(null);
@@ -989,13 +990,19 @@ export default function ProfileScreen({ navigation, route }) {
 
       {/* MODAL 1: ADD FUNDS / WALLET TOP-UP */}
       <Modal visible={addFundsVisible} transparent animationType="slide" onRequestClose={() => setAddFundsVisible(false)}>
-        <View className="flex-1 bg-black/60 justify-end">
+        <View
+          style={{
+            paddingBottom: Platform.OS === 'android' ? Math.max(insets.bottom, 48) + 16 : Math.max(insets.bottom, 16) + 8,
+          }}
+          className="flex-1 bg-black/60 justify-end px-3"
+        >
           <View
             style={{
               backgroundColor: isDark ? '#090d16' : '#ffffff',
               borderColor: isDark ? '#1e293b' : '#e2e8f0',
+              maxHeight: '85%',
             }}
-            className="rounded-t-3xl p-6 border-t"
+            className="rounded-3xl p-6 border shadow-2xl"
           >
             <View className="flex-row items-center justify-between mb-4">
               <Text style={{ color: isDark ? '#ffffff' : '#0f172a' }} className="text-lg font-normal tracking-tight">
@@ -1006,89 +1013,97 @@ export default function ProfileScreen({ navigation, route }) {
               </TouchableOpacity>
             </View>
 
-            <Text style={{ color: isDark ? '#94a3b8' : '#64748b' }} className="text-xs mb-3">
-              Funds are instantly available for Ride hailing, Driver hires, and corporate packages.
-            </Text>
+            <ScrollView showsVerticalScrollIndicator={false} bounces={false} contentContainerStyle={{ paddingBottom: 8 }}>
+              <Text style={{ color: isDark ? '#94a3b8' : '#64748b' }} className="text-xs mb-3">
+                Funds are instantly available for Ride hailing, Driver hires, and corporate packages.
+              </Text>
 
-            {/* Quick Amount Chips */}
-            <View className="flex-row space-x-2 mb-4">
-              {[10000, 25000, 50000, 100000].map((amt) => (
-                <TouchableOpacity
-                  key={amt}
-                  onPress={() => setFundAmount(amt.toString())}
-                  style={{
-                    backgroundColor: fundAmount === amt.toString() ? '#10b981' : isDark ? '#121927' : '#f1f5f9',
-                    borderColor: fundAmount === amt.toString() ? '#10b981' : isDark ? '#1e293b' : '#e2e8f0',
-                  }}
-                  className="flex-1 py-2.5 rounded-xl border items-center justify-center"
-                >
-                  <Text
-                    style={{ color: fundAmount === amt.toString() ? '#ffffff' : isDark ? '#ffffff' : '#0f172a' }}
-                    className="font-black text-xs"
+              {/* Quick Amount Chips */}
+              <View className="flex-row space-x-2 mb-4">
+                {[10000, 25000, 50000, 100000].map((amt) => (
+                  <TouchableOpacity
+                    key={amt}
+                    onPress={() => setFundAmount(amt.toString())}
+                    style={{
+                      backgroundColor: fundAmount === amt.toString() ? '#10b981' : isDark ? '#121927' : '#f1f5f9',
+                      borderColor: fundAmount === amt.toString() ? '#10b981' : isDark ? '#1e293b' : '#e2e8f0',
+                    }}
+                    className="flex-1 py-2.5 rounded-xl border items-center justify-center"
                   >
-                    ₦{(amt / 1000).toFixed(0)}k
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </View>
+                    <Text
+                      style={{ color: fundAmount === amt.toString() ? '#ffffff' : isDark ? '#ffffff' : '#0f172a' }}
+                      className="font-black text-xs"
+                    >
+                      ₦{(amt / 1000).toFixed(0)}k
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
 
-            {/* Custom Amount Input */}
-            <View
-              style={{
-                backgroundColor: isDark ? '#121927' : '#f8fafc',
-                borderColor: isDark ? '#1e293b' : '#e2e8f0',
-              }}
-              className="flex-row items-center border rounded-2xl px-4 py-3 mb-4"
-            >
-              <Text className="text-emerald-500 font-black text-lg mr-2">₦</Text>
-              <TextInput
-                keyboardType="numeric"
-                value={fundAmount}
-                onChangeText={setFundAmount}
-                placeholder="Enter deposit amount"
-                placeholderTextColor={isDark ? '#64748b' : '#94a3b8'}
-                style={{ color: isDark ? '#ffffff' : '#0f172a' }}
-                className="flex-1 font-black text-lg"
-              />
-            </View>
+              {/* Custom Amount Input */}
+              <View
+                style={{
+                  backgroundColor: isDark ? '#121927' : '#f8fafc',
+                  borderColor: isDark ? '#1e293b' : '#e2e8f0',
+                }}
+                className="flex-row items-center border rounded-2xl px-4 py-3 mb-4"
+              >
+                <Text className="text-emerald-500 font-black text-lg mr-2">₦</Text>
+                <TextInput
+                  keyboardType="numeric"
+                  value={fundAmount}
+                  onChangeText={setFundAmount}
+                  placeholder="Enter deposit amount"
+                  placeholderTextColor={isDark ? '#64748b' : '#94a3b8'}
+                  style={{ color: isDark ? '#ffffff' : '#0f172a' }}
+                  className="flex-1 font-black text-lg"
+                />
+              </View>
 
-            {/* Bank Transfer Details Fallback */}
-            <View
-              style={{
-                backgroundColor: isDark ? '#121927' : '#f0fdf4',
-                borderColor: isDark ? '#1e293b' : '#bbf7d0',
-              }}
-              className="p-3.5 rounded-2xl border mb-6"
-            >
-              <Text style={{ color: isDark ? '#34d399' : '#166534' }} className="font-bold text-xs mb-1">
-                Virtual Dedicated Account:
-              </Text>
-              <Text style={{ color: isDark ? '#ffffff' : '#0f172a' }} className="font-mono text-xs font-bold">
-                Wema Bank • 9900223344 • OgaDriver - {user?.name || 'Client'}
-              </Text>
-            </View>
+              {/* Bank Transfer Details Fallback */}
+              <View
+                style={{
+                  backgroundColor: isDark ? '#121927' : '#f0fdf4',
+                  borderColor: isDark ? '#1e293b' : '#bbf7d0',
+                }}
+                className="p-3.5 rounded-2xl border mb-6"
+              >
+                <Text style={{ color: isDark ? '#34d399' : '#166534' }} className="font-bold text-xs mb-1">
+                  Virtual Dedicated Account:
+                </Text>
+                <Text style={{ color: isDark ? '#ffffff' : '#0f172a' }} className="font-mono text-xs font-bold">
+                  Wema Bank • 9900223344 • OgaDriver - {user?.name || 'Client'}
+                </Text>
+              </View>
 
-            <TouchableOpacity
-              onPress={handleAddFundsConfirm}
-              className="w-full py-4 rounded-2xl bg-emerald-500 active:bg-emerald-600 items-center justify-center shadow-lg shadow-emerald-500/20"
-            >
-              <Text className="text-white font-black text-sm uppercase tracking-wider">
-                Proceed with Payment
-              </Text>
-            </TouchableOpacity>
+              <TouchableOpacity
+                onPress={handleAddFundsConfirm}
+                className="w-full py-4 rounded-2xl bg-emerald-500 active:bg-emerald-600 items-center justify-center shadow-lg shadow-emerald-500/20"
+              >
+                <Text className="text-white font-black text-sm uppercase tracking-wider">
+                  Proceed with Payment
+                </Text>
+              </TouchableOpacity>
+            </ScrollView>
           </View>
         </View>
       </Modal>
 
       {/* MODAL 2: EDIT PROFILE INFORMATION */}
       <Modal visible={editProfileVisible} transparent animationType="slide" onRequestClose={() => setEditProfileVisible(false)}>
-        <View className="flex-1 bg-black/60 justify-end">
+        <View
+          style={{
+            paddingBottom: Platform.OS === 'android' ? Math.max(insets.bottom, 48) + 16 : Math.max(insets.bottom, 16) + 8,
+          }}
+          className="flex-1 bg-black/60 justify-end px-3"
+        >
           <View
             style={{
               backgroundColor: isDark ? '#090d16' : '#ffffff',
               borderColor: isDark ? '#1e293b' : '#e2e8f0',
+              maxHeight: '85%',
             }}
-            className="rounded-t-3xl p-6 border-t"
+            className="rounded-3xl p-6 border shadow-2xl"
           >
             <View className="flex-row items-center justify-between mb-4">
               <Text style={{ color: isDark ? '#ffffff' : '#0f172a' }} className="text-lg font-normal tracking-tight">
@@ -1230,13 +1245,19 @@ export default function ProfileScreen({ navigation, route }) {
 
       {/* MODAL 3: COUNTRY & CURRENCY SELECTOR */}
       <Modal visible={countryModalVisible} transparent animationType="slide" onRequestClose={() => setCountryModalVisible(false)}>
-        <View className="flex-1 bg-black/60 justify-end">
+        <View
+          style={{
+            paddingBottom: Platform.OS === 'android' ? Math.max(insets.bottom, 48) + 16 : Math.max(insets.bottom, 16) + 8,
+          }}
+          className="flex-1 bg-black/60 justify-end px-3"
+        >
           <View
             style={{
               backgroundColor: isDark ? '#090d16' : '#ffffff',
               borderColor: isDark ? '#1e293b' : '#e2e8f0',
+              maxHeight: '85%',
             }}
-            className="rounded-t-3xl p-6 border-t"
+            className="rounded-3xl p-6 border shadow-2xl"
           >
             <View className="flex-row items-center justify-between mb-4">
               <Text style={{ color: isDark ? '#ffffff' : '#0f172a' }} className="text-lg font-normal tracking-tight">
@@ -1247,63 +1268,71 @@ export default function ProfileScreen({ navigation, route }) {
               </TouchableOpacity>
             </View>
 
-            <Text style={{ color: isDark ? '#94a3b8' : '#64748b' }} className="text-xs mb-4">
-              Choose your operating region and preferred billing currency:
-            </Text>
+            <ScrollView showsVerticalScrollIndicator={false} bounces={false} contentContainerStyle={{ paddingBottom: 8 }}>
+              <Text style={{ color: isDark ? '#94a3b8' : '#64748b' }} className="text-xs mb-4">
+                Choose your operating region and preferred billing currency:
+              </Text>
 
-            <View className="space-y-2 mb-6">
-              {supportedCountries.map((c) => {
-                const isSelected = selectedCountry.code === c.code;
-                return (
-                  <TouchableOpacity
-                    key={c.code}
-                    onPress={() => {
-                      updateCountry(c);
-                      setCountryModalVisible(false);
-                      Alert.alert('Operating Country Set', `System operating country set to ${c.name} (${c.currency} ${c.symbol}).`);
-                    }}
-                    style={{
-                      backgroundColor: isSelected
-                        ? isDark
-                          ? 'rgba(16,185,129,0.12)'
-                          : '#ecfdf5'
-                        : isDark
-                        ? '#121927'
-                        : '#ffffff',
-                      borderColor: isSelected ? '#10b981' : isDark ? '#1e293b' : '#e2e8f0',
-                      borderWidth: isSelected ? 2 : 1,
-                    }}
-                    className="p-3.5 rounded-2xl flex-row items-center justify-between shadow-sm mb-2"
-                  >
-                    <View className="flex-row items-center">
-                      <Text className="text-2xl mr-3">{c.flag}</Text>
-                      <View>
-                        <Text style={{ color: isDark ? '#ffffff' : '#0f172a' }} className="font-normal text-xs">
-                          {c.name}
-                        </Text>
-                        <Text style={{ color: isDark ? '#94a3b8' : '#64748b' }} className="text-[10px]">
-                          {c.dialCode} • {c.currency} ({c.symbol})
-                        </Text>
+              <View className="space-y-2 mb-6">
+                {supportedCountries.map((c) => {
+                  const isSelected = selectedCountry.code === c.code;
+                  return (
+                    <TouchableOpacity
+                      key={c.code}
+                      onPress={() => {
+                        updateCountry(c);
+                        setCountryModalVisible(false);
+                        Alert.alert('Operating Country Set', `System operating country set to ${c.name} (${c.currency} ${c.symbol}).`);
+                      }}
+                      style={{
+                        backgroundColor: isSelected
+                          ? isDark
+                            ? 'rgba(16,185,129,0.12)'
+                            : '#ecfdf5'
+                          : isDark
+                          ? '#121927'
+                          : '#ffffff',
+                        borderColor: isSelected ? '#10b981' : isDark ? '#1e293b' : '#e2e8f0',
+                        borderWidth: isSelected ? 2 : 1,
+                      }}
+                      className="p-3.5 rounded-2xl flex-row items-center justify-between shadow-sm mb-2"
+                    >
+                      <View className="flex-row items-center">
+                        <Text className="text-2xl mr-3">{c.flag}</Text>
+                        <View>
+                          <Text style={{ color: isDark ? '#ffffff' : '#0f172a' }} className="font-normal text-xs">
+                            {c.name}
+                          </Text>
+                          <Text style={{ color: isDark ? '#94a3b8' : '#64748b' }} className="text-[10px]">
+                            {c.dialCode} • {c.currency} ({c.symbol})
+                          </Text>
+                        </View>
                       </View>
-                    </View>
-                    {isSelected && <Ionicons name="checkmark-circle" size={18} color="#10b981" />}
-                  </TouchableOpacity>
-                );
-              })}
-            </View>
+                      {isSelected && <Ionicons name="checkmark-circle" size={18} color="#10b981" />}
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+            </ScrollView>
           </View>
         </View>
       </Modal>
 
       {/* MODAL 4: 24/7 VIP CLIENT CONCIERGE HOTLINE */}
       <Modal visible={conciergeModalVisible} transparent animationType="slide" onRequestClose={() => setConciergeModalVisible(false)}>
-        <View className="flex-1 bg-black/70 justify-end">
+        <View
+          style={{
+            paddingBottom: Platform.OS === 'android' ? Math.max(insets.bottom, 48) + 16 : Math.max(insets.bottom, 16) + 8,
+          }}
+          className="flex-1 bg-black/70 justify-end px-3"
+        >
           <View
             style={{
               backgroundColor: isDark ? '#090d16' : '#ffffff',
               borderColor: isDark ? '#1e293b' : '#e2e8f0',
+              maxHeight: '85%',
             }}
-            className="rounded-t-3xl p-6 border-t"
+            className="rounded-3xl p-6 border shadow-2xl"
           >
             <View className="flex-row items-center justify-between mb-4">
               <View className="flex-row items-center">
@@ -1449,13 +1478,19 @@ export default function ProfileScreen({ navigation, route }) {
 
       {/* MODAL 5: ADD NEW SAVED PLACE */}
       <Modal visible={addPlaceModalVisible} transparent animationType="slide" onRequestClose={() => setAddPlaceModalVisible(false)}>
-        <View className="flex-1 bg-black/70 justify-end">
+        <View
+          style={{
+            paddingBottom: Platform.OS === 'android' ? Math.max(insets.bottom, 48) + 16 : Math.max(insets.bottom, 16) + 8,
+          }}
+          className="flex-1 bg-black/70 justify-end px-3"
+        >
           <View
             style={{
               backgroundColor: isDark ? '#090d16' : '#ffffff',
               borderColor: isDark ? '#1e293b' : '#e2e8f0',
+              maxHeight: '85%',
             }}
-            className="rounded-t-3xl p-6 border-t"
+            className="rounded-3xl p-6 border shadow-2xl"
           >
             <View className="flex-row items-center justify-between mb-4">
               <View className="flex-row items-center">

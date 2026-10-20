@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
-import { View, Text, Modal, TouchableOpacity, TextInput, ActivityIndicator, Alert } from 'react-native';
+import { View, Text, Modal, TouchableOpacity, TextInput, ActivityIndicator, Alert, Platform } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import * as Location from 'expo-location';
 
 export default function MapLocationPickerModal({ visible, onClose, placeType = 'home', initialAddress = '', onSave }) {
+  const insets = useSafeAreaInsets();
   const [address, setAddress] = useState(initialAddress);
   const [loading, setLoading] = useState(false);
 
@@ -50,8 +52,13 @@ export default function MapLocationPickerModal({ visible, onClose, placeType = '
 
   return (
     <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
-      <View className="flex-1 bg-black/80 justify-end">
-        <View className="bg-slate-900 border-t border-slate-800 rounded-t-3xl p-6">
+      <View
+        style={{
+          paddingBottom: Platform.OS === 'android' ? Math.max(insets.bottom, 48) + 16 : Math.max(insets.bottom, 16) + 8,
+        }}
+        className="flex-1 bg-black/80 justify-end px-3"
+      >
+        <View className="bg-slate-900 border border-slate-800 rounded-3xl p-6">
           {/* Header */}
           <View className="flex-row justify-between items-center mb-5">
             <View className="flex-row items-center space-x-2.5">

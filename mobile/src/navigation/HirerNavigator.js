@@ -123,8 +123,6 @@ export default function HirerNavigator({ route: parentRoute }) {
             iconName = focused ? 'car' : 'car-outline';
           } else if (route.name === 'Hire') {
             iconName = focused ? 'briefcase' : 'briefcase-outline';
-          } else if (route.name === 'Bookings') {
-            iconName = focused ? 'calendar' : 'calendar-outline';
           } else if (route.name === 'Account') {
             iconName = focused ? 'person' : 'person-outline';
           }
@@ -149,7 +147,6 @@ export default function HirerNavigator({ route: parentRoute }) {
     >
       <Tab.Screen name="Ride" component={HomeStack} />
       <Tab.Screen name="Hire" component={HireStack} />
-      <Tab.Screen name="Bookings" component={HirerBookingsScreen} />
       <Tab.Screen name="Account" component={AccountStack} initialParams={params} />
     </Tab.Navigator>
   );

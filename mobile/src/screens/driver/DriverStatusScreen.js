@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, ScrollView, Alert, Modal, FlatList, Switch } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { View, Text, TextInput, TouchableOpacity, ScrollView, Alert, Modal, FlatList, Switch, Platform } from 'react-native';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../context/ThemeContext';
 import { 
@@ -16,6 +16,7 @@ import {
 } from '../../utils/vehicleFleetData';
 
 export default function DriverStatusScreen({ route, navigation }) {
+  const insets = useSafeAreaInsets();
   const { isDark } = useTheme();
   const registeredUser = route.params?.registeredUser || {};
   const [driverStatus, setDriverStatus] = useState('no_car'); // 'with_car' | 'no_car'
@@ -1130,15 +1131,23 @@ export default function DriverStatusScreen({ route, navigation }) {
         animationType="slide"
         onRequestClose={() => setBrandModalVisible(false)}
       >
-        <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'flex-end' }}>
+        <View
+          style={{
+            flex: 1,
+            backgroundColor: 'rgba(0,0,0,0.6)',
+            justifyContent: 'flex-end',
+            paddingBottom: Platform.OS === 'android' ? Math.max(insets.bottom, 48) + 16 : Math.max(insets.bottom, 16) + 8,
+            paddingHorizontal: 12,
+          }}
+        >
           <View 
             style={{ 
               backgroundColor: themeStyles.cardBg, 
-              borderTopColor: themeStyles.cardBorder, 
-              borderTopWidth: 1,
+              borderColor: themeStyles.cardBorder, 
+              borderWidth: 1,
               maxHeight: '80%'
             }}
-            className="rounded-t-3xl p-5"
+            className="rounded-3xl p-5 shadow-2xl"
           >
             <View className="flex-row items-center justify-between mb-3 pb-2 border-b border-slate-700/20">
               <Text style={{ color: themeStyles.primaryText }} className="font-normal text-base">
@@ -1207,15 +1216,23 @@ export default function DriverStatusScreen({ route, navigation }) {
         animationType="slide"
         onRequestClose={() => setModelModalVisible(false)}
       >
-        <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'flex-end' }}>
+        <View
+          style={{
+            flex: 1,
+            backgroundColor: 'rgba(0,0,0,0.6)',
+            justifyContent: 'flex-end',
+            paddingBottom: Platform.OS === 'android' ? Math.max(insets.bottom, 48) + 16 : Math.max(insets.bottom, 16) + 8,
+            paddingHorizontal: 12,
+          }}
+        >
           <View 
             style={{ 
               backgroundColor: themeStyles.cardBg, 
-              borderTopColor: themeStyles.cardBorder, 
-              borderTopWidth: 1,
+              borderColor: themeStyles.cardBorder, 
+              borderWidth: 1,
               maxHeight: '80%'
             }}
-            className="rounded-t-3xl p-5"
+            className="rounded-3xl p-5 shadow-2xl"
           >
             <View className="flex-row items-center justify-between mb-3 pb-2 border-b border-slate-700/20">
               <View>

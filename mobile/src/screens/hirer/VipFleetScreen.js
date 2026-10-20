@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, Image, ActivityIndicator, Alert, Modal, TextInput } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { View, Text, ScrollView, TouchableOpacity, Image, ActivityIndicator, Alert, Modal, TextInput, Platform } from 'react-native';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../context/ThemeContext';
 import { corporateFleetService, extractArray } from '../../api/api';
 
 export default function VipFleetScreen({ navigation }) {
+  const insets = useSafeAreaInsets();
   const { isDark } = useTheme();
   const [loading, setLoading] = useState(true);
   const [account, setAccount] = useState(null);
@@ -234,14 +235,20 @@ export default function VipFleetScreen({ navigation }) {
 
       {/* Booking Modal */}
       <Modal visible={bookingModalVisible} transparent animationType="slide" onRequestClose={() => setBookingModalVisible(false)}>
-        <View className="flex-1 bg-black/60 justify-end">
+        <View
+          style={{
+            paddingBottom: Platform.OS === 'android' ? Math.max(insets.bottom, 48) + 16 : Math.max(insets.bottom, 16) + 8,
+          }}
+          className="flex-1 bg-black/60 justify-end px-3"
+        >
           <View
             style={{
               backgroundColor: themeStyles.cardBg,
-              borderTopColor: themeStyles.cardBorder,
-              borderTopWidth: 1,
+              borderColor: themeStyles.cardBorder,
+              borderWidth: 1,
+              maxHeight: '85%',
             }}
-            className="p-5 rounded-t-3xl"
+            className="p-5 rounded-3xl shadow-2xl"
           >
             <View className="flex-row items-center justify-between mb-4">
               <View>
