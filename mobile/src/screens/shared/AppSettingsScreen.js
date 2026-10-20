@@ -65,50 +65,6 @@ export default function AppSettingsScreen({ navigation }) {
           )}
         </View>
 
-        {/* 🎨 THEME & APPEARANCE SECTION */}
-        <Text className={`font-mono text-xs uppercase tracking-widest mb-3 ${themeColors.accentColor}`}>Appearance & Theme</Text>
-        <View className={`${themeColors.cardBg} border ${themeColors.borderColor} rounded-2xl p-5 mb-6`}>
-          <Text className={`font-normal text-base mb-3 ${themeColors.textColor}`}>App Theme Mode</Text>
-
-          <View className="space-y-3">
-            {/* Dark Mode Option */}
-            <TouchableOpacity
-              onPress={() => updateThemeMode('dark')}
-              className={`p-4 rounded-xl border flex-row justify-between items-center ${themeMode === 'dark' ? 'border-brandMint bg-brandMint/10' : themeColors.borderColor}`}
-            >
-              <View className="flex-row items-center">
-                <Ionicons name="moon-outline" size={20} color={themeMode === 'dark' ? '#10b981' : '#64748b'} />
-                <Text className={`font-normal text-sm ml-3 ${themeMode === 'dark' ? 'text-brandMint' : themeColors.textColor}`}>Dark Mode</Text>
-              </View>
-              {themeMode === 'dark' && <Ionicons name="checkmark-circle" size={20} color="#10b981" />}
-            </TouchableOpacity>
-
-            {/* Light Mode Option */}
-            <TouchableOpacity
-              onPress={() => updateThemeMode('light')}
-              className={`p-4 rounded-xl border flex-row justify-between items-center ${themeMode === 'light' ? 'border-emerald-600 bg-emerald-50' : themeColors.borderColor}`}
-            >
-              <View className="flex-row items-center">
-                <Ionicons name="sunny-outline" size={20} color={themeMode === 'light' ? '#059669' : '#64748b'} />
-                <Text className={`font-normal text-sm ml-3 ${themeMode === 'light' ? 'text-emerald-700' : themeColors.textColor}`}>Light Mode</Text>
-              </View>
-              {themeMode === 'light' && <Ionicons name="checkmark-circle" size={20} color="#059669" />}
-            </TouchableOpacity>
-
-            {/* System Option */}
-            <TouchableOpacity
-              onPress={() => updateThemeMode('system')}
-              className={`p-4 rounded-xl border flex-row justify-between items-center ${themeMode === 'system' ? 'border-brandMint bg-brandMint/10' : themeColors.borderColor}`}
-            >
-              <View className="flex-row items-center">
-                <Ionicons name="phone-portrait-outline" size={20} color={themeMode === 'system' ? '#10b981' : '#64748b'} />
-                <Text className={`font-normal text-sm ml-3 ${themeMode === 'system' ? 'text-brandMint' : themeColors.textColor}`}>System Default</Text>
-              </View>
-              {themeMode === 'system' && <Ionicons name="checkmark-circle" size={20} color="#10b981" />}
-            </TouchableOpacity>
-          </View>
-        </View>
-
         {/* 🚗 RIDE & HIRE PREFERENCES */}
         <Text className={`font-mono text-xs uppercase tracking-widest mb-3 ${themeColors.accentColor}`}>Ride & Hire Preferences</Text>
         <View className={`${themeColors.cardBg} border ${themeColors.borderColor} rounded-2xl p-5 mb-8`}>

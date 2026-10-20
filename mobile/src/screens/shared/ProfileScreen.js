@@ -80,9 +80,7 @@ export default function ProfileScreen({ navigation, route }) {
   const [kycData, setKycData] = useState(null);
   const [companyName, setCompanyName] = useState('');
 
-  // Country & Currency Selector (Global Country System)
-  const [countryModalVisible, setCountryModalVisible] = useState(false);
-  const { country: selectedCountry, updateCountry, supportedCountries } = useCountry();
+  const { country: selectedCountry, formatAmount } = useCountry();
 
   const handlePickAvatar = async () => {
     try {
@@ -125,10 +123,6 @@ export default function ProfileScreen({ navigation, route }) {
         if (parsed.custom && Array.isArray(parsed.custom)) setCustomPlaces(parsed.custom);
       }
 
-      const savedCountry = await Storage.getItemAsync('client_country_settings');
-      if (savedCountry) {
-        setSelectedCountry(JSON.parse(savedCountry));
-      }
 
       const [storedKyc, wRes, pts] = await Promise.all([
         Storage.getItemAsync('client_kyc_data').catch(() => null),
@@ -387,45 +381,22 @@ export default function ProfileScreen({ navigation, route }) {
         }}
         className="flex-row justify-between items-center px-4 py-3 border-b"
       >
-        <View className="flex-row items-center">
-          <View className="w-9 h-9 rounded-xl bg-emerald-500 items-center justify-center mr-3 shadow-md shadow-emerald-500/20">
-            <Ionicons name="person" size={18} color="#ffffff" />
-          </View>
-          <View>
-            <Text style={{ color: isDark ? '#ffffff' : '#0f172a' }} className="font-normal text-lg tracking-tight">
-              Client Account
-            </Text>
-          </View>
-        </View>
+        <Text style={{ color: isDark ? '#ffffff' : '#0f172a' }} className="font-semibold text-xl tracking-tight">
+          Account
+        </Text>
 
-        <View className="flex-row items-center space-x-2">
-          {/* Country Flag Pill */}
-          <TouchableOpacity
-            onPress={() => setCountryModalVisible(true)}
-            style={{
-              backgroundColor: isDark ? '#121927' : '#f1f5f9',
-              borderColor: isDark ? '#1e293b' : '#cbd5e1',
-            }}
-            className="flex-row items-center px-2.5 py-1.5 rounded-xl border mr-1"
-          >
-            <Text className="text-sm mr-1">{selectedCountry.flag}</Text>
-            <Text style={{ color: isDark ? '#ffffff' : '#0f172a' }} className="font-bold text-xs">
-              {selectedCountry.currency}
-            </Text>
-          </TouchableOpacity>
-
-          {/* Theme Quick Toggle */}
-          <TouchableOpacity
-            onPress={() => updateThemeMode(isDark ? 'light' : 'dark')}
-            style={{
-              backgroundColor: isDark ? '#121927' : '#f1f5f9',
-              borderColor: isDark ? '#1e293b' : '#cbd5e1',
-            }}
-            className="p-2 rounded-xl border"
-          >
-            <Ionicons name={isDark ? 'sunny' : 'moon'} size={16} color={isDark ? '#00e588' : '#059669'} />
-          </TouchableOpacity>
-        </View>
+        {/* Theme Quick Toggle */}
+        <TouchableOpacity
+          onPress={() => updateThemeMode(isDark ? 'light' : 'dark')}
+          style={{
+            backgroundColor: isDark ? '#121927' : '#f1f5f9',
+            borderColor: isDark ? '#1e293b' : '#cbd5e1',
+          }}
+          className="p-2 rounded-xl border"
+          activeOpacity={0.7}
+        >
+          <Ionicons name={isDark ? 'sunny' : 'moon'} size={18} color={isDark ? '#00e588' : '#059669'} />
+        </TouchableOpacity>
       </View>
 
       <ScrollView
@@ -535,31 +506,38 @@ export default function ProfileScreen({ navigation, route }) {
         </View>
 
         {/* 2. THE MONEY HUB: CLIENT WALLET & BILLING (FOR THOSE WHO PAY) */}
+        {/* 2. THE MONEY HUB: CLIENT WALLET & BILLING */}
         <View
           style={{
-            backgroundColor: isDark ? '#121927' : '#052e16',
-            borderColor: isDark ? '#1e293b' : '#0a5c25',
+            backgroundColor: isDark ? '#121927' : '#f0fdf4',
+            borderColor: isDark ? '#1e293b' : '#bbf7d0',
           }}
-          className="border rounded-3xl p-5 mb-5 shadow-xl"
+          className="border rounded-3xl p-5 mb-5 shadow-sm"
         >
           <View className="flex-row items-center justify-between mb-3">
             <View className="flex-row items-center">
-              <Ionicons name="wallet-outline" size={18} color="#ffffff" style={{ marginRight: 6 }} />
-              <Text style={{ color: '#ffffff' }} className="font-normal text-xs uppercase tracking-wider">
+              <Ionicons name="wallet-outline" size={18} color={isDark ? '#10b981' : '#059669'} style={{ marginRight: 6 }} />
+              <Text style={{ color: isDark ? '#94a3b8' : '#166534' }} className="font-semibold text-xs uppercase tracking-wider">
                 Prepaid Wallet
               </Text>
             </View>
-            <View className="bg-white/20 px-2 py-0.5 rounded-md border border-white/30">
-              <Text style={{ color: '#ffffff' }} className="font-black text-[10px] uppercase">Instant Pay</Text>
+            <View
+              style={{
+                backgroundColor: isDark ? 'rgba(16, 185, 129, 0.15)' : '#dcfce7',
+                borderColor: isDark ? 'rgba(16, 185, 129, 0.3)' : '#86efac',
+              }}
+              className="px-2 py-0.5 rounded-md border"
+            >
+              <Text style={{ color: isDark ? '#10b981' : '#15803d' }} className="font-bold text-[10px] uppercase">Instant Pay</Text>
             </View>
           </View>
 
           {/* Balance Amount */}
-          <Text style={{ color: '#ffffff' }} className="font-black text-3xl tracking-tight mb-1">
-            ₦{walletBalance.toLocaleString()}
+          <Text style={{ color: isDark ? '#ffffff' : '#0f172a' }} className="font-extrabold text-3xl tracking-tight mb-1">
+            {formatAmount ? formatAmount(walletBalance) : `${selectedCountry?.symbol || '₦'}${walletBalance.toLocaleString()}`}
           </Text>
-          <Text style={{ color: '#ffffff' }} className="text-xs mb-4 opacity-90">
-            Spend this month: ₦{monthlySpend.toLocaleString()}
+          <Text style={{ color: isDark ? '#94a3b8' : '#64748b' }} className="text-xs mb-4">
+            Spend this month: {formatAmount ? formatAmount(monthlySpend) : `${selectedCountry?.symbol || '₦'}${monthlySpend.toLocaleString()}`}
           </Text>
 
           {/* 3 Action Buttons for Wallet */}
@@ -569,23 +547,31 @@ export default function ProfileScreen({ navigation, route }) {
               className="flex-1 py-3 rounded-xl bg-emerald-500 active:bg-emerald-600 items-center justify-center flex-row shadow-sm"
             >
               <Ionicons name="add-circle" size={16} color="#ffffff" style={{ marginRight: 4 }} />
-              <Text style={{ color: '#ffffff' }} className="font-black text-xs uppercase">Add Funds</Text>
+              <Text style={{ color: '#ffffff' }} className="font-bold text-xs uppercase">Add Funds</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
               onPress={() => navigation.navigate('PaymentCards')}
-              className="flex-1 py-3 rounded-xl bg-white/10 active:bg-white/20 items-center justify-center border border-white/20 flex-row"
+              style={{
+                backgroundColor: isDark ? 'rgba(255, 255, 255, 0.08)' : '#ffffff',
+                borderColor: isDark ? 'rgba(255, 255, 255, 0.15)' : '#cbd5e1',
+              }}
+              className="flex-1 py-3 rounded-xl items-center justify-center border flex-row shadow-sm"
             >
-              <Ionicons name="card-outline" size={16} color="#ffffff" style={{ marginRight: 4 }} />
-              <Text style={{ color: '#ffffff' }} className="font-bold text-xs">Cards</Text>
+              <Ionicons name="card-outline" size={16} color={isDark ? '#ffffff' : '#0f172a'} style={{ marginRight: 4 }} />
+              <Text style={{ color: isDark ? '#ffffff' : '#0f172a' }} className="font-semibold text-xs">Cards</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
               onPress={() => navigation.navigate('Invoices')}
-              className="flex-1 py-3 rounded-xl bg-white/10 active:bg-white/20 items-center justify-center border border-white/20 flex-row"
+              style={{
+                backgroundColor: isDark ? 'rgba(255, 255, 255, 0.08)' : '#ffffff',
+                borderColor: isDark ? 'rgba(255, 255, 255, 0.15)' : '#cbd5e1',
+              }}
+              className="flex-1 py-3 rounded-xl items-center justify-center border flex-row shadow-sm"
             >
-              <Ionicons name="document-text-outline" size={16} color="#ffffff" style={{ marginRight: 4 }} />
-              <Text style={{ color: '#ffffff' }} className="font-bold text-xs">Invoices</Text>
+              <Ionicons name="document-text-outline" size={16} color={isDark ? '#ffffff' : '#0f172a'} style={{ marginRight: 4 }} />
+              <Text style={{ color: isDark ? '#ffffff' : '#0f172a' }} className="font-semibold text-xs">Invoices</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -877,17 +863,24 @@ export default function ProfileScreen({ navigation, route }) {
 
         {/* 6. RAPID SOS EMERGENCY CARD */}
         <TouchableOpacity
-          className="bg-red-500/10 border-2 border-red-500 rounded-3xl p-4 mb-5 flex-row items-center justify-between shadow-lg shadow-red-500/10"
-          activeOpacity={0.85}
+          style={{
+            backgroundColor: isDark ? 'rgba(239, 68, 68, 0.08)' : '#fef2f2',
+            borderColor: isDark ? 'rgba(239, 68, 68, 0.25)' : '#fecaca',
+          }}
+          className="border rounded-2xl p-3.5 mb-5 flex-row items-center justify-between"
+          activeOpacity={0.8}
           onPress={() => navigation.navigate('EmergencySos')}
         >
           <View className="flex-row items-center flex-1 mr-2">
-            <View className="w-10 h-10 rounded-2xl bg-red-500/20 items-center justify-center mr-3 border border-red-500/30">
-              <Ionicons name="warning" size={20} color="#ef4444" />
+            <View className="w-10 h-10 rounded-xl bg-red-500/15 items-center justify-center mr-3 border border-red-500/20">
+              <Ionicons name="alert-circle" size={22} color="#ef4444" />
             </View>
-            <View>
-              <Text className="text-red-500 font-normal text-sm tracking-wider uppercase">
-                Emergency SOS Dispatch
+            <View className="flex-1">
+              <Text className="text-red-600 dark:text-red-400 font-semibold text-sm">
+                Emergency SOS
+              </Text>
+              <Text style={{ color: isDark ? '#94a3b8' : '#64748b' }} className="text-xs mt-0.5">
+                24/7 rapid dispatch & security tracking
               </Text>
             </View>
           </View>
@@ -957,35 +950,36 @@ export default function ProfileScreen({ navigation, route }) {
           </View>
         </View>
 
-        {/* 8. SIGN OUT BUTTON */}
-        <TouchableOpacity
-          style={{
-            backgroundColor: isDark ? '#121927' : '#fef2f2',
-            borderColor: '#fca5a5',
-          }}
-          className="border py-3.5 rounded-2xl flex-row items-center justify-center mb-4 active:opacity-80"
-          onPress={handleLogout}
-        >
-          <Ionicons name="log-out-outline" size={18} color="#ef4444" />
-          <Text className="text-red-500 font-normal text-xs uppercase tracking-wider ml-2">
-            Sign Out
-          </Text>
-        </TouchableOpacity>
+        {/* 8. SIGN OUT BUTTON (Modest Centered) */}
+        <View className="items-center mb-3">
+          <TouchableOpacity
+            style={{
+              backgroundColor: isDark ? '#121927' : '#fef2f2',
+              borderColor: isDark ? '#334155' : '#fca5a5',
+              minWidth: 170,
+            }}
+            className="border py-3 px-6 rounded-2xl flex-row items-center justify-center active:opacity-80"
+            onPress={handleLogout}
+          >
+            <Ionicons name="log-out-outline" size={18} color="#ef4444" />
+            <Text className="text-red-500 font-semibold text-xs uppercase tracking-wider ml-2">
+              Sign Out
+            </Text>
+          </TouchableOpacity>
+        </View>
 
         {/* 9. DELETE ACCOUNT (Apple App Store & Google Play Requirement) */}
-        <TouchableOpacity
-          style={{
-            backgroundColor: 'transparent',
-            borderColor: isDark ? '#334155' : '#e2e8f0',
-          }}
-          className="border py-3 rounded-2xl flex-row items-center justify-center mb-8 active:opacity-80"
-          onPress={handleDeleteAccount}
-        >
-          <Ionicons name="trash-outline" size={16} color="#94a3b8" />
-          <Text style={{ color: isDark ? '#94a3b8' : '#64748b' }} className="font-normal text-xs uppercase tracking-wider ml-2">
-            Delete Account
-          </Text>
-        </TouchableOpacity>
+        <View className="items-center mb-8">
+          <TouchableOpacity
+            className="py-2 px-4 rounded-xl flex-row items-center justify-center active:opacity-80"
+            onPress={handleDeleteAccount}
+          >
+            <Ionicons name="trash-outline" size={14} color="#94a3b8" />
+            <Text style={{ color: isDark ? '#64748b' : '#94a3b8' }} className="font-normal text-xs ml-1.5">
+              Delete Account
+            </Text>
+          </TouchableOpacity>
+        </View>
       </ScrollView>
 
       {/* MODAL 1: ADD FUNDS / WALLET TOP-UP */}
@@ -1076,14 +1070,17 @@ export default function ProfileScreen({ navigation, route }) {
                 </Text>
               </View>
 
-              <TouchableOpacity
-                onPress={handleAddFundsConfirm}
-                className="w-full py-4 rounded-2xl bg-emerald-500 active:bg-emerald-600 items-center justify-center shadow-lg shadow-emerald-500/20"
-              >
-                <Text className="text-white font-black text-sm uppercase tracking-wider">
-                  Proceed with Payment
-                </Text>
-              </TouchableOpacity>
+              <View className="items-center mt-3 mb-2">
+                <TouchableOpacity
+                  onPress={handleAddFundsConfirm}
+                  style={{ minWidth: 220 }}
+                  className="py-3.5 px-8 rounded-2xl bg-emerald-500 active:bg-emerald-600 items-center justify-center shadow-lg shadow-emerald-500/20"
+                >
+                  <Text className="text-white font-bold text-sm uppercase tracking-wider">
+                    Proceed with Payment
+                  </Text>
+                </TouchableOpacity>
+              </View>
             </ScrollView>
           </View>
         </View>
@@ -1230,95 +1227,23 @@ export default function ProfileScreen({ navigation, route }) {
                 </View>
               </View>
 
-              <TouchableOpacity
-                onPress={handleSaveProfileChanges}
-                className="w-full py-4 rounded-2xl bg-emerald-500 active:bg-emerald-600 items-center justify-center shadow-lg mb-4"
-              >
-                <Text className="text-white font-black text-sm uppercase tracking-wider">
-                  Save Profile
-                </Text>
-              </TouchableOpacity>
-            </ScrollView>
-          </View>
-        </View>
-      </Modal>
-
-      {/* MODAL 3: COUNTRY & CURRENCY SELECTOR */}
-      <Modal visible={countryModalVisible} transparent animationType="slide" onRequestClose={() => setCountryModalVisible(false)}>
-        <View
-          style={{
-            paddingBottom: Platform.OS === 'android' ? Math.max(insets.bottom, 48) + 16 : Math.max(insets.bottom, 16) + 8,
-          }}
-          className="flex-1 bg-black/60 justify-end px-3"
-        >
-          <View
-            style={{
-              backgroundColor: isDark ? '#090d16' : '#ffffff',
-              borderColor: isDark ? '#1e293b' : '#e2e8f0',
-              maxHeight: '85%',
-            }}
-            className="rounded-3xl p-6 border shadow-2xl"
-          >
-            <View className="flex-row items-center justify-between mb-4">
-              <Text style={{ color: isDark ? '#ffffff' : '#0f172a' }} className="text-lg font-normal tracking-tight">
-                Select Country & Currency
-              </Text>
-              <TouchableOpacity onPress={() => setCountryModalVisible(false)}>
-                <Ionicons name="close-circle" size={26} color="#64748b" />
-              </TouchableOpacity>
-            </View>
-
-            <ScrollView showsVerticalScrollIndicator={false} bounces={false} contentContainerStyle={{ paddingBottom: 8 }}>
-              <Text style={{ color: isDark ? '#94a3b8' : '#64748b' }} className="text-xs mb-4">
-                Choose your operating region and preferred billing currency:
-              </Text>
-
-              <View className="space-y-2 mb-6">
-                {supportedCountries.map((c) => {
-                  const isSelected = selectedCountry.code === c.code;
-                  return (
-                    <TouchableOpacity
-                      key={c.code}
-                      onPress={() => {
-                        updateCountry(c);
-                        setCountryModalVisible(false);
-                        Alert.alert('Operating Country Set', `System operating country set to ${c.name} (${c.currency} ${c.symbol}).`);
-                      }}
-                      style={{
-                        backgroundColor: isSelected
-                          ? isDark
-                            ? 'rgba(16,185,129,0.12)'
-                            : '#ecfdf5'
-                          : isDark
-                          ? '#121927'
-                          : '#ffffff',
-                        borderColor: isSelected ? '#10b981' : isDark ? '#1e293b' : '#e2e8f0',
-                        borderWidth: isSelected ? 2 : 1,
-                      }}
-                      className="p-3.5 rounded-2xl flex-row items-center justify-between shadow-sm mb-2"
-                    >
-                      <View className="flex-row items-center">
-                        <Text className="text-2xl mr-3">{c.flag}</Text>
-                        <View>
-                          <Text style={{ color: isDark ? '#ffffff' : '#0f172a' }} className="font-normal text-xs">
-                            {c.name}
-                          </Text>
-                          <Text style={{ color: isDark ? '#94a3b8' : '#64748b' }} className="text-[10px]">
-                            {c.dialCode} • {c.currency} ({c.symbol})
-                          </Text>
-                        </View>
-                      </View>
-                      {isSelected && <Ionicons name="checkmark-circle" size={18} color="#10b981" />}
-                    </TouchableOpacity>
-                  );
-                })}
+              <View className="items-center mb-4 mt-2">
+                <TouchableOpacity
+                  onPress={handleSaveProfileChanges}
+                  style={{ minWidth: 200 }}
+                  className="py-3.5 px-8 rounded-2xl bg-emerald-500 active:bg-emerald-600 items-center justify-center shadow-lg"
+                >
+                  <Text className="text-white font-bold text-sm uppercase tracking-wider">
+                    Save Profile
+                  </Text>
+                </TouchableOpacity>
               </View>
             </ScrollView>
           </View>
         </View>
       </Modal>
 
-      {/* MODAL 4: 24/7 VIP CLIENT CONCIERGE HOTLINE */}
+      {/* MODAL 3: 24/7 VIP CLIENT CONCIERGE HOTLINE */}
       <Modal visible={conciergeModalVisible} transparent animationType="slide" onRequestClose={() => setConciergeModalVisible(false)}>
         <View
           style={{

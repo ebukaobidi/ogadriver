@@ -3,21 +3,25 @@ import { View, Text, TextInput, TouchableOpacity, ActivityIndicator, Alert, Keyb
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { authService } from '../../api/api';
+import { useCountry } from '../../context/CountryContext';
 
 export default function HirerRegisterScreen({ navigation }) {
+  const { updateCountry } = useCountry();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [referralCode, setReferralCode] = useState('');
   const [loading, setLoading] = useState(false);
   const [showCountryPicker, setShowCountryPicker] = useState(false);
-  const [selectedCountry, setSelectedCountry] = useState({ code: '+234', flag: '🇳🇬', name: 'Nigeria' });
+  const [selectedCountry, setSelectedCountry] = useState({ code: '+234', flag: '🇳🇬', name: 'Nigeria', id: 'nigeria' });
 
   const countries = [
-    { code: '+234', flag: '🇳🇬', name: 'Nigeria' },
-    { code: '+233', flag: '🇬🇭', name: 'Ghana' },
-    { code: '+254', flag: '????', name: 'Kenya' },
-    { code: '+27', flag: '????', name: 'South Africa' },
+    { code: '+234', flag: '🇳🇬', name: 'Nigeria', id: 'nigeria' },
+    { code: '+233', flag: '🇬🇭', name: 'Ghana', id: 'ghana' },
+    { code: '+254', flag: '🇰🇪', name: 'Kenya', id: 'kenya' },
+    { code: '+27', flag: '🇿🇦', name: 'South Africa', id: 'south_africa' },
+    { code: '+44', flag: '🇬🇧', name: 'United Kingdom', id: 'united_kingdom' },
+    { code: '+1', flag: '🇺🇸', name: 'United States', id: 'united_states' },
   ];
 
   const handleRegister = async () => {
@@ -28,6 +32,9 @@ export default function HirerRegisterScreen({ navigation }) {
 
     try {
       setLoading(true);
+      if (updateCountry) {
+        await updateCountry(selectedCountry.id || selectedCountry.name);
+      }
       await new Promise(r => setTimeout(r, 500)); // bypass for dev
       navigation.navigate('MainApp');
     } catch (error) {

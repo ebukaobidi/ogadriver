@@ -253,12 +253,12 @@ export default function KycVerificationScreen({ navigation }) {
               </View>
               <View className="flex-1">
                 <Text style={{ color: isDark ? '#ffffff' : '#0f172a' }} className="font-normal text-sm">
-                  {kycStatus === 'verified' ? 'Tier 2 Identity Verified' : 'KYC Verification Required'}
+                  {kycStatus === 'verified' ? 'Identity Verified' : 'KYC Verification'}
                 </Text>
                 <Text style={{ color: isDark ? '#94a3b8' : '#64748b' }} className="text-[11px] mt-0.5">
                   {kycStatus === 'verified'
-                    ? 'Account verified with Nigerian Govt ID & SOS Next of Kin'
-                    : 'Unlocks VIP chauffeurs, credit limits & automatic SOS armed response'}
+                    ? 'Your identity is fully certified'
+                    : 'Unlocks full access to rides, car hire & safety features'}
                 </Text>
               </View>
             </View>
@@ -445,34 +445,32 @@ export default function KycVerificationScreen({ navigation }) {
           <View
             style={{
               backgroundColor: isDark ? '#121927' : '#ffffff',
-              borderColor: '#ef4444',
+              borderColor: isDark ? 'rgba(239, 68, 68, 0.4)' : '#fecaca',
             }}
-            className="p-4 rounded-3xl border-2 mb-6 shadow-sm"
+            className="p-4 rounded-3xl border mb-6 shadow-sm"
           >
-            <View className="flex-row items-center justify-between mb-2">
-              <View className="flex-row items-center">
-                <View className="w-8 h-8 rounded-xl bg-red-500/20 items-center justify-center mr-2.5 border border-red-500/30">
-                  <Ionicons name="warning" size={18} color="#ef4444" />
+            <View className="flex-row items-center justify-between mb-2.5">
+              <View className="flex-row items-center flex-1 mr-2">
+                <View className="w-8 h-8 rounded-xl bg-red-500/15 items-center justify-center mr-2.5 border border-red-500/20">
+                  <Ionicons name="shield" size={16} color="#ef4444" />
                 </View>
-                <View>
-                  <Text className="text-red-500 font-normal text-sm uppercase tracking-wide">
-                    3. SOS Emergency Next of Kin
+                <View className="flex-1">
+                  <Text className="text-red-500 font-semibold text-xs uppercase tracking-wide">
+                    Emergency Next of Kin
                   </Text>
-                  <Text style={{ color: isDark ? '#94a3b8' : '#64748b' }} className="text-[10px]">
-                    Automatic armed dispatch & live telemetry recipient
+                  <Text style={{ color: isDark ? '#94a3b8' : '#64748b' }} className="text-[11px]" numberOfLines={1}>
+                    Receives live location during an SOS alert
                   </Text>
                 </View>
               </View>
-              <View className="bg-red-500/20 px-2 py-0.5 rounded-md">
-                <Text className="text-red-500 font-black text-[9px] uppercase">Required</Text>
+              <View className="bg-red-500/15 px-2 py-0.5 rounded-md">
+                <Text className="text-red-500 font-bold text-[9px] uppercase">Required</Text>
               </View>
             </View>
 
             <View className="p-2.5 rounded-xl bg-red-500/10 border border-red-500/20 mb-3.5">
-              <Text className="text-red-500 dark:text-red-400 text-[11px] leading-4">
-                <Ionicons name="information-circle" size={12} color="#ef4444" /> In any crisis or SOS trigger,
-                instant encrypted SMS with real-time GPS coordinates and FRSC/Police dispatch details will be sent
-                immediately to this number.
+              <Text className="text-red-500 dark:text-red-400 text-xs leading-4">
+                Your emergency contact will be sent your real-time location if an SOS alert is triggered.
               </Text>
             </View>
 
@@ -557,23 +555,26 @@ export default function KycVerificationScreen({ navigation }) {
             </View>
           </View>
 
-          {/* Submit Action Button */}
-          <TouchableOpacity
-            onPress={handleSubmitKyc}
-            disabled={submitting}
-            className="w-full py-4 rounded-2xl bg-emerald-500 active:bg-emerald-600 items-center justify-center shadow-lg shadow-emerald-500/20 mb-8"
-          >
-            {submitting ? (
-              <ActivityIndicator color="#ffffff" />
-            ) : (
-              <View className="flex-row items-center">
-                <Ionicons name="checkmark-done-circle" size={20} color="#ffffff" style={{ marginRight: 6 }} />
-                <Text className="text-white font-black text-sm uppercase tracking-wider">
-                  Save & Certify Tier 2 KYC
-                </Text>
-              </View>
-            )}
-          </TouchableOpacity>
+          {/* Submit Action Button (Modest Centered) */}
+          <View className="items-center mb-8 mt-2">
+            <TouchableOpacity
+              onPress={handleSubmitKyc}
+              disabled={submitting}
+              style={{ minWidth: 240 }}
+              className="py-3.5 px-8 rounded-2xl bg-emerald-500 active:bg-emerald-600 items-center justify-center shadow-lg shadow-emerald-500/20"
+            >
+              {submitting ? (
+                <ActivityIndicator color="#ffffff" />
+              ) : (
+                <View className="flex-row items-center">
+                  <Ionicons name="checkmark-done-circle" size={18} color="#ffffff" style={{ marginRight: 6 }} />
+                  <Text className="text-white font-semibold text-sm">
+                    Save & Submit KYC
+                  </Text>
+                </View>
+              )}
+            </TouchableOpacity>
+          </View>
         </ScrollView>
       )}
     </SafeAreaView>

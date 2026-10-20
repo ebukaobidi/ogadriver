@@ -16,7 +16,7 @@ const ThemeContext = createContext();
 
 export const ThemeProvider = ({ children }) => {
   const deviceColorScheme = useDeviceColorScheme();
-  const [themeMode, setThemeMode] = useState('dark'); // 'dark', 'light', 'system'
+  const [themeMode, setThemeMode] = useState('system'); // 'system' (phone default theme), 'dark', 'light'
   const [biometricEnabled, setBiometricEnabled] = useState(false);
 
   useEffect(() => {

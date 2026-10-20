@@ -119,9 +119,7 @@ export default function DriverProfileScreen({ navigation, route }) {
   const [profileBrandSearch, setProfileBrandSearch] = useState('');
   const [profileModelSearch, setProfileModelSearch] = useState('');
 
-  // Country Selection Modal State (Global Country System)
-  const [countryModalVisible, setCountryModalVisible] = useState(false);
-  const { country: selectedCountry, updateCountry, supportedCountries } = useCountry();
+  const { country: selectedCountry } = useCountry();
 
   useEffect(() => {
     loadProfile();
@@ -750,23 +748,6 @@ export default function DriverProfileScreen({ navigation, route }) {
             </View>
             <Ionicons name="chevron-forward" size={18} color={themeStyles.subText} />
           </TouchableOpacity>
-
-          {/* Country Selection Menu */}
-          <TouchableOpacity 
-            className="p-4 flex-row justify-between items-center"
-            onPress={() => setCountryModalVisible(true)}
-          >
-            <View className="flex-row items-center">
-              <Text className="text-base mr-2.5">{selectedCountry.flag}</Text>
-              <Text style={{ color: themeStyles.primaryText }} className="font-normal text-sm">
-                Country: {selectedCountry.name} ({selectedCountry.code})
-              </Text>
-            </View>
-            <View className="flex-row items-center">
-              <Text style={{ color: themeStyles.accentGreen }} className="text-xs font-normal mr-1.5">{selectedCountry.currency}</Text>
-              <Ionicons name="chevron-forward" size={18} color={themeStyles.subText} />
-            </View>
-          </TouchableOpacity>
         </View>
 
         {/* 5. Partner Support Button */}
@@ -959,81 +940,6 @@ export default function DriverProfileScreen({ navigation, route }) {
                   )}
                 </TouchableOpacity>
               </ScrollView>
-            </View>
-          </View>
-        </Modal>
-
-        {/* Modal: Select Country */}
-        <Modal
-          visible={countryModalVisible}
-          animationType="slide"
-          transparent={true}
-          onRequestClose={() => setCountryModalVisible(false)}
-        >
-          <View
-            style={{
-              paddingBottom: Platform.OS === 'android' ? Math.max(insets.bottom, 48) + 16 : Math.max(insets.bottom, 16) + 8,
-            }}
-            className="flex-1 justify-end bg-black/70 px-3"
-          >
-            <View 
-              style={{
-                backgroundColor: themeStyles.cardBg,
-                borderColor: themeStyles.cardBorder,
-                borderWidth: 1,
-                maxHeight: '85%'
-              }}
-              className="rounded-3xl p-6 shadow-2xl"
-            >
-              <View className="flex-row justify-between items-center mb-5">
-                <View>
-                  <Text style={{ color: themeStyles.primaryText }} className="text-xl font-normal">
-                    Select Operating Country
-                  </Text>
-                  <Text style={{ color: themeStyles.subText }} className="text-xs font-normal">
-                    Switches regional dispatch currency and road rules
-                  </Text>
-                </View>
-                <TouchableOpacity onPress={() => setCountryModalVisible(false)}>
-                  <Ionicons name="close-circle" size={26} color={themeStyles.subText} />
-                </TouchableOpacity>
-              </View>
-
-              <View className="space-y-2 mb-6">
-                {(supportedCountries || []).map((item) => (
-                  <TouchableOpacity
-                    key={item.code}
-                    onPress={() => {
-                      updateCountry(item);
-                      setCountryModalVisible(false);
-                      Alert.alert("Operating Country Updated", `Your global dispatch & wallet country has been set to ${item.name} (${item.currency}).`);
-                    }}
-                    style={{
-                      backgroundColor: selectedCountry.code === item.code 
-                        ? (isDark ? 'rgba(0, 229, 136, 0.15)' : 'rgba(5, 150, 105, 0.12)') 
-                        : (isDark ? '#090d16' : '#ffffff'),
-                      borderColor: selectedCountry.code === item.code ? themeStyles.brandGreen : themeStyles.cardBorder,
-                      borderWidth: 1
-                    }}
-                    className="p-3.5 rounded-2xl flex-row items-center justify-between mb-2"
-                  >
-                    <View className="flex-row items-center">
-                      <Text className="text-xl mr-3">{item.flag}</Text>
-                      <View>
-                        <Text style={{ color: themeStyles.primaryText }} className="font-normal text-sm">
-                          {item.name}
-                        </Text>
-                        <Text style={{ color: themeStyles.subText }} className="text-[11px] font-normal">
-                          Dial Code: {item.dialCode} • Currency: {item.currency}
-                        </Text>
-                      </View>
-                    </View>
-                    {selectedCountry.code === item.code && (
-                      <Ionicons name="checkmark-circle" size={20} color={themeStyles.brandGreen} />
-                    )}
-                  </TouchableOpacity>
-                ))}
-              </View>
             </View>
           </View>
         </Modal>

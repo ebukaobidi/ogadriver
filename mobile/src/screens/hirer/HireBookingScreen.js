@@ -437,34 +437,17 @@ export default function HireBookingScreen({ navigation }) {
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: isDark ? '#090d16' : '#ffffff' }}>
       {/* TOP FLOATING BOLT NAV HEADER (Overlaying Map) */}
+      {/* TOP FLOATING HEADER (Overlaying Map) */}
       <View
         style={{
           position: 'absolute',
           top: Math.max(insets.top + 8, 16),
-          left: 16,
           right: 16,
           zIndex: 40,
         }}
-        className="flex-row items-center justify-between"
       >
-        <View
-          style={{
-            backgroundColor: isDark ? 'rgba(18,25,39,0.92)' : 'rgba(255,255,255,0.95)',
-            borderColor: isDark ? '#1e293b' : '#e2e8f0',
-          }}
-          className="flex-row items-center px-4 py-2.5 rounded-2xl border shadow-lg shadow-black/10"
-        >
-          <View className="w-2.5 h-2.5 rounded-full bg-emerald-500 mr-2" />
-          <Text style={{ color: isDark ? '#ffffff' : '#0f172a' }} className="font-semibold text-xs mr-2">
-            OgaDriver Chauffeur
-          </Text>
-          <View className="px-1.5 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/30">
-            <Text className="text-[9px] font-bold uppercase text-emerald-500">Live Map</Text>
-          </View>
-        </View>
-
         <TouchableOpacity
-          onPress={() => navigation.navigate('NaijaHirerHome')}
+          onPress={() => navigation.navigate('HirerBookings')}
           style={{
             backgroundColor: isDark ? 'rgba(18,25,39,0.92)' : 'rgba(255,255,255,0.95)',
             borderColor: isDark ? '#1e293b' : '#e2e8f0',
@@ -472,8 +455,8 @@ export default function HireBookingScreen({ navigation }) {
           className="px-3.5 h-11 rounded-2xl border items-center justify-center flex-row shadow-lg shadow-black/10"
           activeOpacity={0.7}
         >
-          <Ionicons name="storefront-outline" size={16} color="#10b981" style={{ marginRight: 4 }} />
-          <Text className="text-emerald-500 font-semibold text-xs">Market</Text>
+          <Ionicons name="calendar-outline" size={16} color="#10b981" style={{ marginRight: 5 }} />
+          <Text className="text-emerald-500 font-semibold text-xs">Bookings</Text>
         </TouchableOpacity>
       </View>
 

@@ -14,10 +14,12 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../context/ThemeContext';
+import { useCountry } from '../../context/CountryContext';
 import { authService } from '../../api/api';
 
 export default function DriverRegisterScreen({ navigation }) {
   const { isDark } = useTheme();
+  const { updateCountry } = useCountry();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
@@ -81,6 +83,9 @@ export default function DriverRegisterScreen({ navigation }) {
 
     try {
       setLoading(true);
+      if (updateCountry) {
+        await updateCountry(selectedCountry.name || selectedCountry.code);
+      }
       // Construct registration payload
       const payload = {
         name: name.trim(),
