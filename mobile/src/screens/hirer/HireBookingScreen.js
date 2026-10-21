@@ -20,6 +20,7 @@ import { bookingService } from '../../api/api';
 import { useTheme } from '../../context/ThemeContext';
 import loyaltyService from '../../services/loyaltyService';
 import { isGoogleMapsConfigured } from '../../utils/maps';
+import * as Location from 'expo-location';
 import OpenStreetMap from '../../components/OpenStreetMap';
 
 let MapView, Marker, PROVIDER_GOOGLE;
@@ -119,6 +120,51 @@ export default function HireBookingScreen({ navigation }) {
     }
   };
 
+  const [userLocation, setUserLocation] = useState(null);
+  const [locationLoading, setLocationLoading] = useState(true);
+
+  // Request & Fetch real GPS location on mount
+  React.useEffect(() => {
+    let isMounted = true;
+    (async () => {
+      try {
+        const { status } = await Location.requestForegroundPermissionsAsync();
+        if (status === 'granted') {
+          const loc = await Location.getCurrentPositionAsync({
+            accuracy: Location.Accuracy.Balanced,
+          });
+          if (isMounted && loc?.coords) {
+            const userCoords = {
+              latitude: loc.coords.latitude,
+              longitude: loc.coords.longitude,
+            };
+            setUserLocation(userCoords);
+            setPickupCoord(userCoords);
+            try {
+              const geo = await Location.reverseGeocodeAsync(userCoords);
+              if (geo && geo.length > 0) {
+                const place = geo[0];
+                const formatted = [place.name, place.street, place.subregion || place.city || place.region]
+                  .filter(Boolean)
+                  .join(', ');
+                setPickup(formatted || 'Current Location');
+              } else {
+                setPickup('Current Location');
+              }
+            } catch (e) {
+              setPickup('Current Location');
+            }
+          }
+        }
+      } catch (err) {
+        console.log('Location request error:', err);
+      } finally {
+        if (isMounted) setLocationLoading(false);
+      }
+    })();
+    return () => { isMounted = false; };
+  }, []);
+
   const handlePickOnMap = () => {
     Alert.alert('Map Pick-up Spot', 'Tap anywhere on the map above to set your chauffeur meeting point.');
   };
@@ -199,12 +245,13 @@ export default function HireBookingScreen({ navigation }) {
   // Bolt-style Bottom Sheet Animation & Snapping for Hire
   const { height: screenHeight } = Dimensions.get('window');
   const SNAP_COLLAPSED = 115; // Clean "Where to?" peek pill only
-  const SNAP_MIDDLE = Math.round(screenHeight * 0.58); // Middle height (58%)
+  const SNAP_MIDDLE = Math.round(screenHeight * 0.50); // Halfway (50% screen)
   const SNAP_EXPANDED = Math.round(screenHeight * 0.88); // Full top screen (88%)
 
-  const [sheetState, setSheetState] = useState('collapsed'); // Default to clean peek pill
-  const sheetHeightAnim = React.useRef(new Animated.Value(SNAP_COLLAPSED)).current;
-  const currentHeightRef = React.useRef(SNAP_COLLAPSED);
+  // Default to halfway so user sees map and their location when setting pickup
+  const [sheetState, setSheetState] = useState('middle');
+  const sheetHeightAnim = React.useRef(new Animated.Value(Math.round(screenHeight * 0.50))).current;
+  const currentHeightRef = React.useRef(Math.round(screenHeight * 0.50));
   const pickupInputRef = React.useRef(null);
 
   const snapSheetTo = (stateName) => {
@@ -250,12 +297,11 @@ export default function HireBookingScreen({ navigation }) {
         // Quick tap: toggle state (< 10px drag)
         if (Math.abs(finalDy) < 10 && Math.abs(gesture.dx) < 10) {
           if (sheetState === 'collapsed') {
+            snapSheetTo('middle');
+          } else if (sheetState === 'middle') {
             snapSheetTo('expanded');
-            setTimeout(() => pickupInputRef.current?.focus(), 250);
-          } else if (sheetState === 'expanded') {
-            snapSheetTo('collapsed');
           } else {
-            snapSheetTo('expanded');
+            snapSheetTo('middle');
           }
           return;
         }
@@ -263,8 +309,7 @@ export default function HireBookingScreen({ navigation }) {
         // Swiped UP
         if (finalVy < -0.25 || finalDy < -35) {
           if (sheetState === 'collapsed') {
-            snapSheetTo('expanded');
-            setTimeout(() => pickupInputRef.current?.focus(), 250);
+            snapSheetTo('middle');
           } else {
             snapSheetTo('expanded');
           }
@@ -272,7 +317,7 @@ export default function HireBookingScreen({ navigation }) {
         // Swiped DOWN
         else if (finalVy > 0.25 || finalDy > 35) {
           if (sheetState === 'expanded') {
-            snapSheetTo('collapsed');
+            snapSheetTo('middle');
           } else {
             snapSheetTo('collapsed');
           }
@@ -465,15 +510,22 @@ export default function HireBookingScreen({ navigation }) {
         {Platform.OS !== 'web' && MapView && isGoogleMapsConfigured() ? (
           <MapView
             style={{ width: '100%', height: '100%' }}
-            initialRegion={region}
+            initialRegion={userLocation ? {
+              latitude: userLocation.latitude,
+              longitude: userLocation.longitude,
+              latitudeDelta: 0.05,
+              longitudeDelta: 0.05,
+            } : region}
             customMapStyle={WHITE_GOOGLE_MAP_STYLE}
             onPress={handleMapPress}
           >
+            {userLocation && <Marker coordinate={userLocation} pinColor="#10b981" title="Your Location" />}
             {pickup && <Marker coordinate={pickupCoord} pinColor="#008751" title="Pickup / Reporting Point" />}
           </MapView>
         ) : (
           <OpenStreetMap
-            center={pickup ? pickupCoord : region}
+            center={userLocation || (pickup ? pickupCoord : region)}
+            userLocation={userLocation}
             pickup={pickup}
             pickupCoord={pickup ? pickupCoord : null}
             onLocationSelect={handleMapPress}
@@ -545,18 +597,49 @@ export default function HireBookingScreen({ navigation }) {
           /* EXPANDED VIEW: HEADER WITH MINIMIZE BTN + FULL REPORTING INPUTS & FORM */
           <View className="flex-1">
             <View {...panResponder.panHandlers} collapsable={false} className="px-4 pb-2 pt-1 flex-row items-center justify-between">
-              <Text style={{ color: isDark ? '#ffffff' : '#0f172a' }} className="font-semibold text-base">
-                Hire a Professional Driver
-              </Text>
-              <TouchableOpacity
-                onPress={() => snapSheetTo('collapsed')}
-                className="flex-row items-center py-1.5 px-3 rounded-full bg-slate-100 dark:bg-slate-800"
-              >
-                <Ionicons name="chevron-down" size={16} color={isDark ? '#cbd5e1' : '#475569'} style={{ marginRight: 4 }} />
-                <Text style={{ color: isDark ? '#cbd5e1' : '#475569' }} className="text-xs font-medium">
-                  Minimize
+              <View className="flex-row items-center">
+                <Text style={{ color: isDark ? '#ffffff' : '#0f172a' }} className="font-semibold text-base mr-2">
+                  Hire a Professional Driver
                 </Text>
-              </TouchableOpacity>
+                {locationLoading && (
+                  <View className="flex-row items-center">
+                    <ActivityIndicator size="small" color="#10b981" />
+                    <Text className="text-[10px] text-emerald-600 dark:text-emerald-400 ml-1">Locating...</Text>
+                  </View>
+                )}
+              </View>
+              <View className="flex-row items-center space-x-2">
+                {sheetState === 'middle' ? (
+                  <TouchableOpacity
+                    onPress={() => snapSheetTo('expanded')}
+                    className="flex-row items-center py-1.5 px-3 rounded-full bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-500/20"
+                    activeOpacity={0.7}
+                  >
+                    <Ionicons name="chevron-up" size={16} color="#10b981" style={{ marginRight: 4 }} />
+                    <Text className="text-xs font-semibold text-emerald-600 dark:text-emerald-400">
+                      Full Screen
+                    </Text>
+                  </TouchableOpacity>
+                ) : (
+                  <TouchableOpacity
+                    onPress={() => snapSheetTo('middle')}
+                    className="flex-row items-center py-1.5 px-3 rounded-full bg-slate-100 dark:bg-slate-800"
+                    activeOpacity={0.7}
+                  >
+                    <Ionicons name="chevron-down" size={16} color={isDark ? '#cbd5e1' : '#475569'} style={{ marginRight: 4 }} />
+                    <Text style={{ color: isDark ? '#cbd5e1' : '#475569' }} className="text-xs font-medium">
+                      Half Screen
+                    </Text>
+                  </TouchableOpacity>
+                )}
+                <TouchableOpacity
+                  onPress={() => snapSheetTo('collapsed')}
+                  className="p-1.5 rounded-full bg-slate-100 dark:bg-slate-800"
+                  activeOpacity={0.7}
+                >
+                  <Ionicons name="remove" size={16} color={isDark ? '#cbd5e1' : '#475569'} />
+                </TouchableOpacity>
+              </View>
             </View>
 
             {/* REPORTING LOCATION & ITINERARY */}

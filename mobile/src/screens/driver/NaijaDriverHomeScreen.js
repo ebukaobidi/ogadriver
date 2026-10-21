@@ -16,6 +16,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { authService, driverService, radioService, extractArray } from '../../api/api';
 import { useTheme } from '../../context/ThemeContext';
 import { isGoogleMapsConfigured } from '../../utils/maps';
+import * as Location from 'expo-location';
 import OpenStreetMap from '../../components/OpenStreetMap';
 
 // Safe MapView imports for native platforms
@@ -46,6 +47,43 @@ export default function NaijaDriverHomeScreen({ navigation }) {
   const [isOnline, setIsOnline] = useState(true);
   const [user, setUser] = useState(null);
   const [driver, setDriver] = useState(null);
+  const [driverCoord, setDriverCoord] = useState({ latitude: 6.4281, longitude: 3.4219 });
+  const [driverLocationName, setDriverLocationName] = useState('Lagos, Nigeria');
+
+  // Request & Fetch real GPS location on mount for Driver
+  useEffect(() => {
+    let isMounted = true;
+    (async () => {
+      try {
+        const { status } = await Location.requestForegroundPermissionsAsync();
+        if (status === 'granted') {
+          const loc = await Location.getCurrentPositionAsync({
+            accuracy: Location.Accuracy.Balanced,
+          });
+          if (isMounted && loc?.coords) {
+            const coords = {
+              latitude: loc.coords.latitude,
+              longitude: loc.coords.longitude,
+            };
+            setDriverCoord(coords);
+            try {
+              const geo = await Location.reverseGeocodeAsync(coords);
+              if (geo && geo.length > 0) {
+                const place = geo[0];
+                const formatted = [place.name, place.street, place.subregion || place.city || place.region]
+                  .filter(Boolean)
+                  .join(', ');
+                if (formatted) setDriverLocationName(formatted);
+              }
+            } catch (e) {}
+          }
+        }
+      } catch (err) {
+        console.log('Driver location error:', err);
+      }
+    })();
+    return () => { isMounted = false; };
+  }, []);
 
   // Proximity Walkie-Talkie & Half-Duplex State
   const [isTalking, setIsTalking] = useState(false);
@@ -524,15 +562,15 @@ export default function NaijaDriverHomeScreen({ navigation }) {
             style={StyleSheet.absoluteFillObject}
             customMapStyle={WHITE_GOOGLE_MAP_STYLE}
             initialRegion={{
-              latitude: 6.4281,
-              longitude: 3.4219,
+              latitude: driverCoord.latitude,
+              longitude: driverCoord.longitude,
               latitudeDelta: 0.05,
               longitudeDelta: 0.05,
             }}
           >
             {isOnline && (
               <Marker
-                coordinate={{ latitude: 6.4281, longitude: 3.4219 }}
+                coordinate={driverCoord}
                 title="Your Vehicle"
                 description={user?.name || 'Active Partner'}
               />
@@ -540,8 +578,9 @@ export default function NaijaDriverHomeScreen({ navigation }) {
           </MapView>
         ) : (
           <OpenStreetMap
-            center={{ latitude: 6.4281, longitude: 3.4219 }}
-            driverCoord={{ latitude: 6.4281, longitude: 3.4219 }}
+            center={driverCoord}
+            userLocation={driverCoord}
+            driverCoord={driverCoord}
             driverName={user?.name || 'Active Driver Partner'}
             isDark={isDark}
             interactive={true}

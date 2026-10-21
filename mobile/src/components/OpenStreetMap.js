@@ -3,12 +3,13 @@ import { View, StyleSheet, Platform, ActivityIndicator } from 'react-native';
 import { WebView } from 'react-native-webview';
 
 /**
- * OpenStreetMap interactive map component powered by Leaflet & CartoDB / OSM tiles.
- * Runs 100% free with zero API key dependencies, avoiding Google Play Services authorization errors.
+ * OpenStreetMap interactive map component powered by Leaflet & OSM tiles.
+ * 100% Free with zero API key dependencies, zero Play Services dependencies, and zero watermarks.
  */
 export default function OpenStreetMap({
   center = { latitude: 6.5244, longitude: 3.3792 }, // Default to Lagos, Nigeria
-  zoom = 14,
+  zoom = 15,
+  userLocation = null, // Current GPS location { latitude, longitude }
   pickup = null,
   dropoff = null,
   pickupCoord = null,
@@ -45,6 +46,11 @@ export default function OpenStreetMap({
 
   // Generate the standalone Leaflet HTML document
   const leafletHtml = useMemo(() => {
+    const uCoord = userLocation && userLocation.latitude != null ? {
+      latitude: Number(userLocation.latitude),
+      longitude: Number(userLocation.longitude)
+    } : null;
+
     const pCoord = pickupCoord && pickupCoord.latitude != null ? {
       latitude: Number(pickupCoord.latitude),
       longitude: Number(pickupCoord.longitude)
@@ -60,8 +66,8 @@ export default function OpenStreetMap({
       longitude: Number(driverCoord.longitude)
     } : null;
 
-    const initialLat = pCoord?.latitude || drCoord?.latitude || (center?.latitude ? Number(center.latitude) : 6.5244);
-    const initialLng = pCoord?.longitude || drCoord?.longitude || (center?.longitude ? Number(center.longitude) : 3.3792);
+    const initialLat = pCoord?.latitude || uCoord?.latitude || drCoord?.latitude || (center?.latitude ? Number(center.latitude) : 6.5244);
+    const initialLng = pCoord?.longitude || uCoord?.longitude || drCoord?.longitude || (center?.longitude ? Number(center.longitude) : 3.3792);
 
     const stopsData = (stops || [])
       .filter((s) => s.lat != null && s.lon != null)
@@ -71,8 +77,6 @@ export default function OpenStreetMap({
         title: s.address || `Stop ${idx + 1}`,
         idx: idx + 1,
       }));
-
-    const tileUrl = 'https://tile.openstreetmap.de/{z}/{x}/{y}.png';
 
     const bgColor = isDark ? '#090d16' : '#f8fafc';
     const popupBg = isDark ? '#1e293b' : '#ffffff';
@@ -84,8 +88,13 @@ export default function OpenStreetMap({
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script>
+    if (typeof L === 'undefined') {
+      document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"><\\/script>');
+    }
+  </script>
   <style>
     * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
     html, body, #map {
@@ -102,7 +111,7 @@ export default function OpenStreetMap({
       isDark
         ? `
     .leaflet-tile-pane {
-      filter: brightness(0.65) invert(1) contrast(3.2) hue-rotate(200deg) saturate(0.28) brightness(0.75);
+      filter: brightness(0.68) invert(1) contrast(3) hue-rotate(200deg) saturate(0.3) brightness(0.78);
     }
     `
         : ''
@@ -134,6 +143,31 @@ export default function OpenStreetMap({
       70% { box-shadow: 0 0 0 14px rgba(0, 135, 81, 0); }
       100% { box-shadow: 0 0 0 0 rgba(0, 135, 81, 0); }
     }
+    /* User Current GPS Location Pulsing Marker */
+    .pin-user-location {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: rgba(16, 185, 129, 0.25);
+      border: 2px solid #10b981;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 0 12px rgba(16, 185, 129, 0.5);
+      animation: pulse-user 2.2s infinite;
+    }
+    .user-inner-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: #10b981;
+      border: 2px solid #ffffff;
+    }
+    @keyframes pulse-user {
+      0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+      70% { box-shadow: 0 0 0 16px rgba(16, 185, 129, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+    }
     .leaflet-popup-content-wrapper {
       background: ${popupBg};
       color: ${popupText};
@@ -161,22 +195,51 @@ export default function OpenStreetMap({
         doubleClickZoom: ${interactive ? 'true' : 'false'}
       }).setView([${initialLat}, ${initialLng}], ${zoom});
 
-      // Pure OpenStreetMap Tile Layer (100% Free, Zero Watermark, Zero API Key Required)
-      var tileLayer = L.tileLayer('${tileUrl}', {
+      // High-availability Humanitarian OpenStreetMap Team Tiles (100% Free, High Contrast, Zero Watermarks)
+      var tileLayer = L.tileLayer('https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png', {
         maxZoom: 19,
+        subdomains: ['a', 'b'],
         attribution: ''
       });
       tileLayer.on('tileerror', function(error) {
-        if (error && error.tile && error.tile.src && !error.tile.src.includes('tile.openstreetmap.fr')) {
-          var match = error.tile.src.match(/\/(\d+)\/(\d+)\/(\d+)\.png/);
-          if (match) {
-            error.tile.src = 'https://a.tile.openstreetmap.fr/hot/' + match[1] + '/' + match[2] + '/' + match[3] + '.png';
+        if (error && error.tile && error.tile.src) {
+          var src = error.tile.src;
+          if (src.indexOf('tile.openstreetmap.org') === -1) {
+            var parts = src.split('/');
+            if (parts.length >= 3) {
+              var z = parts[parts.length - 3];
+              var x = parts[parts.length - 2];
+              var y = parts[parts.length - 1];
+              error.tile.src = 'https://tile.openstreetmap.org/' + z + '/' + x + '/' + y;
+            }
           }
         }
       });
       tileLayer.addTo(map);
 
+      // Invalidate layout after rendering to guarantee map tiles paint fully in WebView
+      setTimeout(function() { if (map) map.invalidateSize(); }, 150);
+      setTimeout(function() { if (map) map.invalidateSize(); }, 600);
+
       var boundsPoints = [];
+
+      // Current GPS Location Marker
+      ${
+        uCoord
+          ? `
+        var userIcon = L.divIcon({
+          className: 'custom-pin',
+          html: '<div class=\"pin-user-location\"><div class=\"user-inner-dot\"></div></div>',
+          iconSize: [24, 24],
+          iconAnchor: [12, 12]
+        });
+        L.marker([${uCoord.latitude}, ${uCoord.longitude}], { icon: userIcon, zIndexOffset: 1000 })
+          .addTo(map)
+          .bindPopup('<b>Your Current Location</b>');
+        boundsPoints.push([${uCoord.latitude}, ${uCoord.longitude}]);
+      `
+          : ''
+      }
 
       // Pickup Marker (Emerald Green)
       ${
@@ -188,9 +251,9 @@ export default function OpenStreetMap({
           iconSize: [32, 32],
           iconAnchor: [16, 16]
         });
-        L.marker([${pCoord.latitude}, ${pCoord.longitude}], { icon: pickupIcon })
+        L.marker([${pCoord.latitude}, ${pCoord.longitude}], { icon: pickupIcon, zIndexOffset: 900 })
           .addTo(map)
-          .bindPopup('<b>Pickup Spot</b><br/>${escapeHtml(pickup || 'Your Location')}');
+          .bindPopup('<b>Pickup Point</b><br/>${escapeHtml(pickup || 'Your Location')}');
         boundsPoints.push([${pCoord.latitude}, ${pCoord.longitude}]);
       `
           : ''
@@ -206,7 +269,7 @@ export default function OpenStreetMap({
           iconSize: [32, 32],
           iconAnchor: [16, 16]
         });
-        L.marker([${dCoord.latitude}, ${dCoord.longitude}], { icon: dropoffIcon })
+        L.marker([${dCoord.latitude}, ${dCoord.longitude}], { icon: dropoffIcon, zIndexOffset: 900 })
           .addTo(map)
           .bindPopup('<b>Destination</b><br/>${escapeHtml(dropoff || 'Destination')}');
         boundsPoints.push([${dCoord.latitude}, ${dCoord.longitude}]);
@@ -239,7 +302,7 @@ export default function OpenStreetMap({
           iconSize: [32, 32],
           iconAnchor: [16, 16]
         });
-        L.marker([${drCoord.latitude}, ${drCoord.longitude}], { icon: driverIcon })
+        L.marker([${drCoord.latitude}, ${drCoord.longitude}], { icon: driverIcon, zIndexOffset: 950 })
           .addTo(map)
           .bindPopup('<b>${escapeHtml(driverName)}</b>');
         boundsPoints.push([${drCoord.latitude}, ${drCoord.longitude}]);
@@ -259,7 +322,7 @@ export default function OpenStreetMap({
         L.polyline(routeCoords, {
           color: '#008751',
           weight: 5,
-          opacity: 0.9,
+          opacity: 0.92,
           lineCap: 'round',
           lineJoin: 'round'
         }).addTo(map);
@@ -297,6 +360,8 @@ export default function OpenStreetMap({
     center?.latitude,
     center?.longitude,
     zoom,
+    userLocation?.latitude,
+    userLocation?.longitude,
     pickup,
     dropoff,
     pickupCoord?.latitude,
@@ -340,10 +405,14 @@ export default function OpenStreetMap({
       <WebView
         ref={webViewRef}
         originWhitelist={['*']}
-        source={{ html: leafletHtml }}
-        style={[styles.webView, { backgroundColor: isDark ? '#090d16' : '#f8fafc' }]}
+        source={{ html: leafletHtml, baseUrl: 'https://unpkg.com' }}
+        style={[styles.webView, { width: '100%', height: '100%', backgroundColor: isDark ? '#090d16' : '#f8fafc' }]}
         javaScriptEnabled={true}
         domStorageEnabled={true}
+        allowFileAccess={true}
+        allowUniversalAccessFromFileURLs={true}
+        mixedContentMode="always"
+        androidLayerType="hardware"
         scrollEnabled={false}
         bounces={false}
         overScrollMode="never"
@@ -378,6 +447,8 @@ const styles = StyleSheet.create({
   },
   webView: {
     flex: 1,
+    width: '100%',
+    height: '100%',
   },
   loadingContainer: {
     ...StyleSheet.absoluteFillObject,
