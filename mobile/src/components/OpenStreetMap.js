@@ -72,9 +72,7 @@ export default function OpenStreetMap({
         idx: idx + 1,
       }));
 
-    const tileUrl = isDark
-      ? 'https://{s}.basemaps.cartocdn.com/rastertiles/dark_all/{z}/{x}/{y}{r}.png'
-      : 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png';
+    const tileUrl = 'https://tile.openstreetmap.de/{z}/{x}/{y}.png';
 
     const bgColor = isDark ? '#090d16' : '#f8fafc';
     const popupBg = isDark ? '#1e293b' : '#ffffff';
@@ -100,6 +98,15 @@ export default function OpenStreetMap({
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     }
     .leaflet-control-attribution { display: none !important; }
+    ${
+      isDark
+        ? `
+    .leaflet-tile-pane {
+      filter: brightness(0.65) invert(1) contrast(3.2) hue-rotate(200deg) saturate(0.28) brightness(0.75);
+    }
+    `
+        : ''
+    }
     .custom-pin {
       display: flex;
       align-items: center;
@@ -154,11 +161,20 @@ export default function OpenStreetMap({
         doubleClickZoom: ${interactive ? 'true' : 'false'}
       }).setView([${initialLat}, ${initialLng}], ${zoom});
 
-      // CartoDB Tile Layer (Voyager for Light, Dark Matter for Dark mode)
-      L.tileLayer('${tileUrl}', {
+      // Pure OpenStreetMap Tile Layer (100% Free, Zero Watermark, Zero API Key Required)
+      var tileLayer = L.tileLayer('${tileUrl}', {
         maxZoom: 19,
-        subdomains: 'abcd'
-      }).addTo(map);
+        attribution: ''
+      });
+      tileLayer.on('tileerror', function(error) {
+        if (error && error.tile && error.tile.src && !error.tile.src.includes('tile.openstreetmap.fr')) {
+          var match = error.tile.src.match(/\/(\d+)\/(\d+)\/(\d+)\.png/);
+          if (match) {
+            error.tile.src = 'https://a.tile.openstreetmap.fr/hot/' + match[1] + '/' + match[2] + '/' + match[3] + '.png';
+          }
+        }
+      });
+      tileLayer.addTo(map);
 
       var boundsPoints = [];
 
