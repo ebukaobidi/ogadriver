@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, ScrollView, RefreshControl, Image, Modal, Alert, TextInput, ActivityIndicator, Platform } from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView, RefreshControl, Image, Modal, Alert, TextInput, ActivityIndicator, Platform, BackHandler } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import * as Location from 'expo-location';
@@ -43,6 +43,22 @@ export default function NaijaHirerHomeScreen({ navigation }) {
 
   // Map Picker Modal & Map Coordinates
   const [showMapModal, setShowMapModal] = useState(false);
+  useEffect(() => {
+    const onBack = () => {
+      if (showCountryModal) {
+        setShowCountryModal(false);
+        return true;
+      }
+      if (showMapModal) {
+        setShowMapModal(false);
+        return true;
+      }
+      return false;
+    };
+    const sub = BackHandler.addEventListener('hardwareBackPress', onBack);
+    return () => sub.remove();
+  }, [showCountryModal, showMapModal]);
+
   const [mapCoords, setMapCoords] = useState({
     latitude: 6.4281,
     longitude: 3.4219,

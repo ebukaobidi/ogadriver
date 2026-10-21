@@ -9,7 +9,8 @@ import {
   StyleSheet,
   Modal,
   ScrollView,
-  AppState
+  AppState,
+  BackHandler
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -39,6 +40,27 @@ const WHITE_GOOGLE_MAP_STYLE = [
   { featureType: 'road', elementType: 'geometry', stylers: [{ color: '#ffffff' }] },
   { featureType: 'road', elementType: 'geometry.stroke', stylers: [{ color: '#e2e8f0' }] },
   { featureType: 'water', elementType: 'geometry', stylers: [{ color: '#e0f2fe' }] },
+];
+
+// Haversine formula for distance calculation in kilometers
+function calculateDistanceInKm(lat1, lon1, lat2, lon2) {
+  const R = 6371;
+  const dLat = (lat2 - lat1) * (Math.PI / 180);
+  const dLon = (lon2 - lon1) * (Math.PI / 180);
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(lat1 * (Math.PI / 180)) * Math.cos(lat2 * (Math.PI / 180)) *
+    Math.sin(dLon / 2) * Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return Math.round(R * c * 10) / 10;
+}
+
+const REGIONAL_RADIO_CHANNELS = [
+  { id: 'lagos_island', code: 'CH-01', frequency: 'CH-01', name: 'Island & Lekki Express', center: { latitude: 6.4311, longitude: 3.4285 }, coverage: 'VI, Ikoyi, Lekki Phase 1, Ajah', driversOnNet: 198 },
+  { id: 'lagos_mainland', code: 'CH-02', frequency: 'CH-02', name: 'Lagos Mainland Grid', center: { latitude: 6.5950, longitude: 3.3450 }, coverage: 'Ikeja, Yaba, 3rd Mainland Bridge', driversOnNet: 142 },
+  { id: 'abuja_fct', code: 'CH-03', frequency: 'CH-03', name: 'Abuja Federal Net', center: { latitude: 9.0765, longitude: 7.4753 }, coverage: 'Central Area, Maitama, Airport Rd', driversOnNet: 95 },
+  { id: 'port_harcourt', code: 'CH-04', frequency: 'CH-04', name: 'Port Harcourt Hub', center: { latitude: 4.8156, longitude: 7.0498 }, coverage: 'GRA, Trans-Amadi, Aba Rd', driversOnNet: 64 },
+  { id: 'sos_emergency', code: 'CH-09', frequency: 'CH-09 (SOS)', name: '🚨 SOS Tactical Net', center: null, coverage: 'Nationwide Road Hazard & Priority Comms', driversOnNet: 310 },
 ];
 
 export default function NaijaDriverHomeScreen({ navigation }) {
@@ -100,15 +122,64 @@ export default function NaijaDriverHomeScreen({ navigation }) {
   ]);
 
   // Tactical Walkie-Talkie Channels (Push-To-Talk / Two-Way Driver Comms)
-  const [radioChannels, setRadioChannels] = useState([
-    { id: 'lagos_mainland', code: 'CH-01', frequency: 'CH-01', name: 'Lagos Mainland Grid', coverage: 'Ikeja, Yaba, 3rd Mainland Bridge', driversOnNet: 142 },
-    { id: 'lagos_island', code: 'CH-02', frequency: 'CH-02', name: 'Island & Lekki Express', coverage: 'VI, Ikoyi, Lekki Phase 1, Ajah', driversOnNet: 198 },
-    { id: 'abuja_fct', code: 'CH-03', frequency: 'CH-03', name: 'Abuja Federal Net', coverage: 'Central Area, Maitama, Airport Rd', driversOnNet: 95 },
-    { id: 'port_harcourt', code: 'CH-04', frequency: 'CH-04', name: 'Port Harcourt Hub', coverage: 'GRA, Trans-Amadi, Aba Rd', driversOnNet: 64 },
-    { id: 'sos_emergency', code: 'CH-09', frequency: 'CH-09 (SOS)', name: '🚨 SOS Tactical Net', coverage: 'Nationwide Road Hazard & Priority Comms', driversOnNet: 310 },
-  ]);
+  const [radioChannels, setRadioChannels] = useState(REGIONAL_RADIO_CHANNELS);
+  const [channelDistances, setChannelDistances] = useState({});
+  const [autoConnectedNotice, setAutoConnectedNotice] = useState(null);
+  const mapRef = useRef(null);
+
+  // Tap handler for single-tap mute / double-tap console
+  const lastTapRef = useRef(0);
+  const singleTapTimeoutRef = useRef(null);
 
   const activeChannelInfo = radioChannels.find(c => c.id === selectedChannel) || radioChannels[0];
+  // Automatic Distance-Based Radio Channel Tuning
+  useEffect(() => {
+    if (!driverCoord || !driverCoord.latitude) return;
+    const distMap = {};
+    const regional = radioChannels.filter(c => c.center);
+    let closestChannel = null;
+    let minDistance = Infinity;
+
+    regional.forEach(c => {
+      const dist = calculateDistanceInKm(
+        driverCoord.latitude,
+        driverCoord.longitude,
+        c.center.latitude,
+        c.center.longitude
+      );
+      distMap[c.id] = dist;
+      if (dist < minDistance) {
+        minDistance = dist;
+        closestChannel = c;
+      }
+    });
+
+    setChannelDistances(distMap);
+
+    if (closestChannel && closestChannel.id !== selectedChannel) {
+      setSelectedChannel(closestChannel.id);
+      setAutoConnectedNotice(`Auto-connected: ${closestChannel.code} • ${closestChannel.name} (${minDistance} km away)`);
+      setTimeout(() => setAutoConnectedNotice(null), 4000);
+    }
+  }, [driverCoord.latitude, driverCoord.longitude]);
+
+  // Android Hardware Back button listener
+  useEffect(() => {
+    const onHardwareBack = () => {
+      if (radioModalVisible) {
+        setRadioModalVisible(false);
+        return true;
+      }
+      if (activeRequest) {
+        setActiveRequest(null);
+        return true;
+      }
+      return false;
+    };
+    const sub = BackHandler.addEventListener('hardwareBackPress', onHardwareBack);
+    return () => sub.remove();
+  }, [radioModalVisible, activeRequest]);
+
 
   // Pulse & Audio Waveform animations
   const pulseAnim = useRef(new Animated.Value(1)).current;
@@ -506,6 +577,37 @@ export default function NaijaDriverHomeScreen({ navigation }) {
     }
   };
 
+  const handleWalkieTap = () => {
+    const now = Date.now();
+    const DOUBLE_TAP_DELAY = 280;
+
+    if (now - lastTapRef.current < DOUBLE_TAP_DELAY) {
+      // Double tap detected: cancel single tap mute toggle and open console
+      if (singleTapTimeoutRef.current) {
+        clearTimeout(singleTapTimeoutRef.current);
+        singleTapTimeoutRef.current = null;
+      }
+      setRadioModalVisible(true);
+    } else {
+      // Single tap: toggle mute after delay
+      singleTapTimeoutRef.current = setTimeout(() => {
+        handleToggleMute();
+      }, DOUBLE_TAP_DELAY);
+    }
+    lastTapRef.current = now;
+  };
+
+  const handleRecenterMap = () => {
+    if (mapRef.current?.animateToRegion) {
+      mapRef.current.animateToRegion({
+        latitude: driverCoord.latitude,
+        longitude: driverCoord.longitude,
+        latitudeDelta: 0.035,
+        longitudeDelta: 0.035,
+      }, 800);
+    }
+  };
+
   const handleToggleMute = () => {
     setIsMuted(!isMuted);
     if (!isMuted) {
@@ -559,13 +661,18 @@ export default function NaijaDriverHomeScreen({ navigation }) {
       <View style={StyleSheet.absoluteFillObject}>
         {Platform.OS !== 'web' && MapView && isGoogleMapsConfigured() ? (
           <MapView
+            ref={mapRef}
             style={StyleSheet.absoluteFillObject}
             customMapStyle={WHITE_GOOGLE_MAP_STYLE}
+            scrollEnabled={true}
+            zoomEnabled={true}
+            rotateEnabled={true}
+            pitchEnabled={true}
             initialRegion={{
               latitude: driverCoord.latitude,
               longitude: driverCoord.longitude,
-              latitudeDelta: 0.05,
-              longitudeDelta: 0.05,
+              latitudeDelta: 0.045,
+              longitudeDelta: 0.045,
             }}
           >
             {isOnline && (
@@ -588,10 +695,10 @@ export default function NaijaDriverHomeScreen({ navigation }) {
         )}
       </View>
 
-      {/* 2. FLOATING TOP HEADER BAR */}
+      {/* 2. FLOATING ONLINE/OFFLINE PILL (TOP LEFT - FULLY PRESERVED WITH ITS FLOATING BACKGROUND) */}
       <View 
         style={[
-          styles.topHeader,
+          styles.floatingOnlineContainer,
           { top: Math.max(insets.top + 8, 14) },
           !isDark && {
             backgroundColor: '#ffffff',
@@ -600,50 +707,6 @@ export default function NaijaDriverHomeScreen({ navigation }) {
           }
         ]}
       >
-        <View style={styles.headerLeft}>
-          <View style={styles.headerAvatar}>
-            <Ionicons name="car-sport" size={18} color="#090d16" />
-          </View>
-          <View>
-            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-              <Text style={[styles.headerTitle, !isDark && { color: '#008751' }]}>OgaDriver</Text>
-              <View 
-                style={[
-                  styles.partnerBadge, 
-                  !isDark && { backgroundColor: 'rgba(0, 135, 81, 0.1)', borderColor: 'rgba(0, 135, 81, 0.3)' }
-                ]}
-              >
-                <Text style={[styles.partnerBadgeText, !isDark && { color: '#008751' }]}>PARTNER</Text>
-              </View>
-            </View>
-            <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 2 }}>
-              <TouchableOpacity 
-                onPress={() => navigation.navigate('DriverSubscription')}
-                style={{
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  backgroundColor: isDark ? 'rgba(0, 229, 136, 0.12)' : 'rgba(5, 150, 105, 0.08)',
-                  borderColor: isDark ? '#00e588' : '#059669',
-                  borderWidth: 1,
-                  borderRadius: 10,
-                  paddingHorizontal: 6,
-                  paddingVertical: 1.5,
-                  marginRight: 6
-                }}
-              >
-                <Ionicons name="card" size={10} color={isDark ? "#00e588" : "#059669"} style={{ marginRight: 3 }} />
-                <Text style={{ color: isDark ? '#00e588' : '#059669', fontSize: 9.5, fontWeight: 'normal' }}>
-                  Pass: ₦300/Day
-                </Text>
-              </TouchableOpacity>
-              <Text style={[styles.headerSubtitle, !isDark && { color: '#64748b' }]} numberOfLines={1}>
-                {driver?.vehicle_make ? `${driver.vehicle_make}` : 'Tactical Map'}
-              </Text>
-            </View>
-          </View>
-        </View>
-
-        {/* Online / Offline Switcher with Anti-Moonlighting Guard */}
         <TouchableOpacity
           onPress={handleToggleOnline}
           style={[
@@ -651,6 +714,7 @@ export default function NaijaDriverHomeScreen({ navigation }) {
             isOnline ? styles.onlineBtnActive : styles.onlineBtnInactive,
             !isDark && { backgroundColor: isOnline ? '#ecfdf5' : '#fff1f2' }
           ]}
+          activeOpacity={0.8}
         >
           <View style={[styles.statusDot, { backgroundColor: isOnline ? '#10b981' : '#f43f5e' }]} />
           <Text style={[styles.statusText, { color: isOnline ? '#059669' : '#e11d48' }]}>
@@ -659,14 +723,30 @@ export default function NaijaDriverHomeScreen({ navigation }) {
         </TouchableOpacity>
       </View>
 
-      {/* 3. FLOATING MAP UTILITY BUTTONS (TOP RIGHT) */}
-      <View style={styles.mapToolsContainer}>
+      {/* AUTO-CONNECTED DISTANCE NOTICE (TEMPORARY FLOATING TOAST) */}
+      {autoConnectedNotice && (
+        <View 
+          style={[
+            styles.autoChannelToast,
+            { top: Math.max(insets.top + 56, 62) }
+          ]}
+        >
+          <Ionicons name="radio" size={12} color="#00e588" style={{ marginRight: 5 }} />
+          <Text style={styles.autoChannelToastText} numberOfLines={1}>
+            {autoConnectedNotice}
+          </Text>
+        </View>
+      )}
+
+      {/* 3. FLOATING MAP UTILITY BUTTONS (TOP RIGHT: LOCATE, CALENDAR, HIRE) */}
+      <View style={[styles.mapToolsContainer, { top: Math.max(insets.top + 8, 14) }]}>
         <TouchableOpacity 
-          onPress={() => Alert.alert('Recenter', 'Map centered to current GPS location.')}
+          onPress={handleRecenterMap}
           style={[
             styles.mapToolBtn,
             !isDark && { backgroundColor: '#ffffff', borderColor: '#e2e8f0' }
           ]}
+          activeOpacity={0.7}
         >
           <Ionicons name="locate" size={18} color={isDark ? "#00e588" : "#059669"} />
         </TouchableOpacity>
@@ -677,6 +757,7 @@ export default function NaijaDriverHomeScreen({ navigation }) {
             { marginTop: 8 },
             !isDark && { backgroundColor: '#ffffff', borderColor: '#e2e8f0' }
           ]}
+          activeOpacity={0.7}
         >
           <Ionicons name="calendar-outline" size={18} color={isDark ? "#00e588" : "#059669"} />
         </TouchableOpacity>
@@ -687,6 +768,7 @@ export default function NaijaDriverHomeScreen({ navigation }) {
             { marginTop: 8 },
             !isDark && { backgroundColor: '#ffffff', borderColor: '#e2e8f0' }
           ]}
+          activeOpacity={0.7}
         >
           <Ionicons name="briefcase-outline" size={18} color={isDark ? "#00e588" : "#059669"} />
         </TouchableOpacity>
@@ -921,93 +1003,93 @@ export default function NaijaDriverHomeScreen({ navigation }) {
         </View>
       )}
 
-      {/* 5. FLOATING OGA RADIO WALKIE-TALKIE BUTTON - Anchored Above Bottom Nav */}
+      {/* 5. FLOATING OGA RADIO WALKIE-TALKIE BUTTON - REDUCED COMPACT SIZE WITH SINGLE-TAP MUTE & DOUBLE-TAP CONSOLE */}
       <View style={styles.ogaRadioAnchor}>
-              <Animated.View style={{ transform: [{ scale: pulseAnim }] }}>
-                <TouchableOpacity
-                  activeOpacity={0.85}
-                  onPress={() => setRadioModalVisible(true)}
-                  onLongPress={handleHoldStart}
-                  onPressOut={handleHoldEnd}
-                  delayLongPress={160}
-                  style={{ alignItems: 'center', justifyContent: 'center' }}
-                >
-                  {/* Outer Ring with Emerald Glow */}
-                  <View 
-                    style={[
-                      styles.radioOuterRing,
-                      isTalking 
-                        ? styles.radioTalking 
-                        : floorStatus === 'busy'
-                          ? { borderColor: '#f59e0b', shadowColor: '#f59e0b' }
-                          : isMuted 
-                            ? styles.radioMuted 
-                            : styles.radioActiveGlow
-                    ]}
-                  >
-                    {/* Indicator Dot */}
-                    <View style={[
-                      styles.radioRedDot, 
-                      { backgroundColor: isTalking ? '#dc2626' : floorStatus === 'busy' ? '#f59e0b' : '#00e588' }
-                    ]} />
+        <Animated.View style={{ transform: [{ scale: pulseAnim }] }}>
+          <TouchableOpacity
+            activeOpacity={0.85}
+            onPress={handleWalkieTap}
+            onLongPress={handleHoldStart}
+            onPressOut={handleHoldEnd}
+            delayLongPress={160}
+            style={{ alignItems: 'center', justifyContent: 'center' }}
+          >
+            {/* Outer Compact Ring */}
+            <View 
+              style={[
+                styles.radioOuterRing,
+                isTalking 
+                  ? styles.radioTalking 
+                  : floorStatus === 'busy'
+                    ? { borderColor: '#f59e0b', shadowColor: '#f59e0b' }
+                    : isMuted 
+                      ? styles.radioMuted 
+                      : styles.radioActiveGlow
+              ]}
+            >
+              {/* Indicator Dot */}
+              <View style={[
+                styles.radioRedDot, 
+                { backgroundColor: isTalking ? '#dc2626' : floorStatus === 'busy' ? '#f59e0b' : isMuted ? '#64748b' : '#00e588' }
+              ]} />
 
-                    {/* Inner Solid Disc */}
-                    <View 
-                      style={[
-                        styles.radioInnerDisc,
-                        { 
-                          backgroundColor: isTalking 
-                            ? '#dc2626' 
-                            : floorStatus === 'busy'
-                              ? '#d97706'
-                              : isMuted 
-                                ? '#334155' 
-                                : '#00e588' 
-                        }
-                      ]}
-                    >
-                      <Ionicons 
-                        name={isMuted ? "mic-off" : isTalking ? "radio" : floorStatus === 'busy' ? "volume-high" : "mic"} 
-                        size={28} 
-                        color={isMuted ? "#94a3b8" : isTalking || floorStatus === 'busy' ? "#ffffff" : "#02241b"} 
-                      />
-                    </View>
-                  </View>
-                </TouchableOpacity>
-              </Animated.View>
-
-              {/* Dynamic Speaker Indicator under the mic */}
-              {activeSpeaker ? (
-                <TouchableOpacity 
-                  onPress={() => setRadioModalVisible(true)} 
-                  style={[
-                    styles.speakerPill,
-                    floorStatus === 'busy' && { backgroundColor: 'rgba(245, 158, 11, 0.95)', borderColor: '#f59e0b' }
-                  ]}
-                >
-                  <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                    <View style={[styles.speakerDot, floorStatus === 'busy' && { backgroundColor: '#ffffff' }]} />
-                    <Text style={styles.speakerName} numberOfLines={1}>
-                      {isTalking ? `TRANSMITTING (${15 - talkDuration}s)` : `TRANSMITTING: ${activeSpeaker.name}`}
-                    </Text>
-                  </View>
-                  <Text style={styles.speakerLocation} numberOfLines={1}>
-                    {activeSpeaker.location}
-                  </Text>
-                </TouchableOpacity>
-              ) : (
-                <TouchableOpacity onPress={() => setRadioModalVisible(true)}>
-                  <Text 
-                    style={[
-                      styles.ogaRadioLabel,
-                      { color: isMuted ? '#64748b' : '#00e588', fontWeight: 'normal' }
-                    ]}
-                  >
-                    {isMuted ? 'PTT MUTED' : `WALKIE-TALKIE: ${activeChannelInfo.code || activeChannelInfo.frequency}`}
-                  </Text>
-                </TouchableOpacity>
-              )}
+              {/* Inner Solid Disc */}
+              <View 
+                style={[
+                  styles.radioInnerDisc,
+                  { 
+                    backgroundColor: isTalking 
+                      ? '#dc2626' 
+                      : floorStatus === 'busy'
+                        ? '#d97706'
+                        : isMuted 
+                          ? '#1e293b' 
+                          : '#00e588' 
+                  }
+                ]}
+              >
+                <Ionicons 
+                  name={isMuted ? "mic-off" : isTalking ? "radio" : floorStatus === 'busy' ? "volume-high" : "mic"} 
+                  size={19} 
+                  color={isMuted ? "#94a3b8" : isTalking || floorStatus === 'busy' ? "#ffffff" : "#02241b"} 
+                />
+              </View>
             </View>
+          </TouchableOpacity>
+        </Animated.View>
+
+        {/* Dynamic Compact Channel / Mute Subtitle */}
+        {activeSpeaker ? (
+          <TouchableOpacity 
+            onPress={() => setRadioModalVisible(true)} 
+            style={[
+              styles.speakerPill,
+              floorStatus === 'busy' && { backgroundColor: 'rgba(245, 158, 11, 0.95)', borderColor: '#f59e0b' }
+            ]}
+          >
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <View style={[styles.speakerDot, floorStatus === 'busy' && { backgroundColor: '#ffffff' }]} />
+              <Text style={styles.speakerName} numberOfLines={1}>
+                {isTalking ? `TRANSMITTING` : `${activeSpeaker.name}`}
+              </Text>
+            </View>
+          </TouchableOpacity>
+        ) : (
+          <TouchableOpacity onPress={() => setRadioModalVisible(true)} activeOpacity={0.8}>
+            <View style={styles.compactStatusPill}>
+              <View style={[styles.miniDot, { backgroundColor: isMuted ? '#64748b' : '#00e588' }]} />
+              <Text 
+                style={[
+                  styles.ogaRadioLabel,
+                  { color: isMuted ? '#94a3b8' : '#00e588' }
+                ]}
+              >
+                {isMuted ? 'MUTED • TAP' : `${activeChannelInfo.code || activeChannelInfo.frequency}`}
+              </Text>
+            </View>
+          </TouchableOpacity>
+        )}
+      </View>
 
             {/* 6. FULL OGA WALKIE-TALKIE TACTICAL CONSOLE MODAL */}
             <Modal
@@ -1357,63 +1439,38 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: '700',
   },
-  topHeader: {
+  floatingOnlineContainer: {
     position: 'absolute',
-    top: 12,
-    left: 14,
-    right: 14,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'between',
-    backgroundColor: 'rgba(15, 23, 42, 0.92)',
+    left: 16,
+    zIndex: 50,
+    backgroundColor: 'rgba(15, 23, 42, 0.94)',
     borderWidth: 1,
     borderColor: '#1e293b',
-    borderRadius: 18,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    zIndex: 50,
+    borderRadius: 16,
+    padding: 3,
     shadowColor: '#000',
-    shadowOpacity: 0.4,
-    shadowRadius: 10,
+    shadowOpacity: 0.35,
+    shadowRadius: 8,
+    elevation: 10,
   },
-  headerLeft: {
+  autoChannelToast: {
+    position: 'absolute',
+    left: 16,
+    zIndex: 49,
     flexDirection: 'row',
     alignItems: 'center',
-    flex: 1,
-  },
-  headerAvatar: {
-    width: 34,
-    height: 34,
-    borderRadius: 10,
-    backgroundColor: '#00e588',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 10,
-  },
-  headerTitle: {
-    color: '#ffffff',
-    fontSize: 15,
-    fontWeight: 'normal',
-    marginRight: 6,
-  },
-  partnerBadge: {
-    backgroundColor: 'rgba(0, 229, 136, 0.12)',
+    backgroundColor: 'rgba(15, 23, 42, 0.92)',
     borderWidth: 1,
-    borderColor: 'rgba(0, 229, 136, 0.3)',
-    paddingHorizontal: 6,
-    paddingVertical: 1,
-    borderRadius: 4,
+    borderColor: '#00e588',
+    borderRadius: 12,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    maxWidth: 240,
   },
-  partnerBadgeText: {
+  autoChannelToastText: {
     color: '#00e588',
-    fontSize: 9,
-    fontWeight: 'normal',
-    letterSpacing: 0.8,
-  },
-  headerSubtitle: {
-    color: '#94a3b8',
-    fontSize: 11,
-    marginTop: 1,
+    fontSize: 9.5,
+    fontWeight: '600',
   },
   onlineBtn: {
     flexDirection: 'row',
@@ -1682,16 +1739,16 @@ const styles = StyleSheet.create({
   },
   ogaRadioAnchor: {
     position: 'absolute',
-    right: 14,
-    bottom: 12,
+    right: 16,
+    bottom: 16,
     alignItems: 'center',
     zIndex: 9999,
     elevation: 35,
   },
   radioOuterRing: {
-    width: 76,
-    height: 76,
-    borderRadius: 38,
+    width: 50,
+    height: 50,
+    borderRadius: 25,
     alignItems: 'center',
     justifyContent: 'center',
     position: 'relative',
@@ -1709,27 +1766,44 @@ const styles = StyleSheet.create({
     backgroundColor: '#03231b',
     borderColor: '#00e588',
     ...(Platform.OS === 'web' ? {
-      boxShadow: '0px 0px 30px rgba(0, 229, 136, 0.75), inset 0px 0px 15px rgba(0, 229, 136, 0.3)',
+      boxShadow: '0px 0px 18px rgba(0, 229, 136, 0.6)',
     } : {}),
   },
   radioRedDot: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
+    width: 6,
+    height: 6,
+    borderRadius: 3,
     backgroundColor: '#ef4444',
     position: 'absolute',
-    top: 5,
-    right: 5,
-    borderWidth: 1.5,
+    top: 3,
+    right: 3,
+    borderWidth: 1,
     borderColor: '#090d16',
     zIndex: 10,
   },
   radioInnerDisc: {
-    width: 54,
-    height: 54,
-    borderRadius: 27,
+    width: 38,
+    height: 38,
+    borderRadius: 19,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  compactStatusPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(15, 23, 42, 0.9)',
+    borderWidth: 1,
+    borderColor: '#1e293b',
+    borderRadius: 8,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    marginTop: 3,
+  },
+  miniDot: {
+    width: 4,
+    height: 4,
+    borderRadius: 2,
+    marginRight: 4,
   },
   speakerPill: {
     backgroundColor: 'rgba(15, 23, 42, 0.95)',
@@ -1763,8 +1837,8 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   ogaRadioLabel: {
-    fontWeight: 'normal',
-    fontSize: 11,
+    fontWeight: '700',
+    fontSize: 8.5,
     letterSpacing: 1.5,
     textTransform: 'uppercase',
     marginTop: 5,

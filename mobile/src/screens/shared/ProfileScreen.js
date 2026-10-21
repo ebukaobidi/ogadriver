@@ -14,6 +14,7 @@ import {
   Share,
   Linking,
   ActivityIndicator,
+  BackHandler,
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { authService, api, walletService } from '../../api/api';
@@ -59,6 +60,27 @@ export default function ProfileScreen({ navigation, route }) {
 
   // Edit Profile Screen / Modal State (Screenshot 1)
   const [editProfileVisible, setEditProfileVisible] = useState(false);
+  // Android hardware back handler
+  useEffect(() => {
+    const onBack = () => {
+      if (editProfileVisible) {
+        setEditProfileVisible(false);
+        return true;
+      }
+      if (conciergeModalVisible) {
+        setConciergeModalVisible(false);
+        return true;
+      }
+      if (navigation?.canGoBack && navigation.canGoBack()) {
+        navigation.goBack();
+        return true;
+      }
+      return false;
+    };
+    const sub = BackHandler.addEventListener('hardwareBackPress', onBack);
+    return () => sub.remove();
+  }, [editProfileVisible, conciergeModalVisible, navigation]);
+
   const [editName, setEditName] = useState('');
   const [editPhone, setEditPhone] = useState('');
   const [editEmail, setEditEmail] = useState('');
@@ -339,9 +361,20 @@ export default function ProfileScreen({ navigation, route }) {
         }}
         className="flex-row justify-between items-center px-4 py-3 border-b"
       >
-        <Text style={{ color: isDark ? '#ffffff' : '#0f172a' }} className="font-semibold text-xl tracking-tight">
-          Account
-        </Text>
+        <View className="flex-row items-center">
+          {navigation?.canGoBack && navigation.canGoBack() && (
+            <TouchableOpacity
+              onPress={() => navigation.goBack()}
+              activeOpacity={0.7}
+              className="mr-3 p-1 rounded-xl"
+            >
+              <Ionicons name="arrow-back" size={22} color={isDark ? '#ffffff' : '#0f172a'} />
+            </TouchableOpacity>
+          )}
+          <Text style={{ color: isDark ? '#ffffff' : '#0f172a' }} className="font-semibold text-xl tracking-tight">
+            Account
+          </Text>
+        </View>
 
         {/* Theme Quick Toggle */}
         <TouchableOpacity

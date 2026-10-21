@@ -438,6 +438,35 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/notifications/read-all', [\App\Http\Controllers\Api\NotificationController::class, 'markAllAsRead']);
     Route::post('/notifications/fcm-token', [\App\Http\Controllers\Api\NotificationController::class, 'updateFcmToken']);
     Route::get('/notifications/document-alerts', [\App\Http\Controllers\Api\NotificationController::class, 'getDocumentAlerts']);
+
+    // Mobile Convenience & Sync Aliases
+    Route::post('/wallet/convert-points', [\App\Http\Controllers\Api\LoyaltyController::class, 'redeem']);
+    Route::post('/user/push-token', [\App\Http\Controllers\Api\NotificationController::class, 'updateFcmToken']);
+    Route::post('bookings/{booking}/security-pin', [BookingController::class, 'generateSecurityPin']);
+    Route::get('/my-applications', [BookingController::class, 'getDriverProposals']);
+
+    // User Saved Places Sync
+    Route::post('/v1/user/saved-places', function (\Illuminate\Http\Request $request) {
+        $user = $request->user();
+        if ($user && $user->driver) {
+            $user->driver->update(['saved_places' => $request->all()]);
+        }
+        return response()->json(['success' => true, 'message' => 'Saved places synced successfully']);
+    });
+    Route::get('/v1/user/saved-places', function (\Illuminate\Http\Request $request) {
+        $user = $request->user();
+        $places = $user && $user->driver ? ($user->driver->saved_places ?? []) : [];
+        return response()->json(['success' => true, 'data' => $places]);
+    });
+
+    // Client Identity / KYC Verification Sync
+    Route::post('/v1/user/verify-identity', function (\Illuminate\Http\Request $request) {
+        $user = $request->user();
+        if ($user && $user->hirer) {
+            $user->hirer->update(['verification_status' => 'verified']);
+        }
+        return response()->json(['success' => true, 'message' => 'Identity verified successfully']);
+    });
 });
 
 // Telemetry endpoints (admin only)

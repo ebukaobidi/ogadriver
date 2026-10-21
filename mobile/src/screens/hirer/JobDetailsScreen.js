@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Linking, View, Text, TouchableOpacity, ScrollView, ActivityIndicator, Alert } from 'react-native';
+import { Linking, View, Text, TouchableOpacity, ScrollView, ActivityIndicator, Alert, BackHandler } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { jobService } from '../../api/api';
 import { Ionicons } from '@expo/vector-icons';

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, Image, ActivityIndicator, Alert, Modal, TextInput, Platform } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, Image, ActivityIndicator, Alert, Modal, TextInput, Platform, BackHandler } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../context/ThemeContext';
@@ -16,6 +16,23 @@ export default function VipFleetScreen({ navigation }) {
   const [destination, setDestination] = useState('');
   const [serviceDuration, setServiceDuration] = useState('1'); // days
   const [submitting, setSubmitting] = useState(false);
+  // Android hardware back handler
+  useEffect(() => {
+    const onBack = () => {
+      if (bookingModalVisible) {
+        setBookingModalVisible(false);
+        return true;
+      }
+      if (navigation?.canGoBack && navigation.canGoBack()) {
+        navigation.goBack();
+        return true;
+      }
+      return false;
+    };
+    const sub = BackHandler.addEventListener('hardwareBackPress', onBack);
+    return () => sub.remove();
+  }, [bookingModalVisible, navigation]);
+
 
   useEffect(() => {
     loadFleetData();
@@ -97,6 +114,15 @@ export default function VipFleetScreen({ navigation }) {
         className="flex-row items-center justify-between px-4 py-3.5"
       >
         <View className="flex-row items-center">
+          {navigation?.canGoBack && navigation.canGoBack() && (
+            <TouchableOpacity
+              onPress={() => navigation.goBack()}
+              activeOpacity={0.7}
+              className="mr-3 p-1 rounded-xl"
+            >
+              <Ionicons name="arrow-back" size={22} color={themeStyles.primaryText} />
+            </TouchableOpacity>
+          )}
           <Text style={{ color: themeStyles.primaryText }} className="font-semibold text-lg">
             VIP & Executive Fleet
           </Text>

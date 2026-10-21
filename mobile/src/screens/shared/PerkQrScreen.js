@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, ScrollView, ActivityIndicator, Alert } from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView, ActivityIndicator, Alert, BackHandler } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import api from '../../api/api';
@@ -9,6 +9,23 @@ export default function PerkQrScreen({ navigation }) {
   const [selectedPerk, setSelectedPerk] = useState(null);
   const [qrToken, setQrToken] = useState(null);
   const [loading, setLoading] = useState(false);
+  useEffect(() => {
+    const onBack = () => {
+      if (qrToken) {
+        setQrToken(null);
+        setSelectedPerk(null);
+        return true;
+      }
+      if (navigation?.canGoBack && navigation.canGoBack()) {
+        navigation.goBack();
+        return true;
+      }
+      return false;
+    };
+    const sub = BackHandler.addEventListener('hardwareBackPress', onBack);
+    return () => sub.remove();
+  }, [qrToken, navigation]);
+
 
   useEffect(() => {
     api.get('/drivers/perks')
@@ -35,7 +52,16 @@ export default function PerkQrScreen({ navigation }) {
 
   return (
     <SafeAreaView className="flex-1 bg-slate-950">
-      <View className="px-4 py-3.5 border-b border-slate-800 bg-slate-900/60">
+      <View className="px-4 py-3.5 border-b border-slate-800 bg-slate-900/60 flex-row items-center">
+        {navigation?.canGoBack && navigation.canGoBack() && (
+          <TouchableOpacity
+            onPress={() => navigation.goBack()}
+            activeOpacity={0.7}
+            className="mr-3 p-1 rounded-xl"
+          >
+            <Ionicons name="arrow-back" size={22} color="#ffffff" />
+          </TouchableOpacity>
+        )}
         <Text className="text-white text-lg font-normal">Perks & Fuel Discount</Text>
       </View>
 

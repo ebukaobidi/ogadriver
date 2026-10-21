@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, ScrollView, ActivityIndicator, Alert } from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView, ActivityIndicator, Alert, BackHandler } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import api from '../../api/api';
@@ -9,6 +9,18 @@ export default function WeeklySprintScreen({ navigation }) {
   const { isDark } = useTheme();
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
+  useEffect(() => {
+    const onBack = () => {
+      if (navigation?.canGoBack && navigation.canGoBack()) {
+        navigation.goBack();
+        return true;
+      }
+      return false;
+    };
+    const sub = BackHandler.addEventListener('hardwareBackPress', onBack);
+    return () => sub.remove();
+  }, [navigation]);
+
 
   const themeStyles = {
     screenBg: isDark ? '#090d16' : '#ffffff',
@@ -51,6 +63,15 @@ export default function WeeklySprintScreen({ navigation }) {
       <ScrollView className="flex-1 px-4 py-4" showsVerticalScrollIndicator={false}>
         {/* Header */}
         <View className="flex-row items-center mb-4">
+          {navigation?.canGoBack && navigation.canGoBack() && (
+            <TouchableOpacity
+              onPress={() => navigation.goBack()}
+              activeOpacity={0.7}
+              className="mr-3 p-1 rounded-xl"
+            >
+              <Ionicons name="arrow-back" size={22} color={themeStyles.primaryText} />
+            </TouchableOpacity>
+          )}
           <View>
             <Text style={{ color: themeStyles.titleText }} className="text-xl font-normal">
               Weekly Cash Sprint

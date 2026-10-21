@@ -3,7 +3,7 @@
     "name": "OgaDriver",
     "slug": "ogadriver",
     "scheme": "ogadriver",
-    "version": "1.0.1",
+    "version": "0.1",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
@@ -15,7 +15,7 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.ogadriver.app",
-      "buildNumber": "2",
+      "buildNumber": "1",
       "infoPlist": {
         "NSLocationWhenInUseUsageDescription": "OgaDriver needs your location to match you with nearby jobs.",
         "NSCameraUsageDescription": "OgaDriver needs camera access to scan your documents and verify your identity.",
@@ -26,7 +26,7 @@
     },
     "android": {
       "package": "com.ogadriver.app",
-      "versionCode": 2,
+      "versionCode": 1,
       "config": {
         "googleMaps": {
           "apiKey": "AIzaSyBP9tHyIKJBMUaFqNjqadXzG9iYHqS9uY0"

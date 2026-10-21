@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, ScrollView, Switch, Alert } from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView, Switch, Alert, BackHandler } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme } from '../../context/ThemeContext';
 import { Ionicons } from '@expo/vector-icons';
@@ -8,6 +8,18 @@ export default function AppSettingsScreen({ navigation }) {
   const { themeMode, isDark, themeColors, biometricEnabled, updateThemeMode, updateBiometricEnabled } = useTheme();
   const [autoAccept, setAutoAccept] = useState(false);
   const [notifications, setNotifications] = useState(true);
+  React.useEffect(() => {
+    const onBack = () => {
+      if (navigation?.canGoBack && navigation.canGoBack()) {
+        navigation.goBack();
+        return true;
+      }
+      return false;
+    };
+    const sub = BackHandler.addEventListener('hardwareBackPress', onBack);
+    return () => sub.remove();
+  }, [navigation]);
+
 
   const handleTestBiometrics = () => {
     Alert.alert(
@@ -26,7 +38,16 @@ export default function AppSettingsScreen({ navigation }) {
   return (
     <SafeAreaView className={`flex-1 ${themeColors.bg}`}>
       {/* Header */}
-      <View className={`px-4 py-4 ${themeColors.cardBg} border-b ${themeColors.borderColor} flex-row items-center justify-between`}>
+      <View className={`px-4 py-4 ${themeColors.cardBg} border-b ${themeColors.borderColor} flex-row items-center`}>
+        {navigation?.canGoBack && navigation.canGoBack() && (
+          <TouchableOpacity
+            onPress={() => navigation.goBack()}
+            activeOpacity={0.7}
+            className="mr-3 p-1 rounded-xl"
+          >
+            <Ionicons name="arrow-back" size={22} color={isDark ? '#ffffff' : '#0f172a'} />
+          </TouchableOpacity>
+        )}
         <Text className={`font-normal text-lg ${themeColors.textColor}`}>Settings & Preferences</Text>
       </View>
 

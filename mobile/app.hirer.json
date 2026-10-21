@@ -3,7 +3,7 @@
     "name": "OgaDriver Hire & Ride",
     "slug": "ogadriver",
     "scheme": "ogadriver-hirer",
-    "version": "1.0.2",
+    "version": "0.1",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
@@ -15,7 +15,7 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.ogadriver.hirer",
-      "buildNumber": "3",
+      "buildNumber": "1",
       "infoPlist": {
         "NSLocationWhenInUseUsageDescription": "OgaDriver needs your location to set pickup spots and match you with verified drivers nearby.",
         "NSCameraUsageDescription": "Camera access for updating profile photo.",
@@ -24,7 +24,7 @@
     },
     "android": {
       "package": "com.ogadriver.hirer",
-      "versionCode": 3,
+      "versionCode": 1,
       "config": {
         "googleMaps": {
           "apiKey": "AIzaSyBP9tHyIKJBMUaFqNjqadXzG9iYHqS9uY0"

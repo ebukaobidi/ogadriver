@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, ScrollView, ActivityIndicator, Alert, Animated } from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView, ActivityIndicator, Alert, Animated, BackHandler } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import api from '../../api/api';
@@ -9,7 +9,19 @@ import SlideUp from '../../components/SlideUp';
 export default function OgaCopilotScreen({ navigation }) {
   const [copilot, setCopilot] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [perimeter, setPerimeter] = useState(15); // Default 15km perimeter radius
+  const [perimeter, setPerimeter] = useState(15);
+  useEffect(() => {
+    const onBack = () => {
+      if (navigation?.canGoBack && navigation.canGoBack()) {
+        navigation.goBack();
+        return true;
+      }
+      return false;
+    };
+    const sub = BackHandler.addEventListener('hardwareBackPress', onBack);
+    return () => sub.remove();
+  }, [navigation]);
+ // Default 15km perimeter radius
 
   useEffect(() => {
     api.get('/drivers/copilot/demand-radar')
@@ -30,6 +42,15 @@ export default function OgaCopilotScreen({ navigation }) {
         {/* Top App Bar Header */}
         <View className="flex-row justify-between items-center mb-1">
           <View className="flex-row items-center">
+            {navigation?.canGoBack && navigation.canGoBack() && (
+              <TouchableOpacity
+                onPress={() => navigation.goBack()}
+                activeOpacity={0.7}
+                className="mr-2 p-1 rounded-xl"
+              >
+                <Ionicons name="arrow-back" size={22} color="#ffffff" />
+              </TouchableOpacity>
+            )}
             <View className="w-8 h-8 rounded-full bg-emerald-500/20 border border-emerald-500/50 items-center justify-center mr-2 relative shadow-lg shadow-emerald-500/20">
               <Ionicons name="person" size={16} color="#10b981" />
             </View>

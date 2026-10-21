@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, FlatList, ActivityIndicator, TextInput, ScrollView, Modal, Alert, Platform } from 'react-native';
+import { View, Text, TouchableOpacity, FlatList, ActivityIndicator, TextInput, ScrollView, Modal, Alert, Platform, BackHandler } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import api, { bookingService, extractArray } from '../../api/api';
 import { Ionicons } from '@expo/vector-icons';
@@ -35,6 +35,27 @@ export default function SearchDriversScreen({ navigation }) {
 
   // Selected Driver for Details Modal
   const [selectedDriver, setSelectedDriver] = useState(null);
+  // Android hardware back handler
+  useEffect(() => {
+    const onBack = () => {
+      if (selectedDriver) {
+        setSelectedDriver(null);
+        return true;
+      }
+      if (showFilters) {
+        setShowFilters(false);
+        return true;
+      }
+      if (navigation?.canGoBack && navigation.canGoBack()) {
+        navigation.goBack();
+        return true;
+      }
+      return false;
+    };
+    const sub = BackHandler.addEventListener('hardwareBackPress', onBack);
+    return () => sub.remove();
+  }, [selectedDriver, showFilters, navigation]);
+
 
   // Advanced Filter States
   const [country, setCountry] = useState('Nigeria');
@@ -270,7 +291,16 @@ export default function SearchDriversScreen({ navigation }) {
         }}
         className="px-4 py-3.5 border-b flex-row items-center justify-between"
       >
-        <View className="flex-1">
+        <View className="flex-1 flex-row items-center">
+          {navigation?.canGoBack && navigation.canGoBack() && (
+            <TouchableOpacity
+              onPress={() => navigation.goBack()}
+              activeOpacity={0.7}
+              className="mr-3 p-1 rounded-xl"
+            >
+              <Ionicons name="arrow-back" size={22} color={isDark ? '#ffffff' : '#0f172a'} />
+            </TouchableOpacity>
+          )}
           <Text style={{ color: isDark ? '#ffffff' : '#0f172a' }} className="font-normal text-base">
             Drivers Directory
           </Text>

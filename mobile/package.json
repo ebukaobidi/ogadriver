@@ -1,6 +1,6 @@
 {
   "name": "mobile",
-  "version": "1.0.0",
+  "version": "0.1.0",
   "main": "index.js",
   "dependencies": {
     "@expo/metro-runtime": "~57.0.16",
@@ -44,7 +44,7 @@
     "start:driver": "EXPO_CONFIG=app.driver.json expo start",
     "start:hirer": "EXPO_CONFIG=app.hirer.json expo start",
     "build:apk:android:local": "expo prebuild --platform android && cd android && gradlew.bat assembleRelease",
-    "build:driver:android": "eas build --platform android --config app.driver.json",
+    "build:driver:android": "eas build --platform android --profile driver-preview",
     "build:hirer:android": "eas build --platform android --profile hirer-preview",
     "android": "expo run:android",
     "ios": "expo run:ios",

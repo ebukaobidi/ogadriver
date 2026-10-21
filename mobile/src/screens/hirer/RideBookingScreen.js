@@ -12,7 +12,8 @@ import {
   Animated,
   Dimensions,
   PanResponder,
-  ActivityIndicator
+  ActivityIndicator,
+  BackHandler
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -68,6 +69,35 @@ export default function RideBookingScreen({ navigation }) {
   // Saved Places and Map Location Picker
   const [savedPlaces, setSavedPlaces] = useState(null);
   const [pickerVisible, setPickerVisible] = useState(false);
+  // Android hardware back button handler
+  useEffect(() => {
+    const onBack = () => {
+      if (pickerVisible) {
+        setPickerVisible(false);
+        return true;
+      }
+      if (showDatePickerModal) {
+        setShowDatePickerModal(false);
+        return true;
+      }
+      if (showTripSummaryModal) {
+        setShowTripSummaryModal(false);
+        return true;
+      }
+      if (showWhenMenu) {
+        setShowWhenMenu(false);
+        return true;
+      }
+      if (navigation?.canGoBack && navigation.canGoBack()) {
+        navigation.goBack();
+        return true;
+      }
+      return false;
+    };
+    const sub = BackHandler.addEventListener('hardwareBackPress', onBack);
+    return () => sub.remove();
+  }, [pickerVisible, showDatePickerModal, showTripSummaryModal, showWhenMenu, navigation]);
+
   const [pickerType, setPickerType] = useState('dropoff');
 
   useEffect(() => {
@@ -765,6 +795,34 @@ export default function RideBookingScreen({ navigation }) {
           />
         )}
       </View>
+
+      
+      {/* FLOATING TOP BACK BUTTON */}
+      {navigation?.canGoBack && navigation.canGoBack() && (
+        <View style={{ position: 'absolute', top: (insets?.top || 16) + 8, left: 16, zIndex: 60 }}>
+          <TouchableOpacity
+            onPress={() => navigation.goBack()}
+            activeOpacity={0.8}
+            style={{
+              width: 44,
+              height: 44,
+              borderRadius: 22,
+              backgroundColor: isDark ? '#121927' : '#ffffff',
+              alignItems: 'center',
+              justifyContent: 'center',
+              shadowColor: '#000',
+              shadowOffset: { width: 0, height: 2 },
+              shadowOpacity: 0.25,
+              shadowRadius: 5,
+              elevation: 8,
+              borderWidth: 1,
+              borderColor: isDark ? '#1e293b' : '#e2e8f0',
+            }}
+          >
+            <Ionicons name="arrow-back" size={22} color={isDark ? '#ffffff' : '#0f172a'} />
+          </TouchableOpacity>
+        </View>
+      )}
 
       {/* BOLT-STYLE SLIDING BOTTOM SHEET */}
       <Animated.View

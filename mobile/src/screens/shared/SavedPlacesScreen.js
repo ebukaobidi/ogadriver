@@ -9,6 +9,7 @@ import {
   Modal,
   Platform,
   ActivityIndicator,
+  BackHandler,
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -48,6 +49,26 @@ export default function SavedPlacesScreen({ navigation }) {
   // Map Picker Modal
   const [pickerVisible, setPickerVisible] = useState(false);
   const [editingType, setEditingType] = useState('home');
+  useEffect(() => {
+    const onBack = () => {
+      if (pickerVisible) {
+        setPickerVisible(false);
+        return true;
+      }
+      if (addModalVisible) {
+        setAddModalVisible(false);
+        return true;
+      }
+      if (navigation?.canGoBack && navigation.canGoBack()) {
+        navigation.goBack();
+        return true;
+      }
+      return false;
+    };
+    const sub = BackHandler.addEventListener('hardwareBackPress', onBack);
+    return () => sub.remove();
+  }, [pickerVisible, addModalVisible, navigation]);
+
 
   useEffect(() => {
     loadSavedPlaces();

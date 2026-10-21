@@ -10,7 +10,8 @@ import {
   TextInput,
   Modal,
   Platform,
-  Linking
+  Linking,
+  BackHandler
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -38,6 +39,31 @@ export default function WalletScreen({ navigation, route }) {
   const [topupModalVisible, setTopupModalVisible] = useState(false);
   const [customAmount, setCustomAmount] = useState('5000');
   const [submittingTopup, setSubmittingTopup] = useState(false);
+  useEffect(() => {
+    const onBack = () => {
+      if (showPaystackWebView) {
+        setShowPaystackWebView(false);
+        setPaystackUrl(null);
+        return true;
+      }
+      if (topupModalVisible) {
+        setTopupModalVisible(false);
+        return true;
+      }
+      if (transferModalVisible) {
+        setTransferModalVisible(false);
+        return true;
+      }
+      if (navigation?.canGoBack && navigation.canGoBack()) {
+        navigation.goBack();
+        return true;
+      }
+      return false;
+    };
+    const sub = BackHandler.addEventListener('hardwareBackPress', onBack);
+    return () => sub.remove();
+  }, [showPaystackWebView, topupModalVisible, transferModalVisible, navigation]);
+
   const [paystackUrl, setPaystackUrl] = useState(null);
   const [paystackRef, setPaystackRef] = useState(null);
   const [showPaystackWebView, setShowPaystackWebView] = useState(false);

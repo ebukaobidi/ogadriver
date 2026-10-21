@@ -3,7 +3,7 @@
     "name": "OgaDriver Partner",
     "slug": "ogadriver",
     "scheme": "ogadriver-partner",
-    "version": "1.0.2",
+    "version": "0.1",
     "orientation": "portrait",
     "icon": "./assets/driver-icon.png",
     "userInterfaceStyle": "dark",
@@ -15,7 +15,7 @@
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "com.ogadriver.partner",
-      "buildNumber": "3",
+      "buildNumber": "1",
       "infoPlist": {
         "NSLocationAlwaysAndWhenInUseUsageDescription": "OgaDriver Partner needs background location tracking to dispatch nearby ride opportunities and enable live GPS trip tracking.",
         "NSLocationWhenInUseUsageDescription": "OgaDriver Partner needs location access to broadcast your position to nearby hirers.",
@@ -26,7 +26,7 @@
     },
     "android": {
       "package": "com.ogadriver.partner",
-      "versionCode": 3,
+      "versionCode": 1,
       "config": {
         "googleMaps": {
           "apiKey": "AIzaSyBP9tHyIKJBMUaFqNjqadXzG9iYHqS9uY0"

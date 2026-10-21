@@ -1,5 +1,5 @@
-import React from 'react';
-import { View, Text, TouchableOpacity } from 'react-native';
+import React, { useEffect } from 'react';
+import { View, Text, TouchableOpacity, BackHandler } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../context/ThemeContext';
 
@@ -16,7 +16,8 @@ export default function HeaderBar({
 }) {
   const { isDark, updateThemeMode } = useTheme();
 
-  const shouldShowBack = false;
+  // Show back button if explicitly requested OR if navigation has a back history
+  const shouldShowBack = Boolean(showBack !== undefined ? showBack : (navigation?.canGoBack && navigation.canGoBack()));
 
   const handleBack = () => {
     if (onBack) {
@@ -27,6 +28,20 @@ export default function HeaderBar({
       navigation.navigate('Home');
     }
   };
+
+  // Android hardware back button handler
+  useEffect(() => {
+    const onHardwareBack = () => {
+      if (shouldShowBack) {
+        handleBack();
+        return true;
+      }
+      return false;
+    };
+
+    const sub = BackHandler.addEventListener('hardwareBackPress', onHardwareBack);
+    return () => sub.remove();
+  }, [shouldShowBack, onBack, navigation]);
 
   const containerBg = isDark ? '#090d16' : '#ffffff';
   const borderColor = isDark ? '#1e293b' : '#e2e8f0';
@@ -51,13 +66,29 @@ export default function HeaderBar({
       }} 
       className="px-4 py-3.5 flex-row justify-between items-center z-50"
     >
-      {/* Left Section: Brand / Clean Title (Phone back button handles return) */}
+      {/* Left Section: Back Button + Title/Brand */}
       <View className="flex-row items-center flex-1 mr-2">
+        {shouldShowBack && (
+          <TouchableOpacity
+            onPress={handleBack}
+            style={{ backgroundColor: buttonBg, borderColor: buttonBorder }}
+            className="w-9 h-9 rounded-xl border items-center justify-center mr-3 shadow-sm active:opacity-75"
+            accessibilityLabel="Go back"
+          >
+            <Ionicons name="arrow-back" size={18} color={iconColor} />
+          </TouchableOpacity>
+        )}
+
         {title ? (
           <View className="flex-1">
             <Text style={{ color: titleColor }} className="font-semibold text-base" numberOfLines={1}>
               {title}
             </Text>
+            {subtitle ? (
+              <Text style={{ color: subTextColor }} className="text-xs mt-0.5" numberOfLines={1}>
+                {subtitle}
+              </Text>
+            ) : null}
           </View>
         ) : (
           <View className="flex-row items-baseline">
@@ -80,7 +111,7 @@ export default function HeaderBar({
           <TouchableOpacity 
             onPress={handleToggleTheme}
             style={{ backgroundColor: buttonBg, borderColor: buttonBorder }}
-            className="w-9 h-9 rounded-full border items-center justify-center shadow-sm mr-2"
+            className="w-9 h-9 rounded-xl border items-center justify-center shadow-sm mr-2"
             activeOpacity={0.7}
             accessibilityLabel="Toggle Theme"
           >
@@ -96,7 +127,7 @@ export default function HeaderBar({
         {showNotification && (
           <TouchableOpacity 
             style={{ backgroundColor: buttonBg, borderColor: buttonBorder }}
-            className="w-9 h-9 rounded-full border items-center justify-center relative shadow-sm"
+            className="w-9 h-9 rounded-xl border items-center justify-center relative shadow-sm"
             onPress={() => navigation?.navigate('Conversations')}
             activeOpacity={0.7}
           >
