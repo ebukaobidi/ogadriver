@@ -1,0 +1,1156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>OgaDriver - Full Application UI Export</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brandMint: '#1cd188',
+            corporateNavy: '#0f172a',
+            slateDark: '#1e293b'
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body {
+      background-color: #080d19;
+      color: #f8fafc;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    }
+    .screen-tab-btn.active {
+      background-color: #1cd188;
+      color: #0f172a;
+      font-weight: 800;
+    }
+    .tab-panel {
+      display: none;
+    }
+    .tab-panel.active {
+      display: block;
+    }
+    ::-webkit-scrollbar {
+      width: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #0f172a;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #334155;
+      border-radius: 3px;
+    }
+  </style>
+</head>
+<body class="min-h-screen pb-20">
+
+  <!-- TOP BAR CONTROL SWITCHER -->
+  <header class="sticky top-0 z-50 bg-[#0f172a]/95 backdrop-blur-xl border-b border-slate-800 px-4 py-3 shadow-xl">
+    <div class="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-3">
+      <div class="flex items-center gap-2">
+        <span class="text-xl font-black text-white tracking-wider">OGA<span class="text-[#1cd188]">DRIVER</span></span>
+        <span class="bg-[#1cd188]/10 text-[#1cd188] border border-[#1cd188]/30 text-[10px] font-bold px-2.5 py-0.5 rounded-full uppercase">Full UI Export</span>
+      </div>
+
+      <!-- Screen Switcher Tabs -->
+      <div class="flex items-center gap-1.5 overflow-x-auto w-full md:w-auto pb-1 md:pb-0 text-xs font-semibold">
+        <button onclick="switchTab('all')" id="btn-all" class="screen-tab-btn active px-3 py-1.5 rounded-xl border border-slate-700 bg-slate-800 text-slate-300 hover:text-white whitespace-nowrap">
+          📄 View All Stacked
+        </button>
+        <button onclick="switchTab('hirer-ride')" id="btn-hirer-ride" class="screen-tab-btn px-3 py-1.5 rounded-xl border border-slate-700 bg-slate-800 text-slate-300 hover:text-white whitespace-nowrap">
+          🚗 Hirer Ride
+        </button>
+        <button onclick="switchTab('hirer-hire')" id="btn-hirer-hire" class="screen-tab-btn px-3 py-1.5 rounded-xl border border-slate-700 bg-slate-800 text-slate-300 hover:text-white whitespace-nowrap">
+          👥 Hirer Directory
+        </button>
+        <button onclick="switchTab('hirer-vip')" id="btn-hirer-vip" class="screen-tab-btn px-3 py-1.5 rounded-xl border border-slate-700 bg-slate-800 text-slate-300 hover:text-white whitespace-nowrap">
+          🛡️ VIP Fleet
+        </button>
+        <button onclick="switchTab('hirer-account')" id="btn-hirer-account" class="screen-tab-btn px-3 py-1.5 rounded-xl border border-slate-700 bg-slate-800 text-slate-300 hover:text-white whitespace-nowrap">
+          👤 Hirer Account
+        </button>
+        <button onclick="switchTab('driver-dash')" id="btn-driver-dash" class="screen-tab-btn px-3 py-1.5 rounded-xl border border-slate-700 bg-slate-800 text-slate-300 hover:text-white whitespace-nowrap">
+          📊 Driver Dash
+        </button>
+        <button onclick="switchTab('driver-jobs')" id="btn-driver-jobs" class="screen-tab-btn px-3 py-1.5 rounded-xl border border-slate-700 bg-slate-800 text-slate-300 hover:text-white whitespace-nowrap">
+          🧾 Driver Jobs
+        </button>
+        <button onclick="switchTab('driver-nearby')" id="btn-driver-nearby" class="screen-tab-btn px-3 py-1.5 rounded-xl border border-slate-700 bg-slate-800 text-slate-300 hover:text-white whitespace-nowrap">
+          📍 Driver Nearby
+        </button>
+        <button onclick="switchTab('driver-training')" id="btn-driver-training" class="screen-tab-btn px-3 py-1.5 rounded-xl border border-slate-700 bg-slate-800 text-slate-300 hover:text-white whitespace-nowrap">
+          🎮 Training
+        </button>
+        <button onclick="switchTab('driver-profile')" id="btn-driver-profile" class="screen-tab-btn px-3 py-1.5 rounded-xl border border-slate-700 bg-slate-800 text-slate-300 hover:text-white whitespace-nowrap">
+          👤 Driver Profile
+        </button>
+        <button onclick="switchTab('admin-dash')" id="btn-admin-dash" class="screen-tab-btn px-3 py-1.5 rounded-xl border border-slate-700 bg-slate-800 text-slate-300 hover:text-white whitespace-nowrap">
+          ⚡ Admin Dash
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- CONTENT CONTAINER -->
+  <div class="max-w-6xl mx-auto p-4 space-y-12 mt-4">
+
+    <!-- ================================================================= -->
+    <!-- 1. HIRER PORTAL — RIDE TAB -->
+    <!-- ================================================================= -->
+    <div id="panel-hirer-ride" class="tab-panel active space-y-4">
+      <div class="flex items-center justify-between">
+        <h2 class="text-lg font-black text-[#1cd188] uppercase tracking-wider flex items-center gap-2">
+          <span>🚗</span> Hirer Portal — Ride Booking Tab
+        </h2>
+        <span class="text-xs text-slate-500 font-mono">Mobile App Frame (375px)</span>
+      </div>
+
+      <div class="max-w-sm mx-auto bg-[#0f172a] rounded-[40px] p-5 border-4 border-slate-800 shadow-2xl relative min-h-[720px] flex flex-col justify-between overflow-hidden">
+        
+        <!-- Header -->
+        <div>
+          <div class="flex items-center justify-between mb-4">
+            <span class="text-lg font-black text-white">Where to?</span>
+            <div class="flex items-center gap-2">
+              <span class="w-2 h-2 rounded-full bg-[#1cd188]"></span>
+              <span class="text-xs text-slate-400 font-bold">Lagos Radar Active</span>
+            </div>
+          </div>
+
+          <!-- Mode Toggle Pills -->
+          <div class="flex bg-[#1e293b] p-1.5 rounded-2xl mb-4 border border-slate-800">
+            <button class="flex-1 py-2 rounded-xl text-xs font-bold bg-[#1cd188] text-[#0f172a] shadow">Ride Now</button>
+            <button class="flex-1 py-2 rounded-xl text-xs font-bold text-slate-400">Schedule</button>
+            <button class="flex-1 py-2 rounded-xl text-xs font-bold text-slate-400">Commute</button>
+          </div>
+
+          <!-- Inputs Block -->
+          <div class="bg-[#1e293b] p-3.5 rounded-2xl space-y-2.5 border border-slate-800 mb-4">
+            <div class="flex items-center gap-3 bg-[#0f172a] p-3 rounded-xl border border-slate-700">
+              <div class="w-2.5 h-2.5 rounded-full bg-[#1cd188]"></div>
+              <input type="text" value="14 Admiralty Way, Lekki Phase 1" class="bg-transparent text-xs text-white flex-1 focus:outline-none" readonly />
+              <button class="text-[#1cd188] text-xs font-bold">📍</button>
+            </div>
+            <div class="flex items-center gap-3 bg-[#0f172a] p-3 rounded-xl border border-slate-700">
+              <div class="w-2.5 h-2.5 rounded-full bg-rose-500"></div>
+              <input type="text" value="Murtala Muhammed Airport, Ikeja" class="bg-transparent text-xs text-white flex-1 focus:outline-none" readonly />
+              <button class="text-[#1cd188] text-xs font-bold">📍</button>
+            </div>
+          </div>
+
+          <!-- Recent Destinations (Restricted to 4) -->
+          <div class="mb-4">
+            <p class="text-slate-400 text-[10px] uppercase tracking-widest font-bold mb-2">1-Tap Recent Destinations</p>
+            <div class="grid grid-cols-2 gap-2">
+              <div class="bg-[#1e293b] p-2 rounded-xl flex items-center gap-2 border border-slate-800">
+                <span class="text-xs">🕒</span>
+                <span class="text-[11px] text-slate-300 truncate">Victoria Island</span>
+              </div>
+              <div class="bg-[#1e293b] p-2 rounded-xl flex items-center gap-2 border border-slate-800">
+                <span class="text-xs">🕒</span>
+                <span class="text-[11px] text-slate-300 truncate">Ikeja City Mall</span>
+              </div>
+              <div class="bg-[#1e293b] p-2 rounded-xl flex items-center gap-2 border border-slate-800">
+                <span class="text-xs">🕒</span>
+                <span class="text-[11px] text-slate-300 truncate">Eko Hotels</span>
+              </div>
+              <div class="bg-[#1e293b] p-2 rounded-xl flex items-center gap-2 border border-slate-800">
+                <span class="text-xs">🕒</span>
+                <span class="text-[11px] text-slate-300 truncate">Chevron Drive</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Ride Class Selection -->
+          <div class="mb-4">
+            <p class="text-slate-400 text-[10px] uppercase tracking-widest font-bold mb-2">Select Ride Class</p>
+            <div class="grid grid-cols-3 gap-2">
+              <div class="bg-[#1e293b] p-2.5 rounded-xl border border-slate-700 text-center">
+                <p class="text-white font-bold text-xs">Economy</p>
+                <p class="text-[#1cd188] text-[10px] font-bold">₦3,500</p>
+              </div>
+              <div class="bg-[#1e293b] p-2.5 rounded-xl border border-slate-700 text-center">
+                <p class="text-white font-bold text-xs">Business</p>
+                <p class="text-[#1cd188] text-[10px] font-bold">₦8,000</p>
+              </div>
+              <div class="bg-[#1cd188]/20 p-2.5 rounded-xl border-2 border-[#1cd188] text-center">
+                <p class="text-[#1cd188] font-bold text-xs">VIP Fleet</p>
+                <p class="text-[#1cd188] text-[10px] font-bold">₦25,000</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- VIP Fleet Sub-options -->
+          <div class="bg-[#1e293b] p-3 rounded-xl border border-slate-700 space-y-2 mb-4">
+            <p class="text-[#1cd188] font-bold text-[11px]">🛡️ VIP Escort & Fleet Options</p>
+            <div class="grid grid-cols-2 gap-2 text-[11px]">
+              <select class="bg-[#0f172a] text-slate-200 border border-slate-700 rounded-lg p-2">
+                <option>Armored SUV (B6)</option>
+                <option>Executive Sedan</option>
+              </select>
+              <select class="bg-[#0f172a] text-slate-200 border border-slate-700 rounded-lg p-2">
+                <option>Executive Chauffeur</option>
+                <option>Police Escort</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- Request CTA -->
+        <div>
+          <button class="w-full bg-[#1cd188] text-[#0f172a] font-black py-3.5 rounded-2xl text-xs tracking-wider mb-3 shadow-lg shadow-[#1cd188]/20">
+            REQUEST RIDE NOW
+          </button>
+
+          <!-- Bottom Navigation Bar -->
+          <nav class="bg-[#0f172a] border-t border-slate-800 pt-2 flex items-center justify-around text-center">
+            <button class="text-[#1cd188] flex flex-col items-center">
+              <span class="text-base">🚗</span>
+              <span class="text-[9px] font-bold">Ride</span>
+            </button>
+            <button class="text-slate-500 flex flex-col items-center">
+              <span class="text-base">👥</span>
+              <span class="text-[9px] font-bold">Hire</span>
+            </button>
+            <button class="text-slate-500 flex flex-col items-center">
+              <span class="text-base">🛡️</span>
+              <span class="text-[9px] font-bold">VIP Fleet</span>
+            </button>
+            <button class="text-slate-500 flex flex-col items-center">
+              <span class="text-base">👤</span>
+              <span class="text-[9px] font-bold">Account</span>
+            </button>
+          </nav>
+        </div>
+
+      </div>
+    </div>
+
+
+    <!-- ================================================================= -->
+    <!-- 2. HIRER PORTAL — HIRE DIRECTORY TAB -->
+    <!-- ================================================================= -->
+    <div id="panel-hirer-hire" class="tab-panel active space-y-4">
+      <div class="flex items-center justify-between">
+        <h2 class="text-lg font-black text-[#1cd188] uppercase tracking-wider flex items-center gap-2">
+          <span>👥</span> Hirer Portal — Driver Hire Directory Tab
+        </h2>
+        <span class="text-xs text-slate-500 font-mono">Mobile App Frame (375px)</span>
+      </div>
+
+      <div class="max-w-sm mx-auto bg-[#0f172a] rounded-[40px] p-5 border-4 border-slate-800 shadow-2xl min-h-[720px] flex flex-col justify-between">
+        <div>
+          <!-- Header -->
+          <div class="flex items-center justify-between mb-3">
+            <span class="text-base font-black text-white">Find Professional Drivers</span>
+            <button class="text-[#1cd188] text-xs font-bold">Reset Filters</button>
+          </div>
+
+          <!-- Search Bar -->
+          <div class="bg-[#1e293b] p-2.5 rounded-xl border border-slate-700 flex items-center gap-2 mb-3">
+            <span class="text-slate-400">🔍</span>
+            <input type="text" placeholder="Search by city, skill or name..." class="bg-transparent text-xs text-white flex-1 focus:outline-none" value="Lagos, Corporate Driver" readonly />
+          </div>
+
+          <!-- Collapsible Filters -->
+          <div class="bg-[#1e293b] p-3 rounded-xl border border-slate-800 mb-4 space-y-2 text-xs">
+            <div class="flex items-center justify-between">
+              <span class="text-slate-300 font-semibold">Employment Type</span>
+              <span class="text-[#1cd188]">Full-Time ▼</span>
+            </div>
+            <div class="flex items-center justify-between pt-1 border-t border-slate-800">
+              <span class="text-slate-300 font-semibold">Vehicle Required?</span>
+              <span class="text-slate-400">No (Employer Has Car)</span>
+            </div>
+          </div>
+
+          <!-- Driver Cards List -->
+          <div class="space-y-3">
+            <!-- Card 1 -->
+            <div class="bg-[#1e293b] p-3.5 rounded-2xl border border-slate-800">
+              <div class="flex items-center justify-between mb-2">
+                <div class="flex items-center gap-2.5">
+                  <div class="w-10 h-10 rounded-full bg-[#1cd188] text-[#0f172a] font-bold flex items-center justify-center text-sm">
+                    BA
+                  </div>
+                  <div>
+                    <p class="text-white font-bold text-xs">Babatunde Adebayo</p>
+                    <p class="text-slate-400 text-[10px]">Lekki • 8 yrs exp • ⭐ 4.95</p>
+                  </div>
+                </div>
+                <span class="bg-[#1cd188]/20 text-[#1cd188] text-[9px] font-bold px-2 py-0.5 rounded-full">VERIFIED TIER 1</span>
+              </div>
+              <div class="flex items-center justify-between text-xs pt-2 border-t border-slate-800">
+                <div>
+                  <span class="text-slate-400 text-[10px]">Monthly Rate: </span>
+                  <span class="text-[#1cd188] font-bold">₦180,000/mo</span>
+                </div>
+                <button class="bg-[#1cd188] text-[#0f172a] font-bold text-[10px] px-3 py-1.5 rounded-xl">HIRE DRIVER</button>
+              </div>
+            </div>
+
+            <!-- Card 2 -->
+            <div class="bg-[#1e293b] p-3.5 rounded-2xl border border-slate-800">
+              <div class="flex items-center justify-between mb-2">
+                <div class="flex items-center gap-2.5">
+                  <div class="w-10 h-10 rounded-full bg-blue-500 text-white font-bold flex items-center justify-center text-sm">
+                    EO
+                  </div>
+                  <div>
+                    <p class="text-white font-bold text-xs">Emmanuel Okon</p>
+                    <p class="text-slate-400 text-[10px]">Ikeja • Executive Chauffeur • ⭐ 4.88</p>
+                  </div>
+                </div>
+                <span class="bg-[#1cd188]/20 text-[#1cd188] text-[9px] font-bold px-2 py-0.5 rounded-full">VERIFIED</span>
+              </div>
+              <div class="flex items-center justify-between text-xs pt-2 border-t border-slate-800">
+                <div>
+                  <span class="text-slate-400 text-[10px]">Daily Rate: </span>
+                  <span class="text-[#1cd188] font-bold">₦12,000/day</span>
+                </div>
+                <button class="bg-[#1cd188] text-[#0f172a] font-bold text-[10px] px-3 py-1.5 rounded-xl">HIRE DRIVER</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Bottom Navigation Bar -->
+        <nav class="bg-[#0f172a] border-t border-slate-800 pt-2 flex items-center justify-around text-center mt-4">
+          <button class="text-slate-500 flex flex-col items-center">
+            <span class="text-base">🚗</span>
+            <span class="text-[9px] font-bold">Ride</span>
+          </button>
+          <button class="text-[#1cd188] flex flex-col items-center">
+            <span class="text-base">👥</span>
+            <span class="text-[9px] font-bold">Hire</span>
+          </button>
+          <button class="text-slate-500 flex flex-col items-center">
+            <span class="text-base">🛡️</span>
+            <span class="text-[9px] font-bold">VIP Fleet</span>
+          </button>
+          <button class="text-slate-500 flex flex-col items-center">
+            <span class="text-base">👤</span>
+            <span class="text-[9px] font-bold">Account</span>
+          </button>
+        </nav>
+      </div>
+    </div>
+
+
+    <!-- ================================================================= -->
+    <!-- 3. HIRER PORTAL — VIP FLEET TAB -->
+    <!-- ================================================================= -->
+    <div id="panel-hirer-vip" class="tab-panel active space-y-4">
+      <div class="flex items-center justify-between">
+        <h2 class="text-lg font-black text-[#1cd188] uppercase tracking-wider flex items-center gap-2">
+          <span>🛡️</span> Hirer Portal — VIP Concierge & Convoy Fleet
+        </h2>
+        <span class="text-xs text-slate-500 font-mono">Mobile App Frame (375px)</span>
+      </div>
+
+      <div class="max-w-sm mx-auto bg-[#0f172a] rounded-[40px] p-5 border-4 border-slate-800 shadow-2xl min-h-[720px] flex flex-col justify-between">
+        <div>
+          <div class="flex items-center justify-between mb-4">
+            <span class="text-base font-black text-white">VIP Executive Concierge</span>
+            <span class="bg-amber-500/20 text-amber-400 text-[10px] font-bold px-2 py-0.5 rounded-full border border-amber-500/30">PREMIUM</span>
+          </div>
+
+          <!-- VIP Fleet Grid -->
+          <div class="space-y-3 mb-4">
+            <div class="bg-[#1e293b] p-3.5 rounded-2xl border border-slate-700 flex items-center justify-between">
+              <div>
+                <p class="text-white font-bold text-xs">Armored SUV Escort (B6 Level)</p>
+                <p class="text-slate-400 text-[10px]">Bulletproof Toyota Landcruiser 300</p>
+                <p class="text-[#1cd188] text-xs font-bold mt-1">₦250,000 / day</p>
+              </div>
+              <button class="bg-[#1cd188] text-[#0f172a] font-bold text-[10px] px-3 py-2 rounded-xl">BOOK NOW</button>
+            </div>
+
+            <div class="bg-[#1e293b] p-3.5 rounded-2xl border border-slate-700 flex items-center justify-between">
+              <div>
+                <p class="text-white font-bold text-xs">Armed Security Convoy</p>
+                <p class="text-slate-400 text-[10px]">2 Police Outriders + CPO Lead</p>
+                <p class="text-[#1cd188] text-xs font-bold mt-1">₦180,000 / day</p>
+              </div>
+              <button class="bg-[#1cd188] text-[#0f172a] font-bold text-[10px] px-3 py-2 rounded-xl">BOOK NOW</button>
+            </div>
+
+            <div class="bg-[#1e293b] p-3.5 rounded-2xl border border-slate-700 flex items-center justify-between">
+              <div>
+                <p class="text-white font-bold text-xs">Executive Chauffeur Sedan</p>
+                <p class="text-slate-400 text-[10px]">Mercedes Benz S-Class (2023)</p>
+                <p class="text-[#1cd188] text-xs font-bold mt-1">₦120,000 / day</p>
+              </div>
+              <button class="bg-[#1cd188] text-[#0f172a] font-bold text-[10px] px-3 py-2 rounded-xl">BOOK NOW</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Bottom Navigation Bar -->
+        <nav class="bg-[#0f172a] border-t border-slate-800 pt-2 flex items-center justify-around text-center mt-4">
+          <button class="text-slate-500 flex flex-col items-center">
+            <span class="text-base">🚗</span>
+            <span class="text-[9px] font-bold">Ride</span>
+          </button>
+          <button class="text-slate-500 flex flex-col items-center">
+            <span class="text-base">👥</span>
+            <span class="text-[9px] font-bold">Hire</span>
+          </button>
+          <button class="text-[#1cd188] flex flex-col items-center">
+            <span class="text-base">🛡️</span>
+            <span class="text-[9px] font-bold">VIP Fleet</span>
+          </button>
+          <button class="text-slate-500 flex flex-col items-center">
+            <span class="text-base">👤</span>
+            <span class="text-[9px] font-bold">Account</span>
+          </button>
+        </nav>
+      </div>
+    </div>
+
+
+    <!-- ================================================================= -->
+    <!-- 4. HIRER PORTAL — ACCOUNT TAB -->
+    <!-- ================================================================= -->
+    <div id="panel-hirer-account" class="tab-panel active space-y-4">
+      <div class="flex items-center justify-between">
+        <h2 class="text-lg font-black text-[#1cd188] uppercase tracking-wider flex items-center gap-2">
+          <span>👤</span> Hirer Portal — Account & Saved Places
+        </h2>
+        <span class="text-xs text-slate-500 font-mono">Mobile App Frame (375px)</span>
+      </div>
+
+      <div class="max-w-sm mx-auto bg-[#0f172a] rounded-[40px] p-5 border-4 border-slate-800 shadow-2xl min-h-[720px] flex flex-col justify-between">
+        <div class="space-y-3">
+          <!-- Profile Card -->
+          <div class="bg-[#1e293b] p-3.5 rounded-2xl border border-slate-800 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+              <div class="w-12 h-12 rounded-2xl bg-[#0f172a] border-2 border-[#1cd188] text-[#1cd188] font-black flex items-center justify-center text-lg">
+                AJ
+              </div>
+              <div>
+                <p class="text-white font-bold text-xs">Adewale Johnson</p>
+                <p class="text-slate-400 text-[10px]">adewale@example.com</p>
+                <span class="text-[#1cd188] text-[9px] font-bold">✓ Profile Verified</span>
+              </div>
+            </div>
+            <!-- Chevron button only -->
+            <button class="w-7 h-7 rounded-full bg-[#0f172a] border border-slate-700 flex items-center justify-center text-slate-400 text-xs">
+              ➔
+            </button>
+          </div>
+
+          <!-- Saved Places Section (Opens Drawer) -->
+          <div class="bg-[#1e293b] p-3.5 rounded-2xl border border-slate-800">
+            <div class="flex items-center justify-between mb-2">
+              <p class="text-white font-bold text-xs uppercase tracking-wider">Saved Places</p>
+              <button class="text-[#1cd188] text-[10px] font-bold">+ Add Place</button>
+            </div>
+            <div class="space-y-2">
+              <div class="bg-[#0f172a] p-2.5 rounded-xl flex items-center justify-between border border-slate-800">
+                <div class="flex items-center gap-2">
+                  <span class="text-xs">🏠</span>
+                  <div>
+                    <p class="text-white text-xs font-semibold">Home</p>
+                    <p class="text-slate-400 text-[10px]">15 Admiralty Way, Lekki</p>
+                  </div>
+                </div>
+                <div class="flex gap-2 text-xs">
+                  <button class="text-slate-400">✏️</button>
+                  <button class="text-rose-400">🗑️</button>
+                </div>
+              </div>
+              <div class="bg-[#0f172a] p-2.5 rounded-xl flex items-center justify-between border border-slate-800">
+                <div class="flex items-center gap-2">
+                  <span class="text-xs">🏢</span>
+                  <div>
+                    <p class="text-white text-xs font-semibold">Office</p>
+                    <p class="text-slate-400 text-[10px]">Marina Towers, Lagos</p>
+                  </div>
+                </div>
+                <div class="flex gap-2 text-xs">
+                  <button class="text-slate-400">✏️</button>
+                  <button class="text-rose-400">🗑️</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Red SOS Bar -->
+          <button class="w-full bg-rose-600/20 border border-rose-500/40 text-rose-400 font-bold py-3 rounded-2xl flex items-center justify-center gap-2 text-xs">
+            <span>⚠️</span> SOS EMERGENCY
+          </button>
+        </div>
+
+        <!-- Bottom Logout & Nav -->
+        <div class="space-y-3">
+          <button class="w-full bg-[#1e293b] text-rose-400 border border-slate-800 font-bold py-2.5 rounded-2xl text-xs uppercase">
+            Logout
+          </button>
+
+          <nav class="bg-[#0f172a] border-t border-slate-800 pt-2 flex items-center justify-around text-center">
+            <button class="text-slate-500 flex flex-col items-center">
+              <span class="text-base">🚗</span>
+              <span class="text-[9px] font-bold">Ride</span>
+            </button>
+            <button class="text-slate-500 flex flex-col items-center">
+              <span class="text-base">👥</span>
+              <span class="text-[9px] font-bold">Hire</span>
+            </button>
+            <button class="text-slate-500 flex flex-col items-center">
+              <span class="text-base">🛡️</span>
+              <span class="text-[9px] font-bold">VIP Fleet</span>
+            </button>
+            <button class="text-[#1cd188] flex flex-col items-center">
+              <span class="text-base">👤</span>
+              <span class="text-[9px] font-bold">Account</span>
+            </button>
+          </nav>
+        </div>
+      </div>
+    </div>
+
+
+    <!-- ================================================================= -->
+    <!-- 5. DRIVER PORTAL — DASHBOARD TAB -->
+    <!-- ================================================================= -->
+    <div id="panel-driver-dash" class="tab-panel active space-y-4">
+      <div class="flex items-center justify-between">
+        <h2 class="text-lg font-black text-[#1cd188] uppercase tracking-wider flex items-center gap-2">
+          <span>📊</span> Driver Portal — Dashboard Tab
+        </h2>
+        <span class="text-xs text-slate-500 font-mono">Mobile App Frame (375px)</span>
+      </div>
+
+      <div class="max-w-sm mx-auto bg-[#0f172a] rounded-[40px] p-5 border-4 border-slate-800 shadow-2xl min-h-[720px] flex flex-col justify-between">
+        <div>
+          <!-- Greeting & Status -->
+          <div class="flex items-center justify-between mb-4">
+            <div>
+              <p class="text-slate-400 text-[10px]">Good morning,</p>
+              <p class="text-white font-bold text-sm">Chukwuka Operative</p>
+            </div>
+            <div class="bg-[#1cd188]/20 border border-[#1cd188]/40 px-3 py-1 rounded-full flex items-center gap-1.5">
+              <span class="w-2 h-2 rounded-full bg-[#1cd188] animate-pulse"></span>
+              <span class="text-[#1cd188] text-[10px] font-bold">ONLINE</span>
+            </div>
+          </div>
+
+          <!-- 4 Stat Dials Row -->
+          <div class="bg-[#1e293b] p-3 rounded-2xl border border-slate-800 mb-3">
+            <p class="text-[#1cd188] text-[10px] font-bold uppercase tracking-widest mb-2">Your Performance Dials</p>
+            <div class="grid grid-cols-4 gap-1.5 text-center">
+              <div class="flex flex-col items-center">
+                <div class="w-10 h-10 rounded-full border-2 border-[#1cd188] flex items-center justify-center text-[9px] font-bold text-white">
+                  ₦85k
+                </div>
+                <span class="text-slate-400 text-[8px] mt-1">Earnings</span>
+              </div>
+              <div class="flex flex-col items-center">
+                <div class="w-10 h-10 rounded-full border-2 border-blue-400 flex items-center justify-center text-[9px] font-bold text-white">
+                  ₦320k
+                </div>
+                <span class="text-slate-400 text-[8px] mt-1">This Month</span>
+              </div>
+              <div class="flex flex-col items-center">
+                <div class="w-10 h-10 rounded-full border-2 border-purple-400 flex items-center justify-center text-[9px] font-bold text-white">
+                  42
+                </div>
+                <span class="text-slate-400 text-[8px] mt-1">Jobs Done</span>
+              </div>
+              <div class="flex flex-col items-center">
+                <div class="w-10 h-10 rounded-full border-2 border-amber-400 flex items-center justify-center text-[9px] font-bold text-white">
+                  8
+                </div>
+                <span class="text-slate-400 text-[8px] mt-1">Offers</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Quick Action Grid -->
+          <div class="grid grid-cols-3 gap-2 mb-3">
+            <div class="bg-[#1e293b] p-2.5 rounded-xl border border-slate-800 text-center">
+              <span class="text-base">🧾</span>
+              <p class="text-white text-[9px] font-bold mt-0.5">Job Offers</p>
+            </div>
+            <div class="bg-[#1e293b] p-2.5 rounded-xl border border-slate-800 text-center">
+              <span class="text-base">📍</span>
+              <p class="text-white text-[9px] font-bold mt-0.5">Nearby Rides</p>
+            </div>
+            <div class="bg-[#1e293b] p-2.5 rounded-xl border border-slate-800 text-center">
+              <span class="text-base">📋</span>
+              <p class="text-white text-[9px] font-bold mt-0.5">Contracts</p>
+            </div>
+            <div class="bg-[#1e293b] p-2.5 rounded-xl border border-slate-800 text-center">
+              <span class="text-base">💳</span>
+              <p class="text-white text-[9px] font-bold mt-0.5">Billing</p>
+            </div>
+            <div class="bg-[#1e293b] p-2.5 rounded-xl border border-slate-800 text-center">
+              <span class="text-base">⚡</span>
+              <p class="text-white text-[9px] font-bold mt-0.5">Cashout</p>
+            </div>
+            <div class="bg-[#1e293b] p-2.5 rounded-xl border border-slate-800 text-center">
+              <span class="text-base">🎮</span>
+              <p class="text-white text-[9px] font-bold mt-0.5">Training</p>
+            </div>
+          </div>
+
+          <!-- Active Jobs & Compliance Rows -->
+          <div class="bg-[#1e293b] p-3 rounded-xl border border-slate-800 flex items-center justify-between mb-2">
+            <div class="flex items-center gap-2">
+              <span class="text-base">💼</span>
+              <div>
+                <p class="text-slate-400 text-[9px] uppercase font-bold">Active Jobs</p>
+                <p class="text-white text-xs font-semibold">1 Active Assignment</p>
+              </div>
+            </div>
+            <span class="text-slate-400 text-xs">➔</span>
+          </div>
+
+          <div class="bg-[#1e293b] p-3 rounded-xl border border-slate-800 flex items-center justify-between mb-3">
+            <div class="flex items-center gap-2">
+              <span class="text-base">🛡️</span>
+              <div>
+                <p class="text-slate-400 text-[9px] uppercase font-bold">Compliance Status</p>
+                <p class="text-white text-xs font-semibold">Verifications: 100% Complete</p>
+              </div>
+            </div>
+            <span class="text-[#1cd188] text-[9px] font-bold border border-[#1cd188] px-2 py-0.5 rounded-full">OK</span>
+          </div>
+        </div>
+
+        <!-- Driver Bottom Nav (3 Dots Icon Only - No Label) -->
+        <nav class="bg-[#0f172a] border-t border-slate-800 pt-2 flex items-center justify-around relative text-center">
+          <button class="text-slate-500 flex flex-col items-center">
+            <span class="text-base">💼</span>
+            <span class="text-[9px] font-bold">Jobs</span>
+          </button>
+          <div class="relative flex flex-col items-center">
+            <button class="w-10 h-10 rounded-full bg-[#1cd188] text-[#0f172a] font-bold flex items-center justify-center -mt-5 shadow-lg">
+              🚗
+            </button>
+            <span class="text-[9px] font-bold text-[#1cd188] mt-0.5">Nearby</span>
+          </div>
+          <button class="text-slate-500 flex flex-col items-center">
+            <span class="text-base">📅</span>
+            <span class="text-[9px] font-bold">Schedule</span>
+          </button>
+          <!-- 3 dots icon with NO text label -->
+          <button class="text-slate-400 flex items-center justify-center p-2">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"/></svg>
+          </button>
+        </nav>
+      </div>
+    </div>
+
+
+    <!-- ================================================================= -->
+    <!-- 6. DRIVER PORTAL — JOB OFFERS TAB -->
+    <!-- ================================================================= -->
+    <div id="panel-driver-jobs" class="tab-panel active space-y-4">
+      <div class="flex items-center justify-between">
+        <h2 class="text-lg font-black text-[#1cd188] uppercase tracking-wider flex items-center gap-2">
+          <span>🧾</span> Driver Portal — Job Offers & Proposals Tab
+        </h2>
+        <span class="text-xs text-slate-500 font-mono">Mobile App Frame (375px)</span>
+      </div>
+
+      <div class="max-w-sm mx-auto bg-[#0f172a] rounded-[40px] p-5 border-4 border-slate-800 shadow-2xl min-h-[720px] flex flex-col justify-between">
+        <div>
+          <!-- Badges Bar -->
+          <div class="flex gap-2 mb-3">
+            <span class="bg-[#1e293b] text-slate-300 text-[10px] font-bold px-2.5 py-1 rounded-full border border-slate-700">
+              14 TOTAL OFFERS
+            </span>
+            <span class="bg-orange-500/20 text-orange-400 text-[10px] font-bold px-2.5 py-1 rounded-full border border-orange-500/30">
+              2 UNREAD
+            </span>
+          </div>
+
+          <!-- Sub-tabs -->
+          <div class="flex bg-[#1e293b] p-1 rounded-xl mb-4 text-xs font-bold">
+            <button class="flex-1 py-2 rounded-lg bg-[#0f172a] text-white">PENDING OFFERS (2)</button>
+            <button class="flex-1 py-2 rounded-lg text-slate-500">ACCEPTED RUNS (12)</button>
+          </div>
+
+          <!-- Proposals List -->
+          <div class="space-y-3 mb-4">
+            <div class="bg-[#1e293b] p-3.5 rounded-2xl border border-slate-800">
+              <div class="flex items-center justify-between mb-1">
+                <p class="text-white font-bold text-xs">Executive Driver - Lekki</p>
+                <span class="text-[#1cd188] font-bold text-xs">₦220,000/mo</span>
+              </div>
+              <p class="text-slate-400 text-[10px] mb-3">Hirer: Chevron Nigeria Staff Co.</p>
+              <div class="flex gap-2">
+                <button class="flex-1 bg-[#1e293b] border border-slate-700 text-slate-300 font-bold py-2 rounded-xl text-[10px]">DECLINE</button>
+                <button class="flex-1 bg-[#1cd188] text-[#0f172a] font-bold py-2 rounded-xl text-[10px]">ACCEPT OFFER</button>
+              </div>
+            </div>
+
+            <div class="bg-[#1e293b] p-3.5 rounded-2xl border border-slate-800">
+              <div class="flex items-center justify-between mb-1">
+                <p class="text-white font-bold text-xs">Daily Chauffeur Run</p>
+                <span class="text-[#1cd188] font-bold text-xs">₦15,000/day</span>
+              </div>
+              <p class="text-slate-400 text-[10px] mb-3">Hirer: Victoria Island Private Resident</p>
+              <div class="flex gap-2">
+                <button class="flex-1 bg-[#1e293b] border border-slate-700 text-slate-300 font-bold py-2 rounded-xl text-[10px]">DECLINE</button>
+                <button class="flex-1 bg-[#1cd188] text-[#0f172a] font-bold py-2 rounded-xl text-[10px]">ACCEPT OFFER</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Bottom Nav with 3 dots no text -->
+        <nav class="bg-[#0f172a] border-t border-slate-800 pt-2 flex items-center justify-around relative text-center">
+          <button class="text-[#1cd188] flex flex-col items-center">
+            <span class="text-base">💼</span>
+            <span class="text-[9px] font-bold">Jobs</span>
+          </button>
+          <div class="relative flex flex-col items-center">
+            <button class="w-10 h-10 rounded-full bg-[#1e293b] text-[#1cd188] border border-slate-700 font-bold flex items-center justify-center -mt-5">
+              🚗
+            </button>
+            <span class="text-[9px] font-bold text-slate-500 mt-0.5">Nearby</span>
+          </div>
+          <button class="text-slate-500 flex flex-col items-center">
+            <span class="text-base">📅</span>
+            <span class="text-[9px] font-bold">Schedule</span>
+          </button>
+          <button class="text-slate-400 flex items-center justify-center p-2">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"/></svg>
+          </button>
+        </nav>
+      </div>
+    </div>
+
+
+    <!-- ================================================================= -->
+    <!-- 7. DRIVER PORTAL — NEARBY OPPORTUNITIES -->
+    <!-- ================================================================= -->
+    <div id="panel-driver-nearby" class="tab-panel active space-y-4">
+      <div class="flex items-center justify-between">
+        <h2 class="text-lg font-black text-[#1cd188] uppercase tracking-wider flex items-center gap-2">
+          <span>📍</span> Driver Portal — Nearby Opportunities & Bids
+        </h2>
+        <span class="text-xs text-slate-500 font-mono">Mobile App Frame (375px)</span>
+      </div>
+
+      <div class="max-w-sm mx-auto bg-[#0f172a] rounded-[40px] p-5 border-4 border-slate-800 shadow-2xl min-h-[720px] flex flex-col justify-between">
+        <div>
+          <!-- Hero Banner with Radar Graphic -->
+          <div class="relative bg-[#1e293b] rounded-2xl overflow-hidden mb-4 p-4 border border-slate-800">
+            <h3 class="text-white font-black text-sm mb-1">NEARBY OPPORTUNITIES</h3>
+            <p class="text-slate-400 text-[10px] mb-3">Open ride bids from hirers near you. Claim fast — verified drivers priority.</p>
+            <button class="border border-[#1cd188] text-[#1cd188] text-[10px] font-bold px-3 py-1.5 rounded-full">
+              ↻ REFRESH RADAR
+            </button>
+          </div>
+
+          <!-- Section 1: Open Bids -->
+          <p class="text-slate-400 text-[10px] uppercase tracking-widest font-bold mb-2">⚡ Open Ride Bids</p>
+          <div class="space-y-2 mb-4">
+            <div class="bg-[#1e293b] p-3 rounded-2xl border border-slate-800">
+              <div class="flex items-center gap-2 mb-1.5">
+                <span class="text-xs">📍</span>
+                <span class="text-white text-xs font-semibold">Lekki Phase 1</span>
+                <span class="text-slate-500">→</span>
+                <span class="text-slate-300 text-xs">Airport</span>
+              </div>
+              <div class="flex items-center justify-between">
+                <span class="text-[#1cd188] font-bold text-xs">Fare: ₦8,500</span>
+                <button class="bg-[#1cd188] text-[#0f172a] font-bold text-[10px] px-3 py-1.5 rounded-full">BID NOW</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Section 2: Transport Jobs Nearby -->
+          <p class="text-slate-400 text-[10px] uppercase tracking-widest font-bold mb-2">💼 Transport Jobs (50km Radius)</p>
+          <div class="space-y-2">
+            <div class="bg-[#1e293b] p-3 rounded-2xl border border-slate-800">
+              <div class="flex items-center justify-between mb-1">
+                <p class="text-white font-bold text-xs">Private Family Driver</p>
+                <span class="text-[#1cd188] font-bold text-xs">₦140k/mo</span>
+              </div>
+              <p class="text-slate-400 text-[10px] mb-2">Victoria Island • Car Provided</p>
+              <button class="w-full bg-[#1cd188]/10 text-[#1cd188] border border-[#1cd188]/30 font-bold text-[10px] py-1.5 rounded-xl">APPLY NOW</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Bottom Nav -->
+        <nav class="bg-[#0f172a] border-t border-slate-800 pt-2 flex items-center justify-around relative text-center">
+          <button class="text-slate-500 flex flex-col items-center">
+            <span class="text-base">💼</span>
+            <span class="text-[9px] font-bold">Jobs</span>
+          </button>
+          <div class="relative flex flex-col items-center">
+            <button class="w-10 h-10 rounded-full bg-[#1cd188] text-[#0f172a] font-bold flex items-center justify-center -mt-5 shadow-lg">
+              🚗
+            </button>
+            <span class="text-[9px] font-bold text-[#1cd188] mt-0.5">Nearby</span>
+          </div>
+          <button class="text-slate-500 flex flex-col items-center">
+            <span class="text-base">📅</span>
+            <span class="text-[9px] font-bold">Schedule</span>
+          </button>
+          <button class="text-slate-400 flex items-center justify-center p-2">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"/></svg>
+          </button>
+        </nav>
+      </div>
+    </div>
+
+
+    <!-- ================================================================= -->
+    <!-- 8. DRIVER PORTAL — ROAD SAFETY SIMULATOR / TRAINING -->
+    <!-- ================================================================= -->
+    <div id="panel-driver-training" class="tab-panel active space-y-4">
+      <div class="flex items-center justify-between">
+        <h2 class="text-lg font-black text-[#1cd188] uppercase tracking-wider flex items-center gap-2">
+          <span>🎮</span> Driver Training & Road Simulator
+        </h2>
+        <span class="text-xs text-slate-500 font-mono">Mobile App Frame (375px)</span>
+      </div>
+
+      <div class="max-w-sm mx-auto bg-[#0f172a] rounded-[40px] p-5 border-4 border-slate-800 shadow-2xl min-h-[720px] flex flex-col justify-between">
+        <div>
+          <p class="text-[#1cd188] text-[10px] font-bold uppercase tracking-widest mb-1">Training Center</p>
+          <h3 class="text-white text-base font-bold mb-4">Road Safety Simulator</h3>
+
+          <!-- Difficulty Selector Grid -->
+          <div class="bg-[#1e293b] p-4 rounded-2xl border border-slate-800 mb-4">
+            <p class="text-slate-400 text-[10px] uppercase tracking-widest text-center mb-3">SELECT DIFFICULTY LEVEL</p>
+            <div class="grid grid-cols-2 gap-2 mb-4">
+              <button class="bg-[#1cd188] text-[#0f172a] font-bold py-2.5 rounded-xl text-xs">BEGINNER</button>
+              <button class="bg-[#0f172a] text-white border border-slate-700 font-bold py-2.5 rounded-xl text-xs">INTERMEDIATE</button>
+              <button class="bg-[#0f172a] text-white border border-slate-700 font-bold py-2.5 rounded-xl text-xs">ADVANCED</button>
+              <button class="bg-[#0f172a] text-white border border-slate-700 font-bold py-2.5 rounded-xl text-xs">EXPERT</button>
+            </div>
+
+            <!-- Simulator Metrics -->
+            <div class="bg-[#0f172a] p-3 rounded-xl text-xs space-y-1.5 border border-slate-800">
+              <div class="flex justify-between"><span class="text-slate-400">Time Limit:</span> <span class="text-white font-bold">20s / question</span></div>
+              <div class="flex justify-between"><span class="text-slate-400">Lives:</span> <span class="text-[#1cd188] font-bold">❤️❤️❤️❤️❤️ (5)</span></div>
+              <div class="flex justify-between"><span class="text-slate-400">Multiplier:</span> <span class="text-amber-400 font-bold">x1.5 XP</span></div>
+            </div>
+          </div>
+
+          <button class="w-full bg-[#1cd188] text-[#0f172a] font-black py-3.5 rounded-2xl text-xs tracking-wider">
+            START SIMULATION QUIZ
+          </button>
+        </div>
+
+        <!-- Bottom Nav -->
+        <nav class="bg-[#0f172a] border-t border-slate-800 pt-2 flex items-center justify-around relative text-center">
+          <button class="text-slate-500 flex flex-col items-center">
+            <span class="text-base">💼</span>
+            <span class="text-[9px] font-bold">Jobs</span>
+          </button>
+          <div class="relative flex flex-col items-center">
+            <button class="w-10 h-10 rounded-full bg-[#1e293b] text-[#1cd188] border border-slate-700 font-bold flex items-center justify-center -mt-5">
+              🚗
+            </button>
+            <span class="text-[9px] font-bold text-slate-500 mt-0.5">Nearby</span>
+          </div>
+          <button class="text-slate-500 flex flex-col items-center">
+            <span class="text-base">📅</span>
+            <span class="text-[9px] font-bold">Schedule</span>
+          </button>
+          <button class="text-slate-400 flex items-center justify-center p-2">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"/></svg>
+          </button>
+        </nav>
+      </div>
+    </div>
+
+
+    <!-- ================================================================= -->
+    <!-- 9. DRIVER PORTAL — PROFILE & PREFERENCES TAB -->
+    <!-- ================================================================= -->
+    <div id="panel-driver-profile" class="tab-panel active space-y-4">
+      <div class="flex items-center justify-between">
+        <h2 class="text-lg font-black text-[#1cd188] uppercase tracking-wider flex items-center gap-2">
+          <span>👤</span> Driver Portal — Profile & Settings Tab
+        </h2>
+        <span class="text-xs text-slate-500 font-mono">Mobile App Frame (375px)</span>
+      </div>
+
+      <div class="max-w-sm mx-auto bg-[#0f172a] rounded-[40px] p-5 border-4 border-slate-800 shadow-2xl min-h-[720px] h-[800px] flex flex-col overflow-y-auto custom-scrollbar relative">
+        <!-- Top Header -->
+        <div class="flex items-center justify-between mb-5 mt-2">
+          <div>
+            <p class="text-[#1cd188] text-[11px] font-bold uppercase tracking-widest mb-1">@DRV-094281</p>
+            <h3 class="text-white text-2xl font-black">Profile</h3>
+          </div>
+          <div class="flex gap-2">
+            <button class="w-11 h-11 rounded-full bg-rose-500/10 border border-rose-500/20 flex items-center justify-center text-rose-400">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
+            </button>
+            <button class="w-11 h-11 rounded-full bg-[#1e293b] border border-slate-800 flex items-center justify-center text-white">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- Avatar Block -->
+        <div class="flex items-center gap-4 mb-6">
+          <div class="w-[72px] h-[72px] rounded-full bg-[#1e293b] border-2 border-slate-700 shadow-xl overflow-hidden flex-shrink-0">
+            <!-- Fallback Image -->
+            <img src="https://ui-avatars.com/api/?name=Chinedu+Okafor&background=1cd188&color=0f172a&size=150" alt="Chinedu Okafor" class="w-full h-full object-cover">
+          </div>
+          <div>
+            <div class="flex items-center gap-1.5">
+              <h4 class="text-white font-bold text-lg">Chinedu Okafor</h4>
+              <svg class="w-4 h-4 text-[#1cd188]" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+              </svg>
+            </div>
+            <p class="text-slate-400 text-xs mt-0.5">4.96 ★ &bull; Platinum operative</p>
+            <div class="mt-2 inline-flex items-center px-2 py-0.5 rounded-full bg-[#1cd188]/20 text-[#1cd188] text-[9px] font-bold uppercase tracking-wider">
+              ONLINE &bull; LAGOS
+            </div>
+          </div>
+        </div>
+
+        <!-- Profile Completion Bar -->
+        <div class="mb-6">
+          <div class="flex justify-between text-[11px] mb-2">
+            <span class="text-slate-400">Profile strength</span>
+            <span class="text-[#1cd188] font-bold">92% <span class="text-slate-500 font-normal mx-1">&bull;</span> <a href="#" class="hover:underline">Add introduction video</a></span>
+          </div>
+          <div class="w-full h-1.5 bg-[#1e293b] rounded-full overflow-hidden">
+            <div class="h-full bg-gradient-to-r from-[#1cd188] to-[#99f6e4] w-[92%] rounded-full"></div>
+          </div>
+        </div>
+
+        <!-- Referral Card -->
+        <div class="bg-gradient-to-br from-[#1cd188]/10 to-[#1cd188]/5 border border-[#1cd188]/20 rounded-[24px] p-4 flex items-center justify-between mb-6 shadow-sm">
+          <div>
+            <h5 class="text-white font-bold text-sm">Invite trusted drivers</h5>
+            <p class="text-slate-400 text-xs mt-1">8 joined &bull; ₦24,000 earned</p>
+            <p class="text-[#1cd188] text-[11px] mt-1.5 font-mono">ogadriver.ng/r/CHINEDU24</p>
+          </div>
+          <button class="w-12 h-12 rounded-full bg-[#0f172a] border border-slate-800 flex items-center justify-center text-white flex-shrink-0 shadow-md">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/></svg>
+          </button>
+        </div>
+
+        <!-- Preferences Toggles -->
+        <div class="bg-[#1e293b] rounded-[32px] border border-slate-800 p-2 mb-6 shadow-xl">
+          
+          <div class="flex items-center justify-between p-3 rounded-[24px] hover:bg-slate-800/50 transition">
+            <div class="flex items-center gap-4">
+              <div class="w-10 h-10 rounded-2xl bg-[#0f172a] border border-slate-700 flex items-center justify-center text-[#1cd188]">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1M5 17a2 2 0 104 0m-4 0a2 2 0 114 0m6 0a2 2 0 104 0m-4 0a2 2 0 114 0"/></svg>
+              </div>
+              <div>
+                <p class="text-white font-bold text-[13px]">I own a vehicle</p>
+                <p class="text-slate-400 text-[11px] mt-0.5">2023 Toyota Camry</p>
+              </div>
+            </div>
+            <!-- Toggle ON -->
+            <div class="w-12 h-7 bg-[#1cd188] rounded-full flex items-center p-1 justify-end cursor-pointer shadow-inner">
+              <div class="w-5 h-5 bg-[#0f172a] rounded-full"></div>
+            </div>
+          </div>
+
+          <div class="flex items-center justify-between p-3 rounded-[24px] hover:bg-slate-800/50 transition mt-1">
+            <div class="flex items-center gap-4">
+              <div class="w-10 h-10 rounded-2xl bg-[#0f172a] border border-slate-700 flex items-center justify-center text-slate-300">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/></svg>
+              </div>
+              <div>
+                <p class="text-white font-bold text-[13px]">Dark mode</p>
+              </div>
+            </div>
+            <!-- Toggle ON -->
+            <div class="w-12 h-7 bg-[#1cd188] rounded-full flex items-center p-1 justify-end cursor-pointer shadow-inner">
+              <div class="w-5 h-5 bg-[#0f172a] rounded-full"></div>
+            </div>
+          </div>
+
+          <div class="flex items-center justify-between p-3 rounded-[24px] hover:bg-slate-800/50 transition mt-1">
+            <div class="flex items-center gap-4">
+              <div class="w-10 h-10 rounded-2xl bg-[#0f172a] border border-slate-700 flex items-center justify-center text-slate-300">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 11c0 3.517-1.009 6.799-2.753 9.571m-3.44-2.04l.054-.09A13.916 13.916 0 008 11a4 4 0 118 0c0 1.017-.07 2.019-.203 3m-2.118 6.844A21.88 21.88 0 0015.171 17m3.839 1.132c.645-2.266.99-4.659.99-7.132A8 8 0 008 4.07M3 15.364c.64-1.319 1-2.8 1-4.364 0-1.457.39-2.823 1.07-4"/></svg>
+              </div>
+              <div>
+                <p class="text-white font-bold text-[13px]">Biometric login</p>
+              </div>
+            </div>
+            <!-- Toggle ON -->
+            <div class="w-12 h-7 bg-[#1cd188] rounded-full flex items-center p-1 justify-end cursor-pointer shadow-inner">
+              <div class="w-5 h-5 bg-[#0f172a] rounded-full"></div>
+            </div>
+          </div>
+
+          <div class="flex items-center justify-between p-3 rounded-[24px] hover:bg-slate-800/50 transition mt-1">
+            <div class="flex items-center gap-4">
+              <div class="w-10 h-10 rounded-2xl bg-[#0f172a] border border-slate-700 flex items-center justify-center text-slate-300">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/></svg>
+              </div>
+              <div>
+                <p class="text-white font-bold text-[13px]">Interstate availability</p>
+                <p class="text-slate-400 text-[11px] mt-0.5">Lagos, Ogun, Oyo</p>
+              </div>
+            </div>
+            <!-- Toggle ON -->
+            <div class="w-12 h-7 bg-[#1cd188] rounded-full flex items-center p-1 justify-end cursor-pointer shadow-inner">
+              <div class="w-5 h-5 bg-[#0f172a] rounded-full"></div>
+            </div>
+          </div>
+
+          <div class="flex items-center justify-between p-3 rounded-[24px] hover:bg-slate-800/50 transition mt-1">
+            <div class="flex items-center gap-4">
+              <div class="w-10 h-10 rounded-2xl bg-[#0f172a] border border-slate-700 flex items-center justify-center text-slate-300">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+              </div>
+              <div>
+                <p class="text-white font-bold text-[13px]">Accommodation needed</p>
+                <p class="text-slate-400 text-[11px] mt-0.5">For multi-day contracts</p>
+              </div>
+            </div>
+            <!-- Toggle OFF -->
+            <div class="w-12 h-7 bg-slate-700 rounded-full flex items-center p-1 justify-start cursor-pointer shadow-inner">
+              <div class="w-5 h-5 bg-slate-400 rounded-full"></div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Bottom Actions (Buttons) -->
+        <div class="mt-auto space-y-4">
+          <!-- Documents / Support -->
+          <div class="grid grid-cols-2 gap-3">
+            <button class="bg-[#1e293b] border border-slate-800 text-white font-bold py-4 rounded-[20px] text-[13px] flex items-center justify-center gap-2.5 hover:bg-slate-800 transition shadow-sm">
+              <svg class="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+              Documents
+            </button>
+            <button class="bg-[#1e293b] border border-slate-800 text-white font-bold py-4 rounded-[20px] text-[13px] flex items-center justify-center gap-2.5 hover:bg-slate-800 transition shadow-sm">
+              <svg class="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+              Support
+            </button>
+          </div>
+
+          <!-- Log out button -->
+          <button class="w-full bg-rose-500 text-white font-bold py-4 rounded-[20px] text-[15px] flex items-center justify-center gap-2 hover:bg-rose-600 transition shadow-lg shadow-rose-500/20">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+            Log out
+          </button>
+        </div>
+      </div>
+    </div>
+
+
+    <!-- ================================================================= -->
+    <!-- 10. ADMIN DASHBOARD -->
+    <!-- ================================================================= -->
+    <div id="panel-admin-dash" class="tab-panel active space-y-4">
+      <div class="flex items-center justify-between">
+        <h2 class="text-lg font-black text-[#1cd188] uppercase tracking-wider flex items-center gap-2">
+          <span>⚡</span> Admin Command Center & Telemetry Radar
+        </h2>
+        <span class="text-xs text-slate-500 font-mono">Desktop / Tablet Responsive View</span>
+      </div>
+
+      <div class="bg-[#0f172a] rounded-3xl p-6 border-4 border-slate-800 shadow-2xl space-y-6">
+        <!-- KPI Metrics Row -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div class="bg-[#1e293b] p-4 rounded-2xl border border-slate-800">
+            <p class="text-slate-400 text-xs font-bold uppercase">Total Registered Users</p>
+            <p class="text-white font-black text-2xl mt-1">12,480</p>
+            <span class="text-[#1cd188] text-[10px] font-bold">↑ 12% this week</span>
+          </div>
+          <div class="bg-[#1e293b] p-4 rounded-2xl border border-slate-800">
+            <p class="text-slate-400 text-xs font-bold uppercase">Active Verified Drivers</p>
+            <p class="text-white font-black text-2xl mt-1">3,820</p>
+            <span class="text-[#1cd188] text-[10px] font-bold">84% Online Now</span>
+          </div>
+          <div class="bg-[#1e293b] p-4 rounded-2xl border border-slate-800">
+            <p class="text-slate-400 text-xs font-bold uppercase">Active Contracts</p>
+            <p class="text-white font-black text-2xl mt-1">1,410</p>
+            <span class="text-[#1cd188] text-[10px] font-bold">₦42.5M Total Value</span>
+          </div>
+          <div class="bg-[#1e293b] p-4 rounded-2xl border border-slate-800">
+            <p class="text-slate-400 text-xs font-bold uppercase">System Telemetry Health</p>
+            <p class="text-[#1cd188] font-black text-2xl mt-1">99.9%</p>
+            <span class="text-slate-400 text-[10px]">Zero Critical Incidents</span>
+          </div>
+        </div>
+
+        <!-- Telemetry Radar & Command Tools -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div class="md:col-span-2 bg-[#1e293b] p-5 rounded-2xl border border-slate-800 relative h-64 flex flex-col justify-between overflow-hidden">
+            <div class="flex items-center justify-between">
+              <span class="text-white font-bold text-sm">Live Fleet Telemetry Radar</span>
+              <span class="bg-[#1cd188]/20 text-[#1cd188] text-xs font-bold px-2.5 py-0.5 rounded-full border border-[#1cd188]/30">REALTIME</span>
+            </div>
+            <div class="flex items-center justify-center">
+              <div class="w-40 h-40 border border-[#1cd188]/30 rounded-full flex items-center justify-center relative">
+                <div class="w-24 h-24 border border-[#1cd188]/50 rounded-full flex items-center justify-center">
+                  <div class="w-3 h-3 bg-[#1cd188] rounded-full animate-ping"></div>
+                </div>
+              </div>
+            </div>
+            <div class="flex justify-between text-xs text-slate-400">
+              <span>Lagos Command Zone</span>
+              <span>Active GPS Beacons: 1,240</span>
+            </div>
+          </div>
+
+          <div class="bg-[#1e293b] p-5 rounded-2xl border border-slate-800 flex flex-col justify-between">
+            <div>
+              <p class="text-white font-bold text-sm mb-3">Quick Administrative Controls</p>
+              <div class="space-y-2">
+                <button class="w-full bg-[#0f172a] text-white border border-slate-700 py-2 rounded-xl text-xs font-bold text-left px-3">
+                  ⚙️ Emergency Switchboard
+                </button>
+                <button class="w-full bg-[#0f172a] text-white border border-slate-700 py-2 rounded-xl text-xs font-bold text-left px-3">
+                  📍 Location Activation Manager
+                </button>
+                <button class="w-full bg-[#0f172a] text-white border border-slate-700 py-2 rounded-xl text-xs font-bold text-left px-3">
+                  ⚖️ Dispute Resolution Dashboard
+                </button>
+              </div>
+            </div>
+            <button class="w-full bg-[#1cd188] text-[#0f172a] font-bold py-2.5 rounded-xl text-xs mt-3">
+              LAUNCH FULL ADMIN CONSOLE
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- SCRIPT FOR TAB SWITCHING -->
+  <script>
+    function switchTab(tabId) {
+      // Remove active from all buttons
+      const buttons = document.querySelectorAll('.screen-tab-btn');
+      buttons.forEach(btn => btn.classList.remove('active'));
+
+      // Add active to clicked button
+      const activeBtn = document.getElementById('btn-' + tabId);
+      if (activeBtn) activeBtn.classList.add('active');
+
+      // Panels
+      const panels = document.querySelectorAll('.tab-panel');
+      if (tabId === 'all') {
+        panels.forEach(p => p.classList.add('active'));
+      } else {
+        panels.forEach(p => p.classList.remove('active'));
+        const target = document.getElementById('panel-' + tabId);
+        if (target) target.classList.add('active');
+      }
+    }
+  </script>
+
+</body>
+</html>

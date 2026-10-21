@@ -59,6 +59,14 @@ const StatsFooter = () => {
             </div>
           </div>
         ))}
+      <div className="max-w-7xl mx-auto px-8 mt-10 pt-6 border-t border-gray-800/80 text-center text-xs text-gray-500">
+        <p className="text-gray-300 font-semibold mb-1">
+          OgaDriver is a product of Cejmart Island Int'l Ltd
+        </p>
+        <p className="text-gray-400 mb-2">
+          Head Office: No. 14, Dutsen Street, Gbazango Extension, Kubwa, Abuja-FCT, Nigeria • Tel: +234 805 404 4980 / +234 812 729 0420
+        </p>
+        <p className="text-gray-500">&copy; {new Date().getFullYear()} Cejmart Island Int'l Ltd / OgaDriver.ng. All rights reserved.</p>
       </div>
     </div>
   );

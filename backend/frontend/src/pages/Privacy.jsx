@@ -28,8 +28,33 @@ function Privacy() {
           <h2 className="text-2xl font-bold text-white mt-8 mb-4">4. Cookies and Telemetry</h2>
           <p>We use cookies and tracking technologies to improve our platform's performance and analyze user interactions. We may also collect device and location telemetry from drivers while active on the job, subject to the driver's consent.</p>
 
-          <h2 className="text-2xl font-bold text-white mt-8 mb-4">5. Your Rights</h2>
-          <p>You have the right to access, update, or delete your personal information. If you wish to exercise these rights, please contact our support team.</p>
+          <h2 className="text-2xl font-bold text-white mt-8 mb-4">5. Your Rights & Data Protection</h2>
+          <p>Under applicable Nigerian data protection regulations (including the NDPA/NDPR), you have the right to access, rectify, or request the deletion of your personal information. If you wish to exercise any of these rights, please contact our Data Protection Compliance Office.</p>
+
+          <h2 className="text-2xl font-bold text-white mt-8 mb-4">6. Data Controller & Corporate Details</h2>
+          <p>OgaDriver is owned, developed, and operated by <strong>Cejmart Island Int'l Ltd</strong>, which serves as the data controller for the platform. For privacy-related inquiries, legal notifications, or compliance requests, please reach out to us at:</p>
+          <div className="bg-slate-900 border border-slate-800 rounded-xl p-5 mt-3 space-y-2 text-sm text-slate-300">
+            <p><strong>Corporate Entity:</strong> Cejmart Island Int'l Ltd</p>
+            <p><strong>Head Office:</strong> No. 14, Dutsen Street, Gbazango Extension, Kubwa, Abuja-FCT, Nigeria</p>
+            <p><strong>Official Phone Lines:</strong> +234 805 404 4980 / +234 812 729 0420</p>
+            <p><strong>Official Email:</strong> support@ogadriver.ng | info@ogadriver.ng</p>
+            <p><strong>Website:</strong> https://ogadriver.ng</p>
+          </div>
+        </div>
+
+        <div className="mt-12 flex flex-col sm:flex-row items-center gap-4 border-t border-slate-800 pt-8">
+            <button 
+                onClick={() => window.history.back()} 
+                className="w-full sm:w-auto px-8 py-3 bg-brandMint text-slate-950 font-bold rounded-xl hover:bg-brandMint/90 transition-colors"
+            >
+                OK, I Understand & Return
+            </button>
+            <Link 
+                to="/terms" 
+                className="w-full sm:w-auto px-8 py-3 bg-transparent border border-slate-700 text-white font-bold rounded-xl hover:bg-slate-800 transition-colors text-center"
+            >
+                View Terms of Service
+            </Link>
         </div>
       </main>
     </div>
