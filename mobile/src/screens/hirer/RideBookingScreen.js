@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   View,
   Text,
@@ -117,6 +117,34 @@ export default function RideBookingScreen({ navigation }) {
     latitudeDelta: 0.0922,
     longitudeDelta: 0.0421,
   };
+
+  // Dynamic Distance & Duration calculation
+  const calculateDistanceKm = (c1, c2, numStops = 0) => {
+    if (!c1 || !c2) return 14.8;
+    const R = 6371;
+    const dLat = ((c2.latitude - c1.latitude) * Math.PI) / 180;
+    const dLon = ((c2.longitude - c1.longitude) * Math.PI) / 180;
+    const a =
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos((c1.latitude * Math.PI) / 180) *
+        Math.cos((c2.latitude * Math.PI) / 180) *
+        Math.sin(dLon / 2) *
+        Math.sin(dLon / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    let km = R * c * 1.35;
+    if (numStops > 0) {
+      km += numStops * 2.8;
+    }
+    return Math.max(1.5, Math.round(km * 10) / 10);
+  };
+
+  const tripDistanceKm = useMemo(() => {
+    return calculateDistanceKm(pickupCoord, dropoffCoord, stops.length);
+  }, [pickupCoord, dropoffCoord, stops.length]);
+
+  const tripDurationMin = useMemo(() => {
+    return Math.max(8, Math.round((tripDistanceKm / 32) * 60) + stops.length * 5);
+  }, [tripDistanceKm, stops.length]);
 
   const [searchResults, setSearchResults] = useState([
     { id: '1', title: 'Victoria Island, Lagos, Nigeria', lat: 6.4281, lon: 3.4219 },
@@ -460,7 +488,7 @@ export default function RideBookingScreen({ navigation }) {
                 <View className="flex-row items-center px-2 py-0.5 rounded-full bg-slate-100">
                   <Ionicons name="time-outline" size={10} color="#64748b" style={{ marginRight: 3 }} />
                   <Text className="text-slate-700 text-[9px] font-normal">
-                    24 min • 14.8 km
+                    {tripDurationMin} min • {tripDistanceKm} km
                   </Text>
                 </View>
               </View>
@@ -799,7 +827,7 @@ export default function RideBookingScreen({ navigation }) {
                 <View className="flex-row items-center bg-black/25 px-2.5 py-1.5 rounded-xl border border-white/10">
                   <Ionicons name="navigate-circle-outline" size={14} color="#34d399" style={{ marginRight: 4 }} />
                   <Text className="text-emerald-300 font-normal text-xs">
-                    14.8 km - 24 min
+                    {tripDistanceKm} km - {tripDurationMin} min
                   </Text>
                 </View>
 
@@ -1147,6 +1175,34 @@ export default function RideBookingScreen({ navigation }) {
             </View>
 
             <ScrollView showsVerticalScrollIndicator={false} bounces={false} contentContainerStyle={{ paddingBottom: 8 }}>
+              {/* Distance & Travel Time Metric Banner */}
+              <View
+                style={{
+                  backgroundColor: isDark ? 'rgba(16, 185, 129, 0.12)' : '#ecfdf5',
+                  borderColor: isDark ? 'rgba(16, 185, 129, 0.3)' : '#a7f3d0',
+                }}
+                className="p-3.5 rounded-2xl border mb-4 flex-row items-center justify-between"
+              >
+                <View className="flex-row items-center flex-1 mr-2">
+                  <View className="w-9 h-9 rounded-xl bg-emerald-500/20 items-center justify-center mr-3 border border-emerald-500/30">
+                    <Ionicons name="speedometer-outline" size={20} color="#10b981" />
+                  </View>
+                  <View className="flex-1">
+                    <Text style={{ color: isDark ? '#ffffff' : '#065f46' }} className="font-semibold text-xs">
+                      Estimated Route Distance
+                    </Text>
+                    <Text style={{ color: isDark ? '#94a3b8' : '#047857' }} className="text-[11px] mt-0.5">
+                      Approx. {tripDurationMin} mins travel time
+                    </Text>
+                  </View>
+                </View>
+                <View className="bg-emerald-500 px-3 py-1.5 rounded-xl shadow-sm">
+                  <Text className="text-white font-bold text-xs font-mono">
+                    {tripDistanceKm} KM
+                  </Text>
+                </View>
+              </View>
+
               {/* Route Details Card */}
               <View
                 style={{
@@ -1155,101 +1211,127 @@ export default function RideBookingScreen({ navigation }) {
                 }}
                 className="p-4 rounded-2xl border mb-4"
               >
-              {/* Pickup */}
-              <View className="flex-row items-start mb-3">
-                <View className="w-3.5 h-3.5 rounded-full bg-emerald-500 mr-3 mt-0.5 items-center justify-center">
-                  <View className="w-1.5 h-1.5 rounded-full bg-white" />
-                </View>
-                <View className="flex-1">
-                  <Text style={{ color: isDark ? '#94a3b8' : '#64748b' }} className="text-[10px] font-normal uppercase">
-                    Pickup Location
-                  </Text>
-                  <Text style={{ color: isDark ? '#ffffff' : '#0f172a' }} className="text-xs font-normal">
-                    {pickup || 'Current GPS Location'}
-                  </Text>
-                </View>
-              </View>
-
-              {/* Intermediate Stops */}
-              {stops.map((s, idx) => (
-                <View key={s.id} className="flex-row items-start mb-3 pl-0.5">
-                  <View className="w-3.5 h-3.5 rounded-full bg-sky-500 mr-3 mt-0.5 items-center justify-center">
-                    <Text className="text-[8px] text-white font-normal">{idx + 1}</Text>
+                {/* Pickup */}
+                <View className="flex-row items-start mb-1">
+                  <View className="w-3.5 h-3.5 rounded-full bg-emerald-500 mr-3 mt-0.5 items-center justify-center">
+                    <View className="w-1.5 h-1.5 rounded-full bg-white" />
                   </View>
                   <View className="flex-1">
                     <Text style={{ color: isDark ? '#94a3b8' : '#64748b' }} className="text-[10px] font-normal uppercase">
-                      Intermediate Stop {idx + 1} (Stop & Continue)
+                      Pickup Location
                     </Text>
                     <Text style={{ color: isDark ? '#ffffff' : '#0f172a' }} className="text-xs font-normal">
-                      {s.address || `Stop ${idx + 1}`}
+                      {pickup || 'Current GPS Location'}
                     </Text>
                   </View>
                 </View>
-              ))}
 
-              {/* Destination */}
-              <View className="flex-row items-start">
-                <View className="w-3.5 h-3.5 rounded-full bg-amber-500 mr-3 mt-0.5 items-center justify-center">
-                  <View className="w-1.5 h-1.5 rounded-full bg-white" />
+                {/* Distance Connector */}
+                <View className="flex-row items-center my-1.5 ml-1">
+                  <View className="w-0.5 h-5 bg-emerald-500/30 mr-4" />
+                  <View className="px-2 py-0.5 rounded-md bg-emerald-500/10 border border-emerald-500/20 flex-row items-center">
+                    <Ionicons name="navigate-outline" size={10} color="#10b981" style={{ marginRight: 3 }} />
+                    <Text style={{ color: isDark ? '#34d399' : '#059669' }} className="text-[10px] font-semibold font-mono">
+                      {tripDistanceKm} km route measure
+                    </Text>
+                  </View>
                 </View>
-                <View className="flex-1">
-                  <Text style={{ color: isDark ? '#94a3b8' : '#64748b' }} className="text-[10px] font-normal uppercase">
-                    Final Destination
+
+                {/* Intermediate Stops */}
+                {stops.map((s, idx) => (
+                  <View key={s.id} className="flex-row items-start mb-3 pl-0.5">
+                    <View className="w-3.5 h-3.5 rounded-full bg-sky-500 mr-3 mt-0.5 items-center justify-center">
+                      <Text className="text-[8px] text-white font-normal">{idx + 1}</Text>
+                    </View>
+                    <View className="flex-1">
+                      <Text style={{ color: isDark ? '#94a3b8' : '#64748b' }} className="text-[10px] font-normal uppercase">
+                        Intermediate Stop {idx + 1} (Stop & Continue)
+                      </Text>
+                      <Text style={{ color: isDark ? '#ffffff' : '#0f172a' }} className="text-xs font-normal">
+                        {s.address || `Stop ${idx + 1}`}
+                      </Text>
+                    </View>
+                  </View>
+                ))}
+
+                {/* Destination */}
+                <View className="flex-row items-start">
+                  <View className="w-3.5 h-3.5 rounded-full bg-amber-500 mr-3 mt-0.5 items-center justify-center">
+                    <View className="w-1.5 h-1.5 rounded-full bg-white" />
+                  </View>
+                  <View className="flex-1">
+                    <Text style={{ color: isDark ? '#94a3b8' : '#64748b' }} className="text-[10px] font-normal uppercase">
+                      Final Destination
+                    </Text>
+                    <Text style={{ color: isDark ? '#ffffff' : '#0f172a' }} className="text-xs font-normal">
+                      {dropoff || 'Not specified'}
+                    </Text>
+                  </View>
+                </View>
+              </View>
+
+              {/* Ride Breakdown Grid (Featuring Distance & Duration) */}
+              <View className="flex-row space-x-2 mb-4">
+                <View
+                  style={{
+                    backgroundColor: isDark ? '#121927' : '#f8fafc',
+                    borderColor: isDark ? '#1e293b' : '#e2e8f0',
+                  }}
+                  className="flex-1 p-2.5 rounded-2xl border items-center"
+                >
+                  <Text style={{ color: isDark ? '#94a3b8' : '#64748b' }} className="text-[10px] font-normal">
+                    Distance
                   </Text>
-                  <Text style={{ color: isDark ? '#ffffff' : '#0f172a' }} className="text-xs font-normal">
-                    {dropoff || 'Not specified'}
+                  <Text className="text-emerald-500 text-xs font-bold mt-0.5 font-mono">
+                    {tripDistanceKm} km
+                  </Text>
+                </View>
+
+                <View
+                  style={{
+                    backgroundColor: isDark ? '#121927' : '#f8fafc',
+                    borderColor: isDark ? '#1e293b' : '#e2e8f0',
+                  }}
+                  className="flex-1 p-2.5 rounded-2xl border items-center"
+                >
+                  <Text style={{ color: isDark ? '#94a3b8' : '#64748b' }} className="text-[10px] font-normal">
+                    Est. Time
+                  </Text>
+                  <Text style={{ color: isDark ? '#ffffff' : '#0f172a' }} className="text-xs font-semibold mt-0.5">
+                    ~{tripDurationMin} min
+                  </Text>
+                </View>
+
+                <View
+                  style={{
+                    backgroundColor: isDark ? '#121927' : '#f8fafc',
+                    borderColor: isDark ? '#1e293b' : '#e2e8f0',
+                  }}
+                  className="flex-1 p-2.5 rounded-2xl border items-center"
+                >
+                  <Text style={{ color: isDark ? '#94a3b8' : '#64748b' }} className="text-[10px] font-normal">
+                    Vehicle
+                  </Text>
+                  <Text style={{ color: isDark ? '#ffffff' : '#0f172a' }} className="text-xs font-semibold mt-0.5" numberOfLines={1}>
+                    {selectedVehicle}
+                  </Text>
+                </View>
+
+                <View
+                  style={{
+                    backgroundColor: isDark ? '#121927' : '#f8fafc',
+                    borderColor: isDark ? '#1e293b' : '#e2e8f0',
+                  }}
+                  className="flex-1 p-2.5 rounded-2xl border items-center"
+                >
+                  <Text style={{ color: isDark ? '#94a3b8' : '#64748b' }} className="text-[10px] font-normal">
+                    Payment
+                  </Text>
+                  <Text style={{ color: isDark ? '#ffffff' : '#0f172a' }} className="text-xs font-semibold mt-0.5" numberOfLines={1}>
+                    {paymentMethod}
                   </Text>
                 </View>
               </View>
-            </View>
-
-            {/* Ride Breakdown Grid */}
-            <View className="flex-row space-x-2 mb-4">
-              <View
-                style={{
-                  backgroundColor: isDark ? '#121927' : '#f8fafc',
-                  borderColor: isDark ? '#1e293b' : '#e2e8f0',
-                }}
-                className="flex-1 p-3 rounded-2xl border items-center"
-              >
-                <Text style={{ color: isDark ? '#94a3b8' : '#64748b' }} className="text-[10px] font-normal">
-                  Vehicle
-                </Text>
-                <Text style={{ color: isDark ? '#ffffff' : '#0f172a' }} className="text-xs font-normal mt-0.5">
-                  {selectedVehicle}
-                </Text>
-              </View>
-
-              <View
-                style={{
-                  backgroundColor: isDark ? '#121927' : '#f8fafc',
-                  borderColor: isDark ? '#1e293b' : '#e2e8f0',
-                }}
-                className="flex-1 p-3 rounded-2xl border items-center"
-              >
-                <Text style={{ color: isDark ? '#94a3b8' : '#64748b' }} className="text-[10px] font-normal">
-                  Schedule
-                </Text>
-                <Text style={{ color: isDark ? '#ffffff' : '#0f172a' }} className="text-xs font-normal mt-0.5">
-                  {scheduleType === 'Now' ? 'Leave Now' : 'Scheduled'}
-                </Text>
-              </View>
-
-              <View
-                style={{
-                  backgroundColor: isDark ? '#121927' : '#f8fafc',
-                  borderColor: isDark ? '#1e293b' : '#e2e8f0',
-                }}
-                className="flex-1 p-3 rounded-2xl border items-center"
-              >
-                <Text style={{ color: isDark ? '#94a3b8' : '#64748b' }} className="text-[10px] font-normal">
-                  Payment
-                </Text>
-                <Text style={{ color: isDark ? '#ffffff' : '#0f172a' }} className="text-xs font-normal mt-0.5">
-                  {paymentMethod}
-                </Text>
-              </View>
-            </View>
 
             {/* Fare & Rewards Row */}
             <View
