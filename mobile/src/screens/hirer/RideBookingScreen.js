@@ -203,7 +203,7 @@ export default function RideBookingScreen({ navigation }) {
   const [searchLoading, setSearchLoading] = useState(false);
   const searchTimeoutRef = React.useRef(null);
 
-  const fetchLiveSuggestions = (query) => {
+  const fetchLiveSuggestions = (query, inputType = 'dropoff') => {
     if (!query || query.trim().length < 2) return;
     if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current);
     searchTimeoutRef.current = setTimeout(async () => {
@@ -214,12 +214,23 @@ export default function RideBookingScreen({ navigation }) {
         if (res.ok) {
           const data = await res.json();
           if (Array.isArray(data) && data.length > 0) {
-            setSearchResults(data.map((item, idx) => ({
+            const mapped = data.map((item, idx) => ({
               id: item.place_id || String(idx),
               title: item.display_name,
               lat: parseFloat(item.lat),
               lon: parseFloat(item.lon),
-            })));
+            }));
+            setSearchResults(mapped);
+
+            // Dynamically update coordinates as user is typing so map markers and linking route update live
+            const topMatch = mapped[0];
+            if (topMatch && topMatch.lat && topMatch.lon) {
+              if (inputType === 'pickup') {
+                setPickupCoord({ latitude: topMatch.lat, longitude: topMatch.lon });
+              } else if (inputType === 'dropoff') {
+                setDropoffCoord({ latitude: topMatch.lat, longitude: topMatch.lon });
+              }
+            }
           }
         }
       } catch (e) {
@@ -236,10 +247,10 @@ export default function RideBookingScreen({ navigation }) {
   const SNAP_MIDDLE = Math.round(screenHeight * 0.50); // Halfway (50% screen)
   const SNAP_EXPANDED = Math.round(screenHeight * 0.88); // Full top screen (88%)
 
-  // Default to halfway on load so user sees map and their location when setting destination
-  const [sheetState, setSheetState] = useState('middle');
-  const sheetHeightAnim = React.useRef(new Animated.Value(Math.round(screenHeight * 0.50))).current;
-  const currentHeightRef = React.useRef(Math.round(screenHeight * 0.50));
+  // Default to collapsed on app load so full map and current location are visible
+  const [sheetState, setSheetState] = useState('collapsed');
+  const sheetHeightAnim = React.useRef(new Animated.Value(SNAP_COLLAPSED)).current;
+  const currentHeightRef = React.useRef(SNAP_COLLAPSED);
   const dropoffInputRef = React.useRef(null);
 
   const snapSheetTo = (stateName) => {
@@ -562,7 +573,7 @@ export default function RideBookingScreen({ navigation }) {
             <TouchableOpacity
               activeOpacity={0.88}
               onPress={() => {
-                snapSheetTo('expanded');
+                snapSheetTo('middle');
                 setTimeout(() => dropoffInputRef.current?.focus(), 250);
               }}
               style={{
@@ -650,10 +661,17 @@ export default function RideBookingScreen({ navigation }) {
                   onChangeText={(text) => {
                     setPickup(text);
                     setActiveInput('pickup');
-                    fetchLiveSuggestions(text);
+                    fetchLiveSuggestions(text, 'pickup');
                   }}
                   onFocus={() => {
                     setActiveInput('pickup');
+                  }}
+                  onSubmitEditing={() => {
+                    if (searchResults.length > 0 && searchResults[0].lat) {
+                      setPickup(searchResults[0].title);
+                      setPickupCoord({ latitude: searchResults[0].lat, longitude: searchResults[0].lon });
+                    }
+                    setActiveInput(null);
                   }}
                   style={{ color: isDark ? '#ffffff' : '#0f172a' }}
                   className="flex-1 text-xs font-normal"
@@ -747,10 +765,17 @@ export default function RideBookingScreen({ navigation }) {
                   onChangeText={(text) => {
                     setDropoff(text);
                     setActiveInput('dropoff');
-                    fetchLiveSuggestions(text);
+                    fetchLiveSuggestions(text, 'dropoff');
                   }}
                   onFocus={() => {
                     setActiveInput('dropoff');
+                  }}
+                  onSubmitEditing={() => {
+                    if (searchResults.length > 0 && searchResults[0].lat) {
+                      setDropoff(searchResults[0].title);
+                      setDropoffCoord({ latitude: searchResults[0].lat, longitude: searchResults[0].lon });
+                    }
+                    setActiveInput(null);
                   }}
                   style={{ color: isDark ? '#ffffff' : '#0f172a' }}
                   className="flex-1 text-xs font-normal"

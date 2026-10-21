@@ -169,29 +169,40 @@ export default function NaijaHirerHomeScreen({ navigation }) {
         {/* Top Header */}
         <View className="px-4 pt-5 pb-3">
           <View className="flex-row items-center justify-between mb-3">
-            <View className="flex-1 mr-2">
-              <TouchableOpacity
-                onPress={() => setShowCountryModal(true)}
-                className="flex-row items-center mb-1.5 self-start px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30"
-              >
-                <Text className="text-base mr-1.5">{selectedCountry.flag}</Text>
-                <Text className="text-emerald-500 text-[11px] font-normal uppercase tracking-wider mr-1">
-                  {selectedCountry.marketTitle}
-                </Text>
-                <Ionicons name="chevron-down" size={13} color="#10b981" />
-              </TouchableOpacity>
+            <View className="flex-row items-center flex-1 mr-2">
+              {navigation.canGoBack() && (
+                <TouchableOpacity
+                  onPress={() => navigation.goBack()}
+                  className="w-10 h-10 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 items-center justify-center mr-3"
+                  activeOpacity={0.7}
+                >
+                  <Ionicons name="arrow-back" size={20} color="#10b981" />
+                </TouchableOpacity>
+              )}
+              <View className="flex-1">
+                <TouchableOpacity
+                  onPress={() => setShowCountryModal(true)}
+                  className="flex-row items-center mb-1.5 self-start px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30"
+                >
+                  <Text className="text-base mr-1.5">{selectedCountry.flag}</Text>
+                  <Text className="text-emerald-500 text-[11px] font-normal uppercase tracking-wider mr-1">
+                    {selectedCountry.marketTitle}
+                  </Text>
+                  <Ionicons name="chevron-down" size={13} color="#10b981" />
+                </TouchableOpacity>
 
-              <Text
-                style={{ color: isDark ? '#ffffff' : '#0f172a' }}
-                className="font-normal text-2xl tracking-tight"
-              >
-                Oga, Welcome!
-              </Text>
-              <Text style={{ color: isDark ? '#94a3b8' : '#64748b' }} className="text-xs font-normal">
-                {selectedCountry.id === 'NG'
-                  ? 'Find, hire, or negotiate with verified Nigerian drivers sharp sharp'
-                  : `Explore ${selectedCountry.name} vetted chauffeur & car hire services`}
-              </Text>
+                <Text
+                  style={{ color: isDark ? '#ffffff' : '#0f172a' }}
+                  className="font-normal text-2xl tracking-tight"
+                >
+                  Oga, Welcome!
+                </Text>
+                <Text style={{ color: isDark ? '#94a3b8' : '#64748b' }} className="text-xs font-normal">
+                  {selectedCountry.id === 'NG'
+                    ? 'Find, hire, or negotiate with verified Nigerian drivers sharp sharp'
+                    : `Explore ${selectedCountry.name} vetted chauffeur & car hire services`}
+                </Text>
+              </View>
             </View>
 
             <TouchableOpacity

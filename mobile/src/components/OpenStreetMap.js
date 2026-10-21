@@ -319,20 +319,41 @@ export default function OpenStreetMap({
           ...stopsList.map(function(s) { return [s.lat, s.lng]; }),
           [${dCoord.latitude}, ${dCoord.longitude}]
         ];
-        L.polyline(routeCoords, {
+        var routePolyline = L.polyline(routeCoords, {
           color: '#008751',
           weight: 5,
           opacity: 0.92,
           lineCap: 'round',
           lineJoin: 'round'
         }).addTo(map);
+
+        // Asynchronously fetch realistic road curves from OSRM
+        try {
+          var osrmUrl = 'https://router.project-osrm.org/route/v1/driving/' +
+            ${pCoord.longitude} + ',' + ${pCoord.latitude} + ';' +
+            ${dCoord.longitude} + ',' + ${dCoord.latitude} +
+            '?overview=full&geometries=geojson';
+          fetch(osrmUrl)
+            .then(function(res) { return res.json(); })
+            .then(function(json) {
+              if (json && json.routes && json.routes.length > 0 && json.routes[0].geometry) {
+                var coords = json.routes[0].geometry.coordinates.map(function(c) {
+                  return [c[1], c[0]];
+                });
+                if (coords && coords.length > 0) {
+                  routePolyline.setLatLngs(coords);
+                }
+              }
+            })
+            .catch(function(e) {});
+        } catch (e) {}
       `
           : ''
       }
 
       // Automatically Fit Bounds to show all route points
       if (boundsPoints.length > 1) {
-        map.fitBounds(boundsPoints, { padding: [60, 60], maxZoom: 16 });
+        map.fitBounds(boundsPoints, { paddingTopLeft: [50, 50], paddingBottomRight: [50, 110], maxZoom: 16 });
       } else if (boundsPoints.length === 1) {
         map.setView(boundsPoints[0], 15);
       }
@@ -422,7 +443,7 @@ export default function OpenStreetMap({
             <ActivityIndicator size="small" color="#008751" />
           </View>
         )}
-        startInLoadingState={true}
+        startInLoadingState={false}
       />
     </View>
   );

@@ -94,9 +94,16 @@ function HireStack() {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }} initialRouteName="HireBookingMain">
       <Stack.Screen name="HireBookingMain" component={HireBookingScreen} />
+      <Stack.Screen name="NaijaHirerHome" component={NaijaHirerHomeScreen} />
+      <Stack.Screen name="SearchDrivers" component={SearchDriversScreen} />
       <Stack.Screen name="HirerBookings" component={HirerBookingsScreen} />
       <Stack.Screen name="PostJob" component={PostJobScreen} />
       <Stack.Screen name="VipFleet" component={VipFleetScreen} />
+      <Stack.Screen name="JobDetails" component={JobDetailsScreen} />
+      <Stack.Screen name="PlacementPayment" component={PlacementPaymentScreen} />
+      <Stack.Screen name="ReportInfraction" component={ReportInfractionScreen} />
+      <Stack.Screen name="Conversations" component={ConversationsListScreen} />
+      <Stack.Screen name="Chat" component={ChatScreen} />
     </Stack.Navigator>
   );
 }

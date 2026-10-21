@@ -55,7 +55,11 @@ export default function HireBookingScreen({ navigation }) {
   const insets = useSafeAreaInsets();
 
   const [pickup, setPickup] = useState('');
+  const [dropoff, setDropoff] = useState('');
   const [activeInput, setActiveInput] = useState(null);
+  const [dropoffCoord, setDropoffCoord] = useState(null);
+  const pickupInputRef = React.useRef(null);
+  const dropoffInputRef = React.useRef(null);
 
   // Hire Mode: Driver only vs Driver + car
   const [hireType, setHireType] = useState('Driver only'); // 'Driver only' | 'Driver + car'
@@ -185,7 +189,7 @@ export default function HireBookingScreen({ navigation }) {
   const [searchLoading, setSearchLoading] = useState(false);
   const searchTimeoutRef = React.useRef(null);
 
-  const fetchLiveSuggestions = (query) => {
+  const fetchLiveSuggestions = (query, inputType = 'pickup') => {
     if (!query || query.trim().length < 2) return;
     if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current);
     searchTimeoutRef.current = setTimeout(async () => {
@@ -196,12 +200,23 @@ export default function HireBookingScreen({ navigation }) {
         if (res.ok) {
           const data = await res.json();
           if (Array.isArray(data) && data.length > 0) {
-            setSearchResults(data.map((item, idx) => ({
+            const mapped = data.map((item, idx) => ({
               id: item.place_id || String(idx),
               title: item.display_name,
               lat: parseFloat(item.lat),
               lon: parseFloat(item.lon),
-            })));
+            }));
+            setSearchResults(mapped);
+
+            // Dynamically update coordinates as user is typing so pins & linking line update live
+            const topMatch = mapped[0];
+            if (topMatch && topMatch.lat && topMatch.lon) {
+              if (inputType === 'pickup') {
+                setPickupCoord({ latitude: topMatch.lat, longitude: topMatch.lon });
+              } else if (inputType === 'dropoff') {
+                setDropoffCoord({ latitude: topMatch.lat, longitude: topMatch.lon });
+              }
+            }
           }
         }
       } catch (e) {
@@ -248,11 +263,10 @@ export default function HireBookingScreen({ navigation }) {
   const SNAP_MIDDLE = Math.round(screenHeight * 0.50); // Halfway (50% screen)
   const SNAP_EXPANDED = Math.round(screenHeight * 0.88); // Full top screen (88%)
 
-  // Default to halfway so user sees map and their location when setting pickup
-  const [sheetState, setSheetState] = useState('middle');
-  const sheetHeightAnim = React.useRef(new Animated.Value(Math.round(screenHeight * 0.50))).current;
-  const currentHeightRef = React.useRef(Math.round(screenHeight * 0.50));
-  const pickupInputRef = React.useRef(null);
+  // Default to collapsed on load so user sees full map and current location
+  const [sheetState, setSheetState] = useState('collapsed');
+  const sheetHeightAnim = React.useRef(new Animated.Value(SNAP_COLLAPSED)).current;
+  const currentHeightRef = React.useRef(SNAP_COLLAPSED);
 
   const snapSheetTo = (stateName) => {
     let target = SNAP_COLLAPSED;
@@ -457,6 +471,9 @@ export default function HireBookingScreen({ navigation }) {
               if (activeInput === 'pickup') {
                 setPickup(item.title);
                 if (item.lat && item.lon) setPickupCoord({ latitude: item.lat, longitude: item.lon });
+              } else if (activeInput === 'dropoff') {
+                setDropoff(item.title);
+                if (item.lat && item.lon) setDropoffCoord({ latitude: item.lat, longitude: item.lon });
               }
               setActiveInput(null);
             }}
@@ -521,13 +538,17 @@ export default function HireBookingScreen({ navigation }) {
           >
             {userLocation && <Marker coordinate={userLocation} pinColor="#10b981" title="Your Location" />}
             {pickup && <Marker coordinate={pickupCoord} pinColor="#008751" title="Pickup / Reporting Point" />}
+            {dropoff && dropoffCoord && <Marker coordinate={dropoffCoord} pinColor="#ea4335" title="Destination" />}
           </MapView>
         ) : (
           <OpenStreetMap
             center={userLocation || (pickup ? pickupCoord : region)}
             userLocation={userLocation}
             pickup={pickup}
+            dropoff={dropoff}
             pickupCoord={pickup ? pickupCoord : null}
+            dropoffCoord={dropoff ? dropoffCoord : null}
+            stops={stops}
             onLocationSelect={handleMapPress}
             isDark={isDark}
             interactive={true}
@@ -574,8 +595,8 @@ export default function HireBookingScreen({ navigation }) {
             <TouchableOpacity
               activeOpacity={0.88}
               onPress={() => {
-                snapSheetTo('expanded');
-                setTimeout(() => pickupInputRef.current?.focus(), 250);
+                snapSheetTo('middle');
+                setTimeout(() => (pickup ? dropoffInputRef.current?.focus() : pickupInputRef.current?.focus()), 250);
               }}
               style={{
                 backgroundColor: isDark ? '#121927' : '#f1f5f9',
@@ -585,11 +606,11 @@ export default function HireBookingScreen({ navigation }) {
             >
               <Ionicons name="search" size={20} color={isDark ? '#ffffff' : '#0f172a'} style={{ marginRight: 12 }} />
               <Text
-                style={{ color: pickup ? (isDark ? '#ffffff' : '#0f172a') : (isDark ? '#94a3b8' : '#64748b') }}
+                style={{ color: (dropoff || pickup) ? (isDark ? '#ffffff' : '#0f172a') : (isDark ? '#94a3b8' : '#64748b') }}
                 className="text-base font-medium flex-1"
                 numberOfLines={1}
               >
-                {pickup || 'Where do you need a driver?'}
+                {dropoff ? `To: ${dropoff}` : pickup ? `From: ${pickup}` : 'Where do you need a driver?'}
               </Text>
             </TouchableOpacity>
           </View>
@@ -663,10 +684,17 @@ export default function HireBookingScreen({ navigation }) {
                   onChangeText={(text) => {
                     setPickup(text);
                     setActiveInput('pickup');
-                    fetchLiveSuggestions(text);
+                    fetchLiveSuggestions(text, 'pickup');
                   }}
                   onFocus={() => {
                     setActiveInput('pickup');
+                  }}
+                  onSubmitEditing={() => {
+                    if (searchResults.length > 0 && searchResults[0].lat) {
+                      setPickup(searchResults[0].title);
+                      setPickupCoord({ latitude: searchResults[0].lat, longitude: searchResults[0].lon });
+                    }
+                    setActiveInput(null);
                   }}
                   style={{ color: isDark ? '#ffffff' : '#0f172a' }}
                   className="flex-1 text-xs font-normal"
@@ -688,6 +716,55 @@ export default function HireBookingScreen({ navigation }) {
                 )}
               </View>
               {activeInput === 'pickup' && renderSuggestions()}
+
+              {/* Destination Input for Hire */}
+              <View
+                style={{
+                  backgroundColor: isDark ? '#121927' : '#ffffff',
+                  borderColor: activeInput === 'dropoff' ? '#ea4335' : isDark ? '#1e293b' : '#e2e8f0',
+                }}
+                className="flex-row items-center border rounded-2xl px-3.5 py-2.5 mb-1.5 shadow-sm"
+              >
+                <View className="w-3.5 h-3.5 rounded-full bg-rose-500 mr-2.5 items-center justify-center">
+                  <View className="w-1.5 h-1.5 rounded-full bg-white" />
+                </View>
+                <TextInput
+                  ref={dropoffInputRef}
+                  placeholder="Where to? (Destination / Itinerary end)"
+                  placeholderTextColor={isDark ? '#64748b' : '#94a3b8'}
+                  value={dropoff}
+                  onChangeText={(text) => {
+                    setDropoff(text);
+                    setActiveInput('dropoff');
+                    fetchLiveSuggestions(text, 'dropoff');
+                  }}
+                  onFocus={() => {
+                    setActiveInput('dropoff');
+                  }}
+                  onSubmitEditing={() => {
+                    if (searchResults.length > 0 && searchResults[0].lat) {
+                      setDropoff(searchResults[0].title);
+                      setDropoffCoord({ latitude: searchResults[0].lat, longitude: searchResults[0].lon });
+                    }
+                    setActiveInput(null);
+                  }}
+                  style={{ color: isDark ? '#ffffff' : '#0f172a' }}
+                  className="flex-1 text-xs font-normal"
+                />
+                {dropoff ? (
+                  <TouchableOpacity onPress={() => { setDropoff(''); setDropoffCoord(null); }} className="p-1">
+                    <Ionicons name="close-circle" size={17} color="#ef4444" />
+                  </TouchableOpacity>
+                ) : (
+                  <TouchableOpacity
+                    onPress={() => setDropoff('City Service / Full Day Standby')}
+                    className="p-1"
+                  >
+                    <Ionicons name="location" size={17} color="#ea4335" />
+                  </TouchableOpacity>
+                )}
+              </View>
+              {activeInput === 'dropoff' && renderSuggestions()}
 
               {/* CENTER ADD STOP ACTION BAR */}
               <View className="my-1.5 flex-row items-center justify-center">
