@@ -7,7 +7,9 @@
       "developmentClient": true,
       "distribution": "internal",
       "env": {
-        "EXPO_PUBLIC_API_URL": "https://ogadriver.ng/api"
+        "EXPO_PUBLIC_API_URL": "https://ogadriver.ng/api",
+        "EXPO_PUBLIC_GOOGLE_MAPS_API_KEY": "AIzaSyBP9tHyIKJBMUaFqNjqadXzG9iYHqS9uY0",
+        "GOOGLE_MAPS_API_KEY": "AIzaSyBP9tHyIKJBMUaFqNjqadXzG9iYHqS9uY0"
       }
     },
     "preview": {
@@ -18,7 +20,9 @@
       "env": {
         "EXPO_PUBLIC_API_URL": "https://ogadriver.ng/api",
         "EXPO_PUBLIC_PAYSTACK_KEY": "pk_live_a92fa363b1192c08410f198c64b2796cb96425cd",
-        "EXPO_PUBLIC_LOCATIONIQ_KEY": "pk.8ae3192c04f86a50c49464280dfb044e"
+        "EXPO_PUBLIC_LOCATIONIQ_KEY": "pk.8ae3192c04f86a50c49464280dfb044e",
+        "EXPO_PUBLIC_GOOGLE_MAPS_API_KEY": "AIzaSyBP9tHyIKJBMUaFqNjqadXzG9iYHqS9uY0",
+        "GOOGLE_MAPS_API_KEY": "AIzaSyBP9tHyIKJBMUaFqNjqadXzG9iYHqS9uY0"
       }
     },
     "production-apk": {
@@ -26,7 +30,9 @@
       "env": {
         "EXPO_PUBLIC_API_URL": "https://ogadriver.ng/api",
         "EXPO_PUBLIC_PAYSTACK_KEY": "pk_live_a92fa363b1192c08410f198c64b2796cb96425cd",
-        "EXPO_PUBLIC_LOCATIONIQ_KEY": "pk.8ae3192c04f86a50c49464280dfb044e"
+        "EXPO_PUBLIC_LOCATIONIQ_KEY": "pk.8ae3192c04f86a50c49464280dfb044e",
+        "EXPO_PUBLIC_GOOGLE_MAPS_API_KEY": "AIzaSyBP9tHyIKJBMUaFqNjqadXzG9iYHqS9uY0",
+        "GOOGLE_MAPS_API_KEY": "AIzaSyBP9tHyIKJBMUaFqNjqadXzG9iYHqS9uY0"
       }
     },
     "hirer-preview": {
@@ -35,7 +41,9 @@
         "EXPO_PUBLIC_APP_VARIANT": "hirer",
         "EXPO_PUBLIC_API_URL": "https://ogadriver.ng/api",
         "EXPO_PUBLIC_PAYSTACK_KEY": "pk_live_a92fa363b1192c08410f198c64b2796cb96425cd",
-        "EXPO_PUBLIC_LOCATIONIQ_KEY": "pk.8ae3192c04f86a50c49464280dfb044e"
+        "EXPO_PUBLIC_LOCATIONIQ_KEY": "pk.8ae3192c04f86a50c49464280dfb044e",
+        "EXPO_PUBLIC_GOOGLE_MAPS_API_KEY": "AIzaSyBP9tHyIKJBMUaFqNjqadXzG9iYHqS9uY0",
+        "GOOGLE_MAPS_API_KEY": "AIzaSyBP9tHyIKJBMUaFqNjqadXzG9iYHqS9uY0"
       }
     },
     "driver-preview": {
@@ -44,7 +52,9 @@
         "EXPO_PUBLIC_APP_VARIANT": "driver",
         "EXPO_PUBLIC_API_URL": "https://ogadriver.ng/api",
         "EXPO_PUBLIC_PAYSTACK_KEY": "pk_live_a92fa363b1192c08410f198c64b2796cb96425cd",
-        "EXPO_PUBLIC_LOCATIONIQ_KEY": "pk.8ae3192c04f86a50c49464280dfb044e"
+        "EXPO_PUBLIC_LOCATIONIQ_KEY": "pk.8ae3192c04f86a50c49464280dfb044e",
+        "EXPO_PUBLIC_GOOGLE_MAPS_API_KEY": "AIzaSyBP9tHyIKJBMUaFqNjqadXzG9iYHqS9uY0",
+        "GOOGLE_MAPS_API_KEY": "AIzaSyBP9tHyIKJBMUaFqNjqadXzG9iYHqS9uY0"
       }
     },
     "production": {
@@ -58,19 +68,25 @@
       "env": {
         "EXPO_PUBLIC_API_URL": "https://ogadriver.ng/api",
         "EXPO_PUBLIC_PAYSTACK_KEY": "pk_live_a92fa363b1192c08410f198c64b2796cb96425cd",
-        "EXPO_PUBLIC_LOCATIONIQ_KEY": "pk.8ae3192c04f86a50c49464280dfb044e"
+        "EXPO_PUBLIC_LOCATIONIQ_KEY": "pk.8ae3192c04f86a50c49464280dfb044e",
+        "EXPO_PUBLIC_GOOGLE_MAPS_API_KEY": "AIzaSyBP9tHyIKJBMUaFqNjqadXzG9iYHqS9uY0",
+        "GOOGLE_MAPS_API_KEY": "AIzaSyBP9tHyIKJBMUaFqNjqadXzG9iYHqS9uY0"
       }
     },
     "driver-production": {
       "extends": "production",
       "env": {
-        "EXPO_PUBLIC_APP_VARIANT": "driver"
+        "EXPO_PUBLIC_APP_VARIANT": "driver",
+        "EXPO_PUBLIC_GOOGLE_MAPS_API_KEY": "AIzaSyBP9tHyIKJBMUaFqNjqadXzG9iYHqS9uY0",
+        "GOOGLE_MAPS_API_KEY": "AIzaSyBP9tHyIKJBMUaFqNjqadXzG9iYHqS9uY0"
       }
     },
     "hirer-production": {
       "extends": "production",
       "env": {
-        "EXPO_PUBLIC_APP_VARIANT": "hirer"
+        "EXPO_PUBLIC_APP_VARIANT": "hirer",
+        "EXPO_PUBLIC_GOOGLE_MAPS_API_KEY": "AIzaSyBP9tHyIKJBMUaFqNjqadXzG9iYHqS9uY0",
+        "GOOGLE_MAPS_API_KEY": "AIzaSyBP9tHyIKJBMUaFqNjqadXzG9iYHqS9uY0"
       }
     }
   }
