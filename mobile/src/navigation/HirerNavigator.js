@@ -23,7 +23,7 @@ import NaijaHirerHomeScreen from '../screens/hirer/NaijaHirerHomeScreen';
 import JobDetailsScreen from '../screens/hirer/JobDetailsScreen';
 import TermsAndPrivacyScreen from '../screens/shared/TermsAndPrivacyScreen';
 import PaymentCardsScreen from '../screens/shared/PaymentCardsScreen';
-import InvoicesScreen from '../screens/shared/InvoicesScreen';
+import SavedPlacesScreen from '../screens/shared/SavedPlacesScreen';
 import EmergencySosScreen from '../screens/shared/EmergencySosScreen';
 import KycVerificationScreen from '../screens/shared/KycVerificationScreen';
 import GiftFundsScreen from '../screens/shared/GiftFundsScreen';
@@ -59,7 +59,7 @@ function HomeStack() {
       <Stack.Screen name="Wallet" component={WalletScreen} />
       <Stack.Screen name="TermsAndPrivacy" component={TermsAndPrivacyScreen} />
       <Stack.Screen name="PaymentCards" component={PaymentCardsScreen} />
-      <Stack.Screen name="Invoices" component={InvoicesScreen} />
+      <Stack.Screen name="SavedPlaces" component={SavedPlacesScreen} />
       <Stack.Screen name="EmergencySos" component={EmergencySosScreen} />
       <Stack.Screen name="KycVerification" component={KycVerificationScreen} />
       <Stack.Screen name="GiftFunds" component={GiftFundsScreen} />
@@ -82,7 +82,7 @@ function AccountStack({ route }) {
       <Stack.Screen name="PlacementPayment" component={PlacementPaymentScreen} />
       <Stack.Screen name="TermsAndPrivacy" component={TermsAndPrivacyScreen} />
       <Stack.Screen name="PaymentCards" component={PaymentCardsScreen} />
-      <Stack.Screen name="Invoices" component={InvoicesScreen} />
+      <Stack.Screen name="SavedPlaces" component={SavedPlacesScreen} />
       <Stack.Screen name="EmergencySos" component={EmergencySosScreen} />
       <Stack.Screen name="KycVerification" component={KycVerificationScreen} />
       <Stack.Screen name="GiftFunds" component={GiftFundsScreen} />

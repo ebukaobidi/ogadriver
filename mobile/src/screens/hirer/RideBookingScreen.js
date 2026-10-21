@@ -22,6 +22,8 @@ import loyaltyService from '../../services/loyaltyService';
 import { isGoogleMapsConfigured } from '../../utils/maps';
 import * as Location from 'expo-location';
 import OpenStreetMap from '../../components/OpenStreetMap';
+import * as SecureStore from 'expo-secure-store';
+import MapLocationPickerModal from '../../components/MapLocationPickerModal';
 
 let MapView, Marker, Polyline, PROVIDER_GOOGLE;
 let DateTimePicker;
@@ -62,6 +64,20 @@ export default function RideBookingScreen({ navigation }) {
   // Intermediate stops (Stop & Continue)
   const [stops, setStops] = useState([]); // [{ id: string, address: string }]
   const [showTripSummaryModal, setShowTripSummaryModal] = useState(false);
+
+  // Saved Places and Map Location Picker
+  const [savedPlaces, setSavedPlaces] = useState(null);
+  const [pickerVisible, setPickerVisible] = useState(false);
+  const [pickerType, setPickerType] = useState('dropoff');
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const str = Platform.OS === 'web' ? localStorage.getItem('saved_places') : await SecureStore.getItemAsync('saved_places');
+        if (str) setSavedPlaces(JSON.parse(str));
+      } catch (e) {}
+    })();
+  }, []);
 
   // Vehicle choices: Economy, Comfort, Executive VIP (Centred layout)
   const [selectedVehicle, setSelectedVehicle] = useState('Economy');
@@ -215,13 +231,7 @@ export default function RideBookingScreen({ navigation }) {
     return Math.max(8, Math.round((tripDistanceKm / 32) * 60) + stops.length * 5);
   }, [tripDistanceKm, stops.length]);
 
-  const [searchResults, setSearchResults] = useState([
-    { id: '1', title: 'Victoria Island, Lagos, Nigeria', lat: 6.4281, lon: 3.4219 },
-    { id: '2', title: 'Lekki Phase 1, Lagos, Nigeria', lat: 6.4474, lon: 3.4723 },
-    { id: '3', title: 'Maitama, Abuja, Nigeria', lat: 9.0882, lon: 7.4934 },
-    { id: '4', title: 'Gwarinpa Estate, Abuja, Nigeria', lat: 9.1100, lon: 7.3900 },
-    { id: '5', title: 'Ikeja City Mall, Lagos', lat: 6.6190, lon: 3.3580 },
-  ]);
+  const [searchResults, setSearchResults] = useState([]);
   const [searchLoading, setSearchLoading] = useState(false);
   const searchTimeoutRef = React.useRef(null);
 
@@ -267,7 +277,7 @@ export default function RideBookingScreen({ navigation }) {
   // Snap points (height from bottom)
   const SNAP_COLLAPSED = 115; // Clean "Where to?" pill only
   const SNAP_MIDDLE = Math.round(screenHeight * 0.50); // Halfway (50% screen)
-  const SNAP_EXPANDED = Math.round(screenHeight * 0.88); // Full top screen (88%)
+  const SNAP_EXPANDED = Math.round(screenHeight * 0.72); // Fluid slide keeping map visible at top (72%)
 
   // Default to middle (halfway) on app load so Map floats at top and the slide starts below it
   const [sheetState, setSheetState] = useState('middle');
@@ -362,11 +372,69 @@ export default function RideBookingScreen({ navigation }) {
     })
   ).current;
 
-  const vehicleOptions = [
-    { id: 'Economy', name: 'Economy', price: 3900, icon: 'car-outline', desc: 'Standard 4-seater' },
-    { id: 'Comfort', name: 'Comfort', price: 6500, icon: 'car-sport-outline', desc: 'Air-conditioned Sedan' },
-    { id: 'Executive', name: 'VIP Luxury', price: 25000, icon: 'diamond', desc: 'Premium Chauffeur Fleet' },
-  ];
+  const vehicleOptions = useMemo(() => {
+    const dist = Math.max(1.5, tripDistanceKm || 2);
+    const stopCharge = stops.length * 800;
+    const economyRate = Math.max(2000, Math.round(1200 + dist * 280 + stopCharge));
+    const comfortRate = Math.max(3500, Math.round(2000 + dist * 420 + stopCharge));
+    const execRate = Math.max(18000, Math.round(12000 + dist * 1200 + stopCharge));
+
+    return [
+      { id: 'Economy', name: 'Economy', price: economyRate, icon: 'car-outline', desc: 'Standard 4-seater' },
+      { id: 'Comfort', name: 'Comfort', price: comfortRate, icon: 'car-sport-outline', desc: 'Air-conditioned Sedan' },
+      { id: 'Executive', name: 'VIP Luxury', price: execRate, icon: 'diamond', desc: 'Premium Chauffeur Fleet' },
+    ];
+  }, [tripDistanceKm, stops.length]);
+
+  useEffect(() => {
+    const found = vehicleOptions.find((v) => v.id === selectedVehicle);
+    if (found) {
+      setSuggestedPrice(found.price);
+      setOfferPrice(found.price);
+    }
+  }, [vehicleOptions, selectedVehicle]);
+
+  const handleOpenLocationPicker = async (type) => {
+    setPickerType(type);
+    if (type === 'pickup') {
+      try {
+        const { status } = await Location.requestForegroundPermissionsAsync();
+        if (status === 'granted') {
+          const loc = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
+          if (loc?.coords) {
+            const newCoord = { latitude: loc.coords.latitude, longitude: loc.coords.longitude };
+            setPickupCoord(newCoord);
+            if (mapRef.current?.animateToRegion) {
+              mapRef.current.animateToRegion({ ...newCoord, latitudeDelta: 0.02, longitudeDelta: 0.02 }, 800);
+            }
+            const geo = await Location.reverseGeocodeAsync(newCoord);
+            if (geo && geo.length > 0) {
+              const item = geo[0];
+              const parts = [item.street || item.name, item.district || item.subregion, item.city || item.region].filter(Boolean);
+              const formatted = parts.join(', ');
+              if (formatted) {
+                setPickup(formatted);
+                setActiveInput(null);
+                return;
+              }
+            }
+          }
+        }
+      } catch (e) {}
+    }
+    setPickerVisible(true);
+  };
+
+  const handleSavePickedLocation = ({ type, address: chosenAddress, coords: chosenCoords }) => {
+    if (type === 'pickup') {
+      setPickup(chosenAddress);
+      if (chosenCoords) setPickupCoord(chosenCoords);
+    } else {
+      setDropoff(chosenAddress);
+      if (chosenCoords) setDropoffCoord(chosenCoords);
+    }
+    setActiveInput(null);
+  };
 
   const handleSelectVehicle = (v) => {
     setSelectedVehicle(v.id);
@@ -467,15 +535,35 @@ export default function RideBookingScreen({ navigation }) {
 
   const renderSuggestions = () => {
     if (!activeInput) return null;
+
+    const hasSearchResults = searchResults && searchResults.length > 0;
+    const hasSavedPlaces = savedPlaces && (savedPlaces.home || savedPlaces.work || savedPlaces.airport || (savedPlaces.custom && savedPlaces.custom.length > 0));
+
     return (
       <View
         style={{
           backgroundColor: isDark ? '#121927' : '#ffffff',
           borderColor: isDark ? '#1e293b' : '#e2e8f0',
         }}
-        className="border rounded-2xl shadow-xl mt-1 z-50 max-h-56 overflow-hidden"
+        className="border rounded-2xl shadow-xl mt-1 z-50 max-h-64 overflow-hidden"
       >
-        {searchResults.map((item, index) => (
+        {/* Pick from Map Pin Direct Action */}
+        <TouchableOpacity
+          onPress={() => handleOpenLocationPicker(activeInput)}
+          className="flex-row items-center p-3 border-b border-slate-700/20 bg-emerald-500/10"
+        >
+          <View className="w-7 h-7 rounded-full bg-emerald-500/20 items-center justify-center mr-2.5">
+            <Ionicons name="map" size={14} color="#10b981" />
+          </View>
+          <Text className="text-emerald-500 font-bold text-xs flex-1">
+            Pick address directly from interactive map
+          </Text>
+          <Ionicons name="chevron-forward" size={14} color="#10b981" />
+        </TouchableOpacity>
+
+        {/* Live Search Suggestions (when user is typing) */}
+        {hasSearchResults ? (
+          searchResults.map((item, index) => (
           <TouchableOpacity
             key={item.id}
             className={`flex-row items-center p-3.5 ${
@@ -510,7 +598,84 @@ export default function RideBookingScreen({ navigation }) {
               {item.title}
             </Text>
           </TouchableOpacity>
-        ))}
+        ))) : hasSavedPlaces ? (
+          /* Real Saved Places display when focused */
+          <ScrollView showsVerticalScrollIndicator={false}>
+            {savedPlaces.home && savedPlaces.home !== 'Not set' && (
+              <TouchableOpacity
+                onPress={() => {
+                  if (activeInput === 'pickup') setPickup(savedPlaces.home);
+                  if (activeInput === 'dropoff') setDropoff(savedPlaces.home);
+                  setActiveInput(null);
+                }}
+                className="flex-row items-center p-3 border-b border-slate-700/20"
+              >
+                <View className="w-7 h-7 rounded-xl bg-emerald-500/10 items-center justify-center mr-2.5">
+                  <Ionicons name="home" size={14} color="#10b981" />
+                </View>
+                <View className="flex-1">
+                  <Text style={{ color: isDark ? '#ffffff' : '#0f172a' }} className="font-semibold text-xs">Home</Text>
+                  <Text style={{ color: isDark ? '#94a3b8' : '#64748b' }} className="text-[11px]" numberOfLines={1}>{savedPlaces.home}</Text>
+                </View>
+              </TouchableOpacity>
+            )}
+            {savedPlaces.work && savedPlaces.work !== 'Not set' && (
+              <TouchableOpacity
+                onPress={() => {
+                  if (activeInput === 'pickup') setPickup(savedPlaces.work);
+                  if (activeInput === 'dropoff') setDropoff(savedPlaces.work);
+                  setActiveInput(null);
+                }}
+                className="flex-row items-center p-3 border-b border-slate-700/20"
+              >
+                <View className="w-7 h-7 rounded-xl bg-emerald-500/10 items-center justify-center mr-2.5">
+                  <Ionicons name="briefcase" size={14} color="#10b981" />
+                </View>
+                <View className="flex-1">
+                  <Text style={{ color: isDark ? '#ffffff' : '#0f172a' }} className="font-semibold text-xs">Work / Office</Text>
+                  <Text style={{ color: isDark ? '#94a3b8' : '#64748b' }} className="text-[11px]" numberOfLines={1}>{savedPlaces.work}</Text>
+                </View>
+              </TouchableOpacity>
+            )}
+            {savedPlaces.airport && savedPlaces.airport !== 'Not set' && (
+              <TouchableOpacity
+                onPress={() => {
+                  if (activeInput === 'pickup') setPickup(savedPlaces.airport);
+                  if (activeInput === 'dropoff') setDropoff(savedPlaces.airport);
+                  setActiveInput(null);
+                }}
+                className="flex-row items-center p-3 border-b border-slate-700/20"
+              >
+                <View className="w-7 h-7 rounded-xl bg-emerald-500/10 items-center justify-center mr-2.5">
+                  <Ionicons name="airplane" size={14} color="#10b981" />
+                </View>
+                <View className="flex-1">
+                  <Text style={{ color: isDark ? '#ffffff' : '#0f172a' }} className="font-semibold text-xs">Airport</Text>
+                  <Text style={{ color: isDark ? '#94a3b8' : '#64748b' }} className="text-[11px]" numberOfLines={1}>{savedPlaces.airport}</Text>
+                </View>
+              </TouchableOpacity>
+            )}
+            {savedPlaces.custom && savedPlaces.custom.map((cp) => (
+              <TouchableOpacity
+                key={cp.id}
+                onPress={() => {
+                  if (activeInput === 'pickup') setPickup(cp.address);
+                  if (activeInput === 'dropoff') setDropoff(cp.address);
+                  setActiveInput(null);
+                }}
+                className="flex-row items-center p-3 border-b border-slate-700/20"
+              >
+                <View className="w-7 h-7 rounded-xl bg-emerald-500/10 items-center justify-center mr-2.5">
+                  <Ionicons name="location" size={14} color="#10b981" />
+                </View>
+                <View className="flex-1">
+                  <Text style={{ color: isDark ? '#ffffff' : '#0f172a' }} className="font-semibold text-xs">{cp.name}</Text>
+                  <Text style={{ color: isDark ? '#94a3b8' : '#64748b' }} className="text-[11px]" numberOfLines={1}>{cp.address}</Text>
+                </View>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+        ) : null}
       </View>
     );
   };
@@ -675,35 +840,12 @@ export default function RideBookingScreen({ navigation }) {
                 )}
               </View>
               <View className="flex-row items-center space-x-2">
-                {sheetState === 'middle' ? (
-                  <TouchableOpacity
-                    onPress={() => snapSheetTo('expanded')}
-                    className="flex-row items-center py-1.5 px-3 rounded-full bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-500/20"
-                    activeOpacity={0.7}
-                  >
-                    <Ionicons name="chevron-up" size={16} color="#10b981" style={{ marginRight: 4 }} />
-                    <Text className="text-xs font-semibold text-emerald-600 dark:text-emerald-400">
-                      Full Screen
-                    </Text>
-                  </TouchableOpacity>
-                ) : (
-                  <TouchableOpacity
-                    onPress={() => snapSheetTo('middle')}
-                    className="flex-row items-center py-1.5 px-3 rounded-full bg-slate-100 dark:bg-slate-800"
-                    activeOpacity={0.7}
-                  >
-                    <Ionicons name="chevron-down" size={16} color={isDark ? '#cbd5e1' : '#475569'} style={{ marginRight: 4 }} />
-                    <Text style={{ color: isDark ? '#cbd5e1' : '#475569' }} className="text-xs font-medium">
-                      Half Screen
-                    </Text>
-                  </TouchableOpacity>
-                )}
                 <TouchableOpacity
-                  onPress={() => snapSheetTo('collapsed')}
-                  className="p-1.5 rounded-full bg-slate-100 dark:bg-slate-800"
+                  onPress={() => snapSheetTo(sheetState === 'collapsed' ? 'middle' : 'collapsed')}
+                  className="p-2 rounded-full bg-slate-100 dark:bg-slate-800"
                   activeOpacity={0.7}
                 >
-                  <Ionicons name="remove" size={16} color={isDark ? '#cbd5e1' : '#475569'} />
+                  <Ionicons name={sheetState === 'collapsed' ? 'chevron-up' : 'chevron-down'} size={18} color={isDark ? '#cbd5e1' : '#475569'} />
                 </TouchableOpacity>
               </View>
             </View>
@@ -749,7 +891,7 @@ export default function RideBookingScreen({ navigation }) {
                   </TouchableOpacity>
                 ) : (
                   <TouchableOpacity
-                    onPress={() => setPickup('Current GPS Location')}
+                    onPress={() => handleOpenLocationPicker('pickup')}
                     className="p-1"
                   >
                     <Ionicons name="location" size={17} color="#10b981" />
@@ -853,7 +995,7 @@ export default function RideBookingScreen({ navigation }) {
                   </TouchableOpacity>
                 ) : (
                   <TouchableOpacity
-                    onPress={() => setDropoff('Set from Map Pin')}
+                    onPress={() => handleOpenLocationPicker('dropoff')}
                     className="p-1"
                   >
                     <Ionicons name="location" size={17} color="#10b981" />
@@ -1223,18 +1365,33 @@ export default function RideBookingScreen({ navigation }) {
 
             {/* PAYMENT METHOD SELECTION */}
             <View className="mb-6">
-              <Text style={{ color: isDark ? '#ffffff' : '#0f172a' }} className="font-normal text-sm tracking-tight mb-2.5 px-1">
-                Payment Option
-              </Text>
+              <View className="flex-row items-center justify-between mb-2.5 px-1">
+                <Text style={{ color: isDark ? '#ffffff' : '#0f172a' }} className="font-normal text-sm tracking-tight">
+                  Payment Method
+                </Text>
+                <TouchableOpacity
+                  onPress={() => navigation.navigate('PaymentCards')}
+                  className="flex-row items-center"
+                >
+                  <Ionicons name="card-outline" size={14} color="#10b981" style={{ marginRight: 3 }} />
+                  <Text className="text-emerald-500 font-bold text-xs">Add Debit/Credit Card</Text>
+                </TouchableOpacity>
+              </View>
               <View className="flex-row space-x-2.5">
                 {[
                   { id: 'Cash', icon: 'cash-outline', label: 'Cash' },
                   { id: 'Bank transfer', icon: 'swap-horizontal-outline', label: 'Transfer' },
                   { id: 'Wallet', icon: 'wallet-outline', label: 'In-App Wallet' },
+                  { id: 'Card', icon: 'card-outline', label: 'Card' },
                 ].map((item) => (
                   <TouchableOpacity
                     key={item.id}
-                    onPress={() => setPaymentMethod(item.id)}
+                    onPress={() => {
+                      setPaymentMethod(item.id);
+                      if (item.id === 'Card') {
+                        navigation.navigate('PaymentCards');
+                      }
+                    }}
                     style={{
                       backgroundColor: paymentMethod === item.id
                         ? isDark ? 'rgba(16,185,129,0.12)' : '#ecfdf5'
@@ -1246,15 +1403,15 @@ export default function RideBookingScreen({ navigation }) {
                   >
                     <Ionicons
                       name={item.icon}
-                      size={16}
+                      size={15}
                       color={paymentMethod === item.id ? '#10b981' : isDark ? '#94a3b8' : '#64748b'}
-                      style={{ marginRight: 6 }}
+                      style={{ marginRight: 4 }}
                     />
                     <Text
                       style={{
                         color: paymentMethod === item.id ? '#10b981' : isDark ? '#ffffff' : '#0f172a',
                       }}
-                      className="font-bold text-xs"
+                      className="font-bold text-[11px]"
                     >
                       {item.label}
                     </Text>
@@ -1640,6 +1797,14 @@ export default function RideBookingScreen({ navigation }) {
           onChange={onNativeDateChange}
         />
       )}
+      {/* MAP LOCATION PICKER MODAL */}
+      <MapLocationPickerModal
+        visible={pickerVisible}
+        onClose={() => setPickerVisible(false)}
+        placeType={pickerType}
+        initialAddress={pickerType === 'pickup' ? pickup : dropoff}
+        onSave={handleSavePickedLocation}
+      />
     </SafeAreaView>
   );
 }

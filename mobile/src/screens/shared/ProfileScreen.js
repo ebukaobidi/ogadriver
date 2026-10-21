@@ -12,14 +12,14 @@ import {
   TextInput,
   Platform,
   Share,
-  Linking
+  Linking,
+  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { authService, api, walletService } from '../../api/api';
 import * as SecureStore from 'expo-secure-store';
 import * as ImagePicker from 'expo-image-picker';
 import { Ionicons } from '@expo/vector-icons';
-import MapLocationPickerModal from '../../components/MapLocationPickerModal';
 import { useTheme } from '../../context/ThemeContext';
 import { useCountry } from '../../context/CountryContext';
 import loyaltyService from '../../services/loyaltyService';
@@ -36,23 +36,20 @@ const Storage = {
   deleteItemAsync: async (key) => {
     if (Platform.OS === 'web') return localStorage.removeItem(key);
     return await SecureStore.deleteItemAsync(key);
-  }
+  },
 };
 
 export default function ProfileScreen({ navigation, route }) {
   const onLogout = route.params?.onLogout;
   const insets = useSafeAreaInsets();
-  const { isDark, themeMode, updateThemeMode, themeColors } = useTheme();
+  const { isDark, themeMode, updateThemeMode } = useTheme();
 
   const [user, setUser] = useState(null);
   const [refreshing, setRefreshing] = useState(false);
 
   // Financial & Wallet State for Paying Clients
   const [walletBalance, setWalletBalance] = useState(0);
-  const [monthlySpend, setMonthlySpend] = useState(0);
   const [userPoints, setUserPoints] = useState(0);
-  const [addFundsVisible, setAddFundsVisible] = useState(false);
-  const [fundAmount, setFundAmount] = useState('25000');
   const [conciergeModalVisible, setConciergeModalVisible] = useState(false);
 
   // Client Preferences
@@ -60,48 +57,30 @@ export default function ProfileScreen({ navigation, route }) {
   const [tripPref, setTripPref] = useState(false);
   const [corporateAccount, setCorporateAccount] = useState(true);
 
-  // Saved Places State
-  const [homeAddress, setHomeAddress] = useState('Victoria Island, Lagos');
-  const [workAddress, setWorkAddress] = useState('Ikoyi Commercial Hub, Lagos');
-  const [airportAddress, setAirportAddress] = useState('Murtala Muhammed Int’l Airport (MM2)');
-  const [customPlaces, setCustomPlaces] = useState([]);
-  const [addPlaceModalVisible, setAddPlaceModalVisible] = useState(false);
-  const [newPlaceName, setNewPlaceName] = useState('');
-  const [newPlaceAddress, setNewPlaceAddress] = useState('');
-  const [pickerVisible, setPickerVisible] = useState(false);
-  const [editingPlaceType, setEditingPlaceType] = useState('home');
-
-  // Edit Profile Modal State
+  // Edit Profile Screen / Modal State (Screenshot 1)
   const [editProfileVisible, setEditProfileVisible] = useState(false);
   const [editName, setEditName] = useState('');
   const [editPhone, setEditPhone] = useState('');
   const [editEmail, setEditEmail] = useState('');
   const [editAvatar, setEditAvatar] = useState(null);
   const [kycData, setKycData] = useState(null);
-  const [companyName, setCompanyName] = useState('');
+  const [kycStatus, setKycStatus] = useState('unverified');
+
+  // Mini-modals for editing individual fields
+  const [editFieldModalVisible, setEditFieldModalVisible] = useState(false);
+  const [activeEditField, setActiveEditField] = useState('name'); // 'name' | 'phone'
+  const [tempFieldValue, setTempFieldValue] = useState('');
+
+  // Identity Verification Flow State (Screenshots 2-5)
+  const [verifyModalVisible, setVerifyModalVisible] = useState(false);
+  const [verifyStep, setVerifyStep] = useState(1); // 1: Overview, 2: Country, 3: ID Type, 4: Document Photo, 5: Selfie, 6: Success
+  const [selectedCountryName, setSelectedCountryName] = useState('Nigeria');
+  const [selectedIdType, setSelectedIdType] = useState('license'); // 'license', 'nin', 'voters', 'passport', 'permit'
+  const [idDocImage, setIdDocImage] = useState(null);
+  const [selfieImage, setSelfieImage] = useState(null);
+  const [isVerifying, setIsVerifying] = useState(false);
 
   const { country: selectedCountry, formatAmount } = useCountry();
-
-  const handlePickAvatar = async () => {
-    try {
-      const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
-      if (!permission.granted) {
-        Alert.alert('Permission Denied', 'Please enable gallery access to choose an avatar.');
-        return;
-      }
-      const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
-        allowsEditing: true,
-        aspect: [1, 1],
-        quality: 0.85,
-      });
-      if (!result.canceled && result.assets && result.assets.length > 0) {
-        setEditAvatar(result.assets[0].uri);
-      }
-    } catch (err) {
-      Alert.alert('Avatar Error', 'Could not open photo library.');
-    }
-  };
 
   const fetchProfile = async () => {
     try {
@@ -114,25 +93,17 @@ export default function ProfileScreen({ navigation, route }) {
         setEditAvatar(u.avatar || null);
       }
 
-      const savedStr = await Storage.getItemAsync('saved_places');
-      if (savedStr) {
-        const parsed = JSON.parse(savedStr);
-        if (parsed.home) setHomeAddress(parsed.home);
-        if (parsed.work) setWorkAddress(parsed.work);
-        if (parsed.airport) setAirportAddress(parsed.airport);
-        if (parsed.custom && Array.isArray(parsed.custom)) setCustomPlaces(parsed.custom);
-      }
-
-
       const [storedKyc, wRes, pts] = await Promise.all([
         Storage.getItemAsync('client_kyc_data').catch(() => null),
         walletService.getWallet().catch(() => null),
-        loyaltyService.getPoints().catch(() => 0)
+        loyaltyService.getPoints().catch(() => 0),
       ]);
 
       if (storedKyc) {
         try {
-          setKycData(JSON.parse(storedKyc));
+          const parsed = JSON.parse(storedKyc);
+          setKycData(parsed);
+          if (parsed.status) setKycStatus(parsed.status);
         } catch (err) {}
       }
 
@@ -160,175 +131,162 @@ export default function ProfileScreen({ navigation, route }) {
     await fetchProfile();
   };
 
-  const handleOpenEditPlace = (type) => {
-    setEditingPlaceType(type);
-    setPickerVisible(true);
-  };
-
-  const handleSavePlace = async ({ type, address }) => {
-    const updated = {
-      home: type === 'home' ? address : homeAddress,
-      work: type === 'work' ? address : workAddress,
-      airport: type === 'airport' ? address : airportAddress,
-      custom: customPlaces,
-    };
-
-    if (type === 'home') setHomeAddress(address);
-    if (type === 'work') setWorkAddress(address);
-    if (type === 'airport') setAirportAddress(address);
-
+  // Avatar Picker
+  const handlePickAvatar = async () => {
     try {
-      await Storage.setItemAsync('saved_places', JSON.stringify(updated));
-      await api.post('/v1/user/saved-places', updated).catch(() => {});
-      Alert.alert('Saved Place Updated', `${type.toUpperCase()} location has been saved.`);
-    } catch (e) {
-      console.log('Error saving place:', e);
-    }
-  };
-
-  const handleAddCustomPlaceConfirm = async () => {
-    if (!newPlaceName.trim()) {
-      Alert.alert('Place Name Required', 'Please enter a name for this place (e.g., Mom’s House, Gym, Branch Office).');
-      return;
-    }
-    if (!newPlaceAddress.trim()) {
-      Alert.alert('Address Required', 'Please provide the street address or location description.');
-      return;
-    }
-
-    const newPlace = {
-      id: Date.now().toString(),
-      name: newPlaceName.trim(),
-      address: newPlaceAddress.trim(),
-    };
-
-    const updatedCustom = [...customPlaces, newPlace];
-    setCustomPlaces(updatedCustom);
-    setAddPlaceModalVisible(false);
-    setNewPlaceName('');
-    setNewPlaceAddress('');
-
-    const fullSaved = {
-      home: homeAddress,
-      work: workAddress,
-      airport: airportAddress,
-      custom: updatedCustom,
-    };
-
-    try {
-      await Storage.setItemAsync('saved_places', JSON.stringify(fullSaved));
-      await api.post('/v1/user/saved-places', fullSaved).catch(() => {});
-      Alert.alert('Place Added', `"${newPlace.name}" has been saved for 1-tap quick booking.`);
-    } catch (e) {
-      console.log('Error saving custom place:', e);
-    }
-  };
-
-  const handleDeleteCustomPlace = (placeId, placeName) => {
-    Alert.alert(
-      'Remove Place',
-      `Delete "${placeName}" from your saved places?`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Remove',
-          style: 'destructive',
-          onPress: async () => {
-            const updatedCustom = customPlaces.filter((p) => p.id !== placeId);
-            setCustomPlaces(updatedCustom);
-            const fullSaved = {
-              home: homeAddress,
-              work: workAddress,
-              airport: airportAddress,
-              custom: updatedCustom,
-            };
-            await Storage.setItemAsync('saved_places', JSON.stringify(fullSaved));
-          },
-        },
-      ]
-    );
-  };
-
-  const handleDeletePlace = (type) => {
-    Alert.alert(
-      'Remove Location',
-      `Clear saved location for ${type === 'home' ? 'Home' : type === 'work' ? 'Work / Office' : 'Airport'}?`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Remove',
-          style: 'destructive',
-          onPress: async () => {
-            const updated = {
-              home: type === 'home' ? 'Not set' : homeAddress,
-              work: type === 'work' ? 'Not set' : workAddress,
-              airport: type === 'airport' ? 'Not set' : airportAddress,
-              custom: customPlaces,
-            };
-            if (type === 'home') setHomeAddress('Not set');
-            if (type === 'work') setWorkAddress('Not set');
-            if (type === 'airport') setAirportAddress('Not set');
-            await Storage.setItemAsync('saved_places', JSON.stringify(updated));
-          },
-        },
-      ]
-    );
-  };
-
-  const handleSaveProfileChanges = async () => {
-    try {
-      const cleanPhone = editPhone.trim();
-      if (!cleanPhone || cleanPhone.length < 10) {
-        Alert.alert(
-          'Valid Phone Required',
-          'A verified telephone number is mandatory to bind your client identity and prevent multiple account creation.'
-        );
+      const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (!permission.granted) {
+        Alert.alert('Permission Denied', 'Please enable gallery access to choose an avatar.');
         return;
       }
-      if (!editName.trim()) {
-        Alert.alert('Name Required', 'Please enter your full name.');
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.85,
+      });
+      if (!result.canceled && result.assets && result.assets.length > 0) {
+        const newAvatarUri = result.assets[0].uri;
+        setEditAvatar(newAvatarUri);
+        // Persist avatar change immediately
+        const updatedUser = { ...user, avatar: newAvatarUri };
+        setUser(updatedUser);
+        await authService.updateUser(updatedUser).catch(() => {});
+        await Storage.setItemAsync('custom_user_profile', JSON.stringify(updatedUser));
+      }
+    } catch (err) {
+      Alert.alert('Avatar Error', 'Could not open photo library.');
+    }
+  };
+
+  // Edit specific fields (Name / Phone)
+  const openEditField = (field) => {
+    setActiveEditField(field);
+    setTempFieldValue(field === 'name' ? editName : editPhone);
+    setEditFieldModalVisible(true);
+  };
+
+  const handleSaveField = async () => {
+    const val = tempFieldValue.trim();
+    if (!val) {
+      Alert.alert('Required', `Please enter a valid ${activeEditField}.`);
+      return;
+    }
+
+    let updatedUser = { ...user };
+    if (activeEditField === 'name') {
+      setEditName(val);
+      updatedUser.name = val;
+    } else if (activeEditField === 'phone') {
+      if (val.length < 10) {
+        Alert.alert('Invalid Phone', 'Please enter a valid phone number with area code.');
         return;
       }
+      setEditPhone(val);
+      updatedUser.phone = val;
+    }
 
-      const updatedUser = {
-        ...user,
-        name: editName.trim(),
-        phone: cleanPhone,
-        avatar: editAvatar || user?.avatar,
-      };
-
-      setUser(updatedUser);
+    setUser(updatedUser);
+    setEditFieldModalVisible(false);
+    try {
       await authService.updateUser(updatedUser).catch(() => {});
       await Storage.setItemAsync('custom_user_profile', JSON.stringify(updatedUser));
-      setEditProfileVisible(false);
-      Alert.alert('Profile Saved', 'Your profile details and avatar have been successfully updated.');
     } catch (e) {
-      Alert.alert('Error', 'Failed to update profile information.');
+      console.log('Error updating field:', e);
     }
   };
 
-  const handleAddFundsConfirm = () => {
-    const amountNum = parseInt(fundAmount, 10) || 0;
-    if (amountNum < 1000) {
-      Alert.alert('Minimum Deposit', 'Minimum wallet top-up is ₦1,000.');
+  // Verification Actions
+  const handleStartVerification = () => {
+    setVerifyStep(1);
+    setVerifyModalVisible(true);
+  };
+
+  const handleCaptureDocumentPhoto = async () => {
+    try {
+      const cameraPerm = await ImagePicker.requestCameraPermissionsAsync();
+      let result;
+      if (cameraPerm.granted) {
+        result = await ImagePicker.launchCameraAsync({
+          allowsEditing: true,
+          aspect: [4, 3],
+          quality: 0.9,
+        });
+      } else {
+        const libraryPerm = await ImagePicker.requestMediaLibraryPermissionsAsync();
+        if (!libraryPerm.granted) {
+          Alert.alert('Permission Needed', 'Camera or photo library permission is required to capture your document.');
+          return;
+        }
+        result = await ImagePicker.launchImageLibraryAsync({
+          allowsEditing: true,
+          aspect: [4, 3],
+          quality: 0.9,
+        });
+      }
+      if (!result.canceled && result.assets && result.assets.length > 0) {
+        setIdDocImage(result.assets[0].uri);
+      }
+    } catch (e) {
+      Alert.alert('Capture Error', 'Could not capture document image.');
+    }
+  };
+
+  const handleCaptureSelfie = async () => {
+    try {
+      const cameraPerm = await ImagePicker.requestCameraPermissionsAsync();
+      let result;
+      if (cameraPerm.granted) {
+        result = await ImagePicker.launchCameraAsync({
+          allowsEditing: true,
+          aspect: [1, 1],
+          quality: 0.85,
+          cameraType: ImagePicker.CameraType?.front,
+        });
+      } else {
+        result = await ImagePicker.launchImageLibraryAsync({
+          allowsEditing: true,
+          aspect: [1, 1],
+          quality: 0.85,
+        });
+      }
+      if (!result.canceled && result.assets && result.assets.length > 0) {
+        setSelfieImage(result.assets[0].uri);
+      }
+    } catch (e) {
+      Alert.alert('Capture Error', 'Could not capture selfie.');
+    }
+  };
+
+  const handleSubmitVerification = async () => {
+    if (!idDocImage) {
+      Alert.alert('ID Required', 'Please capture a clear photo of your government ID document.');
       return;
     }
-    setWalletBalance((prev) => prev + amountNum);
-    setAddFundsVisible(false);
-    Alert.alert(
-      'Wallet Credited',
-      `₦${amountNum.toLocaleString()} added to your OgaDriver client wallet.`
-    );
-  };
-
-  const handleShareReferral = async () => {
-    try {
-      await Share.share({
-        message: `Use my OgaDriver Client Invite Code OGA-CLIENT-77 to get ₦2,000 bonus on your first verified ride or driver hire! Download at https://ogadriver.ng`,
-      });
-    } catch (error) {
-      console.log(error);
+    if (!selfieImage) {
+      Alert.alert('Selfie Required', 'Please take a live selfie so we can verify your identity.');
+      return;
     }
+
+    setIsVerifying(true);
+    setTimeout(async () => {
+      const kycPayload = {
+        status: 'verified',
+        idType: selectedIdType,
+        country: selectedCountryName,
+        verifiedAt: new Date().toISOString(),
+        idDocImage,
+        selfieImage,
+      };
+
+      setKycStatus('verified');
+      setKycData(kycPayload);
+      await Storage.setItemAsync('client_kyc_data', JSON.stringify(kycPayload));
+      await api.post('/v1/user/verify-identity', kycPayload).catch(() => {});
+
+      setIsVerifying(false);
+      setVerifyStep(6); // Success screen
+    }, 1500);
   };
 
   const handleLogout = async () => {
@@ -405,7 +363,7 @@ export default function ProfileScreen({ navigation, route }) {
         showsVerticalScrollIndicator={false}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#10b981" />}
       >
-        {/* 1. CLIENT IDENTITY CARD */}
+        {/* 1. CLIENT IDENTITY CARD (Stats Pill Bar completely removed as requested) */}
         <View
           style={{
             backgroundColor: isDark ? '#121927' : '#ffffff',
@@ -413,18 +371,18 @@ export default function ProfileScreen({ navigation, route }) {
           }}
           className="border rounded-3xl p-5 mb-5 shadow-sm"
         >
-          <View className="flex-row items-center justify-between mb-4">
+          <View className="flex-row items-center justify-between">
             <View className="flex-row items-center space-x-3.5 flex-1">
               <TouchableOpacity
                 onPress={() => setEditProfileVisible(true)}
                 activeOpacity={0.8}
                 className="w-16 h-16 rounded-2xl bg-emerald-500/10 border-2 border-emerald-500 items-center justify-center overflow-hidden relative"
               >
-                {user?.avatar ? (
-                  <Image source={{ uri: user.avatar }} className="w-full h-full" />
+                {editAvatar || user?.avatar ? (
+                  <Image source={{ uri: editAvatar || user.avatar }} className="w-full h-full" />
                 ) : (
                   <Text className="text-emerald-500 font-black text-2xl">
-                    {(user?.name || 'Oga')[0].toUpperCase()}
+                    {(user?.name || editName || 'O')[0].toUpperCase()}
                   </Text>
                 )}
                 <View className="absolute bottom-0 right-0 bg-emerald-500 rounded-tl-lg p-0.5">
@@ -432,29 +390,19 @@ export default function ProfileScreen({ navigation, route }) {
                 </View>
               </TouchableOpacity>
 
-              <View className="flex-1">
-                <View className="flex-row items-center space-x-1.5">
-                  <Text style={{ color: isDark ? '#ffffff' : '#0f172a' }} className="font-normal text-lg tracking-tight" numberOfLines={1}>
-                    {user?.name || 'Oga Babatunde'}
-                  </Text>
-                </View>
+              <View className="flex-1 ml-3">
+                <Text style={{ color: isDark ? '#ffffff' : '#0f172a' }} className="font-semibold text-lg tracking-tight" numberOfLines={1}>
+                  {user?.name || editName || 'Oga Babatunde'}
+                </Text>
+                <Text style={{ color: isDark ? '#94a3b8' : '#64748b' }} className="text-xs mt-0.5">
+                  {user?.phone || editPhone || '+234 803 123 4567'}
+                </Text>
                 <View className="flex-row items-center mt-1">
-                  <TouchableOpacity
-                    onPress={() => navigation.navigate('KycVerification')}
-                    className="bg-emerald-500/15 border border-emerald-500/30 px-2 py-0.5 rounded-full flex-row items-center mr-2"
-                  >
-                    <Ionicons name="checkmark-circle" size={10} color="#10b981" style={{ marginRight: 2 }} />
-                    <Text className="text-emerald-500 font-black text-[9px] uppercase tracking-wider">
-                      {kycData?.status === 'verified' ? 'Tier 2 KYC' : 'Verify KYC'}
-                    </Text>
-                  </TouchableOpacity>
+                  <View className="w-2 h-2 rounded-full bg-emerald-500 mr-1.5" />
                   <Text style={{ color: isDark ? '#94a3b8' : '#64748b' }} className="text-[11px] font-medium">
                     Corporate Account
                   </Text>
                 </View>
-                <Text style={{ color: isDark ? '#94a3b8' : '#64748b' }} className="text-xs mt-1">
-                  {user?.phone || '+234 803 123 4567'}
-                </Text>
               </View>
             </View>
 
@@ -469,43 +417,9 @@ export default function ProfileScreen({ navigation, route }) {
               <Ionicons name="pencil" size={16} color="#10b981" />
             </TouchableOpacity>
           </View>
-
-          {/* Quick Stats Pill Bar */}
-          <View
-            style={{
-              backgroundColor: isDark ? '#090d16' : '#f8fafc',
-              borderColor: isDark ? '#1e293b' : '#e2e8f0',
-            }}
-            className="flex-row justify-between items-center p-3 rounded-2xl border"
-          >
-            <View className="items-center flex-1 border-r border-slate-700/20">
-              <Text className="text-emerald-500 font-black text-base">4.9 ★</Text>
-              <Text style={{ color: isDark ? '#94a3b8' : '#64748b' }} className="text-[10px] font-bold uppercase mt-0.5">
-                Client Rating
-              </Text>
-            </View>
-
-            <View className="items-center flex-1 border-r border-slate-700/20">
-              <Text style={{ color: isDark ? '#ffffff' : '#0f172a' }} className="font-black text-base">
-                28
-              </Text>
-              <Text style={{ color: isDark ? '#94a3b8' : '#64748b' }} className="text-[10px] font-bold uppercase mt-0.5">
-                Total Trips
-              </Text>
-            </View>
-
-            <View className="items-center flex-1">
-              <Text style={{ color: isDark ? '#ffffff' : '#0f172a' }} className="font-black text-base">
-                3
-              </Text>
-              <Text style={{ color: isDark ? '#94a3b8' : '#64748b' }} className="text-[10px] font-bold uppercase mt-0.5">
-                Drivers Hired
-              </Text>
-            </View>
-          </View>
         </View>
 
-        {/* 2. THE MONEY HUB: CLIENT WALLET & BILLING (Menu Item Leading to Dedicated Wallet Screen) */}
+        {/* 2. WALLET (Dedicated Menu Item Leading to Wallet Screen) */}
         <View className="mb-4">
           <TouchableOpacity
             activeOpacity={0.85}
@@ -544,7 +458,38 @@ export default function ProfileScreen({ navigation, route }) {
           </TouchableOpacity>
         </View>
 
-        {/* 3. DEDICATED "MY BOOKINGS" SECTION (Moved from bottom Nav to Account as NEW) */}
+        {/* 3. SAVED PLACES MENU ITEM (Clean dedicated screen transition) */}
+        <View className="mb-4">
+          <TouchableOpacity
+            activeOpacity={0.85}
+            onPress={() => navigation.navigate('SavedPlaces')}
+            style={{
+              backgroundColor: isDark ? '#121927' : '#ffffff',
+              borderColor: isDark ? '#1e293b' : '#e2e8f0',
+            }}
+            className="border rounded-2xl p-4 flex-row items-center justify-between shadow-sm"
+          >
+            <View className="flex-row items-center flex-1 mr-3">
+              <View
+                style={{ backgroundColor: isDark ? 'rgba(16, 185, 129, 0.15)' : '#ecfdf5' }}
+                className="w-11 h-11 rounded-2xl items-center justify-center mr-3 border border-emerald-500/20"
+              >
+                <Ionicons name="bookmark" size={22} color="#10b981" />
+              </View>
+              <View className="flex-1">
+                <Text style={{ color: isDark ? '#ffffff' : '#0f172a' }} className="font-bold text-base">
+                  Saved Places
+                </Text>
+                <Text style={{ color: isDark ? '#94a3b8' : '#64748b' }} className="text-xs font-medium mt-0.5">
+                  Home, Work, Airport & Custom Spots
+                </Text>
+              </View>
+            </View>
+            <Ionicons name="chevron-forward" size={18} color={isDark ? '#94a3b8' : '#64748b'} />
+          </TouchableOpacity>
+        </View>
+
+        {/* 4. MY BOOKINGS SECTION */}
         <View className="mb-4">
           <TouchableOpacity
             activeOpacity={0.85}
@@ -556,25 +501,56 @@ export default function ProfileScreen({ navigation, route }) {
             className="border rounded-2xl p-4 flex-row items-center justify-between shadow-sm"
           >
             <View className="flex-row items-center flex-1 mr-3">
-              <View className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 items-center justify-center mr-3">
-                <Ionicons name="calendar" size={20} color="#10b981" />
+              <View className="w-11 h-11 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 items-center justify-center mr-3">
+                <Ionicons name="calendar" size={22} color="#10b981" />
               </View>
               <View className="flex-1">
                 <View className="flex-row items-center">
-                  <Text style={{ color: isDark ? '#ffffff' : '#0f172a' }} className="font-normal text-sm mr-2">
+                  <Text style={{ color: isDark ? '#ffffff' : '#0f172a' }} className="font-bold text-base mr-2">
                     My Bookings
                   </Text>
                   <View className="px-2 py-0.5 rounded-full bg-emerald-500/15 border border-emerald-500/30">
-                    <Text className="text-[9px] font-normal uppercase text-emerald-500">NEW</Text>
+                    <Text className="text-[9px] font-bold uppercase text-emerald-500">Active</Text>
                   </View>
                 </View>
+                <Text style={{ color: isDark ? '#94a3b8' : '#64748b' }} className="text-xs font-medium mt-0.5">
+                  Past trips, chauffeurs & invoices
+                </Text>
               </View>
             </View>
             <Ionicons name="chevron-forward" size={18} color={isDark ? '#94a3b8' : '#64748b'} />
           </TouchableOpacity>
         </View>
 
-        {/* Secondary Account Shortcuts (Browse Drivers, Referrals, Loyalty) */}
+        {/* 5. PAYMENT METHODS MENU ROW */}
+        <View className="mb-4">
+          <TouchableOpacity
+            activeOpacity={0.85}
+            onPress={() => navigation.navigate('PaymentCards')}
+            style={{
+              backgroundColor: isDark ? '#121927' : '#ffffff',
+              borderColor: isDark ? '#1e293b' : '#e2e8f0',
+            }}
+            className="border rounded-2xl p-4 flex-row items-center justify-between shadow-sm"
+          >
+            <View className="flex-row items-center flex-1 mr-3">
+              <View className="w-11 h-11 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 items-center justify-center mr-3">
+                <Ionicons name="card" size={22} color="#10b981" />
+              </View>
+              <View className="flex-1">
+                <Text style={{ color: isDark ? '#ffffff' : '#0f172a' }} className="font-bold text-base">
+                  Payment Methods
+                </Text>
+                <Text style={{ color: isDark ? '#94a3b8' : '#64748b' }} className="text-xs font-medium mt-0.5">
+                  Add Debit/Credit Card & default billing
+                </Text>
+              </View>
+            </View>
+            <Ionicons name="chevron-forward" size={18} color={isDark ? '#94a3b8' : '#64748b'} />
+          </TouchableOpacity>
+        </View>
+
+        {/* Secondary Account Shortcuts (Browse Drivers, Gift Funds, Loyalty) */}
         <View className="flex-row space-x-2.5 mb-5">
           <TouchableOpacity
             className="flex-1"
@@ -593,7 +569,7 @@ export default function ProfileScreen({ navigation, route }) {
               >
                 <Ionicons name="people" size={19} color="#10b981" />
               </View>
-              <Text style={{ color: isDark ? '#ffffff' : '#0f172a' }} className="font-normal text-xs">
+              <Text style={{ color: isDark ? '#ffffff' : '#0f172a' }} className="font-semibold text-xs">
                 Drivers
               </Text>
             </View>
@@ -616,7 +592,7 @@ export default function ProfileScreen({ navigation, route }) {
               >
                 <Ionicons name="gift" size={19} color="#10b981" />
               </View>
-              <Text style={{ color: isDark ? '#ffffff' : '#0f172a' }} className="font-normal text-xs">
+              <Text style={{ color: isDark ? '#ffffff' : '#0f172a' }} className="font-semibold text-xs">
                 Gift Funds
               </Text>
             </View>
@@ -639,143 +615,14 @@ export default function ProfileScreen({ navigation, route }) {
               >
                 <Ionicons name="star" size={19} color="#10b981" />
               </View>
-              <Text style={{ color: isDark ? '#ffffff' : '#0f172a' }} className="font-normal text-xs">
+              <Text style={{ color: isDark ? '#ffffff' : '#0f172a' }} className="font-semibold text-xs">
                 OgaPoints
               </Text>
             </View>
           </TouchableOpacity>
         </View>
 
-        {/* 4. SAVED PLACES (WITH MAP LOCATION PICKER MODAL & ADD NEW BTN) */}
-        <View className="mb-5">
-          <View className="flex-row items-center justify-between mb-2.5 px-1">
-            <Text style={{ color: isDark ? '#ffffff' : '#0f172a' }} className="font-normal text-sm tracking-tight">
-              Saved Places
-            </Text>
-            <TouchableOpacity
-              onPress={() => setAddPlaceModalVisible(true)}
-              className="flex-row items-center bg-emerald-500/15 border border-emerald-500/30 px-2.5 py-1 rounded-xl"
-            >
-              <Ionicons name="add-circle" size={14} color="#10b981" style={{ marginRight: 4 }} />
-              <Text className="text-emerald-500 font-normal text-xs">Add New Place</Text>
-            </TouchableOpacity>
-          </View>
-
-          <View
-            style={{
-              backgroundColor: isDark ? '#121927' : '#ffffff',
-              borderColor: isDark ? '#1e293b' : '#e2e8f0',
-            }}
-            className="border rounded-3xl p-4 shadow-sm"
-          >
-            {/* Home Address */}
-            <View className="flex-row items-center justify-between border-b border-slate-700/20 pb-3 mb-3">
-              <View className="flex-row items-center flex-1 mr-2">
-                <View className="w-9 h-9 rounded-xl bg-emerald-500/10 items-center justify-center mr-3 border border-emerald-500/20">
-                  <Ionicons name="home-outline" size={18} color="#10b981" />
-                </View>
-                <View className="flex-1">
-                  <Text style={{ color: isDark ? '#ffffff' : '#0f172a' }} className="font-normal text-xs">
-                    My Home
-                  </Text>
-                  <Text style={{ color: isDark ? '#94a3b8' : '#64748b' }} className="text-[11px]" numberOfLines={1}>
-                    {homeAddress}
-                  </Text>
-                </View>
-              </View>
-              <View className="flex-row items-center">
-                <TouchableOpacity onPress={() => handleOpenEditPlace('home')} className="p-2 mr-1 bg-emerald-500/10 rounded-lg">
-                  <Ionicons name="create-outline" size={15} color="#10b981" />
-                </TouchableOpacity>
-                <TouchableOpacity onPress={() => handleDeletePlace('home')} className="p-2 bg-red-500/10 rounded-lg">
-                  <Ionicons name="trash-outline" size={15} color="#ef4444" />
-                </TouchableOpacity>
-              </View>
-            </View>
-
-            {/* Work / Office Address */}
-            <View className="flex-row items-center justify-between border-b border-slate-700/20 pb-3 mb-3">
-              <View className="flex-row items-center flex-1 mr-2">
-                <View className="w-9 h-9 rounded-xl bg-emerald-500/10 items-center justify-center mr-3 border border-emerald-500/20">
-                  <Ionicons name="briefcase-outline" size={18} color="#10b981" />
-                </View>
-                <View className="flex-1">
-                  <Text style={{ color: isDark ? '#ffffff' : '#0f172a' }} className="font-normal text-xs">
-                    Work / Office
-                  </Text>
-                  <Text style={{ color: isDark ? '#94a3b8' : '#64748b' }} className="text-[11px]" numberOfLines={1}>
-                    {workAddress}
-                  </Text>
-                </View>
-              </View>
-              <View className="flex-row items-center">
-                <TouchableOpacity onPress={() => handleOpenEditPlace('work')} className="p-2 mr-1 bg-emerald-500/10 rounded-lg">
-                  <Ionicons name="create-outline" size={15} color="#10b981" />
-                </TouchableOpacity>
-                <TouchableOpacity onPress={() => handleDeletePlace('work')} className="p-2 bg-red-500/10 rounded-lg">
-                  <Ionicons name="trash-outline" size={15} color="#ef4444" />
-                </TouchableOpacity>
-              </View>
-            </View>
-
-            {/* Airport Terminal */}
-            <View className={`flex-row items-center justify-between ${customPlaces.length > 0 ? 'border-b border-slate-700/20 pb-3 mb-3' : ''}`}>
-              <View className="flex-row items-center flex-1 mr-2">
-                <View className="w-9 h-9 rounded-xl bg-emerald-500/10 items-center justify-center mr-3 border border-emerald-500/20">
-                  <Ionicons name="airplane-outline" size={18} color="#10b981" />
-                </View>
-                <View className="flex-1">
-                  <Text style={{ color: isDark ? '#ffffff' : '#0f172a' }} className="font-normal text-xs">
-                    Airport Terminal
-                  </Text>
-                  <Text style={{ color: isDark ? '#94a3b8' : '#64748b' }} className="text-[11px]" numberOfLines={1}>
-                    {airportAddress}
-                  </Text>
-                </View>
-              </View>
-              <View className="flex-row items-center">
-                <TouchableOpacity onPress={() => handleOpenEditPlace('airport')} className="p-2 mr-1 bg-emerald-500/10 rounded-lg">
-                  <Ionicons name="create-outline" size={15} color="#10b981" />
-                </TouchableOpacity>
-                <TouchableOpacity onPress={() => handleDeletePlace('airport')} className="p-2 bg-red-500/10 rounded-lg">
-                  <Ionicons name="trash-outline" size={15} color="#ef4444" />
-                </TouchableOpacity>
-              </View>
-            </View>
-
-            {/* Dynamic Custom Added Places */}
-            {customPlaces.map((cp, idx) => (
-              <View
-                key={cp.id}
-                className={`flex-row items-center justify-between ${idx !== customPlaces.length - 1 ? 'border-b border-slate-700/20 pb-3 mb-3' : 'pt-1'}`}
-              >
-                <View className="flex-row items-center flex-1 mr-2">
-                  <View className="w-9 h-9 rounded-xl bg-emerald-500/10 items-center justify-center mr-3 border border-emerald-500/20">
-                    <Ionicons name="location-outline" size={18} color="#10b981" />
-                  </View>
-                  <View className="flex-1">
-                    <Text style={{ color: isDark ? '#ffffff' : '#0f172a' }} className="font-normal text-xs">
-                      {cp.name}
-                    </Text>
-                    <Text style={{ color: isDark ? '#94a3b8' : '#64748b' }} className="text-[11px]" numberOfLines={1}>
-                      {cp.address}
-                    </Text>
-                  </View>
-                </View>
-                <View className="flex-row items-center">
-                  <TouchableOpacity
-                    onPress={() => handleDeleteCustomPlace(cp.id, cp.name)}
-                    className="p-2 bg-red-500/10 rounded-lg"
-                  >
-                    <Ionicons name="trash-outline" size={15} color="#ef4444" />
-                  </TouchableOpacity>
-                </View>
-              </View>
-            ))}
-          </View>
-        </View>
-
-        {/* 5. CLIENT & RIDE PREFERENCES (FLEXIBLE OPTIONS) */}
+        {/* 6. CLIENT PREFERENCES */}
         <View className="mb-5">
           <Text style={{ color: isDark ? '#ffffff' : '#0f172a' }} className="font-normal text-sm tracking-tight mb-2.5 px-1">
             Trip & Chauffeur Preferences
@@ -829,7 +676,7 @@ export default function ProfileScreen({ navigation, route }) {
           </View>
         </View>
 
-        {/* 6. RAPID SOS EMERGENCY CARD */}
+        {/* 7. RAPID SOS EMERGENCY CARD */}
         <TouchableOpacity
           style={{
             backgroundColor: isDark ? 'rgba(239, 68, 68, 0.08)' : '#fef2f2',
@@ -855,10 +702,10 @@ export default function ProfileScreen({ navigation, route }) {
           <Ionicons name="chevron-forward" size={18} color="#ef4444" />
         </TouchableOpacity>
 
-        {/* 7. SETTINGS, SECURITY & CLIENT GOVERNANCE */}
+        {/* 8. SETTINGS & CLIENT SUPPORT (KYC moved inside Profile Edit screen) */}
         <View className="mb-6">
           <Text style={{ color: isDark ? '#ffffff' : '#0f172a' }} className="font-normal text-sm tracking-tight mb-2.5 px-1">
-            Security & Client Support
+            Security & Support
           </Text>
 
           <View
@@ -868,24 +715,6 @@ export default function ProfileScreen({ navigation, route }) {
             }}
             className="border rounded-3xl overflow-hidden shadow-sm"
           >
-            {/* KYC & Identity Verification Menu Item */}
-            <TouchableOpacity
-              className="flex-row items-center justify-between p-4 border-b border-slate-700/20"
-              onPress={() => navigation.navigate('KycVerification')}
-            >
-              <View className="flex-row items-center flex-1 mr-2">
-                <Text style={{ color: isDark ? '#ffffff' : '#0f172a' }} className="font-semibold text-xs">
-                  KYC & Identity Verification
-                </Text>
-                <View className="ml-2 bg-emerald-500/15 border border-emerald-500/30 px-1.5 py-0.5 rounded">
-                  <Text className="text-emerald-500 font-black text-[8px] uppercase">
-                    {kycData?.status === 'verified' ? 'Tier 2 Certified' : 'Action Needed'}
-                  </Text>
-                </View>
-              </View>
-              <Ionicons name="chevron-forward" size={16} color="#64748b" />
-            </TouchableOpacity>
-
             <TouchableOpacity
               className="flex-row items-center justify-between p-4 border-b border-slate-700/20"
               onPress={() => navigation.navigate('AppSettings')}
@@ -918,7 +747,7 @@ export default function ProfileScreen({ navigation, route }) {
           </View>
         </View>
 
-        {/* 8. SIGN OUT BUTTON (Modest Centered) */}
+        {/* 9. SIGN OUT BUTTON */}
         <View className="items-center mb-3">
           <TouchableOpacity
             style={{
@@ -936,7 +765,7 @@ export default function ProfileScreen({ navigation, route }) {
           </TouchableOpacity>
         </View>
 
-        {/* 9. DELETE ACCOUNT (Apple App Store & Google Play Requirement) */}
+        {/* 10. DELETE ACCOUNT */}
         <View className="items-center mb-8">
           <TouchableOpacity
             className="py-2 px-4 rounded-xl flex-row items-center justify-center active:opacity-80"
@@ -950,268 +779,609 @@ export default function ProfileScreen({ navigation, route }) {
         </View>
       </ScrollView>
 
-      {/* MODAL 1: ADD FUNDS / WALLET TOP-UP */}
-      <Modal visible={addFundsVisible} transparent animationType="slide" onRequestClose={() => setAddFundsVisible(false)}>
-        <View
-          style={{
-            paddingBottom: Platform.OS === 'android' ? Math.max(insets.bottom, 48) + 16 : Math.max(insets.bottom, 16) + 8,
-          }}
-          className="flex-1 bg-black/60 justify-end px-3"
-        >
+      {/* =========================================================================
+          MODAL 1: PROFILE EDIT SCREEN (MATCHING SCREENSHOT 1)
+          - Centered Avatar with Camera/Pencil badge
+          - "Drivers can only see your photo during pickup"
+          - Inset divider lines ("two line style that does not reach both ends")
+          - Name, Phone, Email (Verified), Identity (Not verified / [Verify])
+         ========================================================================= */}
+      <Modal visible={editProfileVisible} animationType="slide" onRequestClose={() => setEditProfileVisible(false)}>
+        <SafeAreaView style={{ flex: 1, backgroundColor: isDark ? '#090d16' : '#ffffff' }}>
+          {/* Header Bar */}
           <View
             style={{
-              backgroundColor: isDark ? '#090d16' : '#ffffff',
-              borderColor: isDark ? '#1e293b' : '#e2e8f0',
-              maxHeight: '85%',
+              borderBottomColor: isDark ? '#1e293b' : '#e2e8f0',
             }}
-            className="rounded-3xl p-6 border shadow-2xl"
+            className="flex-row items-center px-4 py-3 border-b"
           >
-            <View className="flex-row items-center justify-between mb-4">
-              <Text style={{ color: isDark ? '#ffffff' : '#0f172a' }} className="text-lg font-normal tracking-tight">
-                Top Up Client Wallet
-              </Text>
-              <TouchableOpacity onPress={() => setAddFundsVisible(false)}>
-                <Ionicons name="close-circle" size={26} color="#64748b" />
+            <TouchableOpacity
+              onPress={() => setEditProfileVisible(false)}
+              className="p-1 mr-3"
+            >
+              <Ionicons name="arrow-back" size={24} color={isDark ? '#ffffff' : '#0f172a'} />
+            </TouchableOpacity>
+            <Text style={{ color: isDark ? '#ffffff' : '#0f172a' }} className="font-bold text-xl">
+              Profile
+            </Text>
+          </View>
+
+          <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
+            {/* Avatar Section */}
+            <View className="items-center pt-8 pb-6">
+              <TouchableOpacity
+                onPress={handlePickAvatar}
+                activeOpacity={0.85}
+                className="relative"
+              >
+                <View
+                  style={{
+                    backgroundColor: isDark ? '#1e293b' : '#e2e8f0',
+                  }}
+                  className="w-28 h-28 rounded-full items-center justify-center overflow-hidden"
+                >
+                  {editAvatar || user?.avatar ? (
+                    <Image source={{ uri: editAvatar || user.avatar }} className="w-full h-full" />
+                  ) : (
+                    <Ionicons name="camera" size={38} color={isDark ? '#94a3b8' : '#64748b'} />
+                  )}
+                </View>
+
+                {/* Green circular badge with pencil */}
+                <View className="absolute top-0 right-0 w-8 h-8 rounded-full bg-emerald-500 border-2 border-white dark:border-slate-900 items-center justify-center shadow-md">
+                  <Ionicons name="pencil" size={14} color="#ffffff" />
+                </View>
               </TouchableOpacity>
+
+              <Text style={{ color: isDark ? '#94a3b8' : '#64748b' }} className="text-xs mt-3">
+                Drivers can only see your photo during pickup
+              </Text>
             </View>
 
-            <ScrollView showsVerticalScrollIndicator={false} bounces={false} contentContainerStyle={{ paddingBottom: 8 }}>
-              <Text style={{ color: isDark ? '#94a3b8' : '#64748b' }} className="text-xs mb-3">
-                Funds are instantly available for Ride hailing, Driver hires, and corporate packages.
-              </Text>
+            {/* Profile Fields with Inset Divider Lines ("two line style that does not reach both ends") */}
+            <View className="mt-4">
+              {/* Row 1: Name */}
+              <TouchableOpacity
+                onPress={() => openEditField('name')}
+                activeOpacity={0.7}
+                className="px-5 py-4 flex-row items-center justify-between"
+              >
+                <View className="flex-1 mr-3">
+                  <Text style={{ color: isDark ? '#94a3b8' : '#64748b' }} className="text-xs mb-1">
+                    Name
+                  </Text>
+                  <Text style={{ color: isDark ? '#ffffff' : '#0f172a' }} className="text-base font-semibold">
+                    {editName || user?.name || 'Set your name'}
+                  </Text>
+                </View>
+                <Ionicons name="chevron-forward" size={18} color={isDark ? '#94a3b8' : '#cbd5e1'} />
+              </TouchableOpacity>
 
-              {/* Quick Amount Chips */}
-              <View className="flex-row space-x-2 mb-4">
-                {[10000, 25000, 50000, 100000].map((amt) => (
+              {/* Inset Divider Line */}
+              <View className="mx-5 h-[1px] bg-slate-200 dark:bg-slate-800" />
+
+              {/* Row 2: Phone number */}
+              <TouchableOpacity
+                onPress={() => openEditField('phone')}
+                activeOpacity={0.7}
+                className="px-5 py-4 flex-row items-center justify-between"
+              >
+                <View className="flex-1 mr-3">
+                  <Text style={{ color: isDark ? '#94a3b8' : '#64748b' }} className="text-xs mb-1">
+                    Phone number
+                  </Text>
+                  <Text style={{ color: isDark ? '#ffffff' : '#0f172a' }} className="text-base font-semibold">
+                    {editPhone || user?.phone || '+234 805 404 4980'}
+                  </Text>
+                </View>
+                <Ionicons name="chevron-forward" size={18} color={isDark ? '#94a3b8' : '#cbd5e1'} />
+              </TouchableOpacity>
+
+              {/* Inset Divider Line */}
+              <View className="mx-5 h-[1px] bg-slate-200 dark:bg-slate-800" />
+
+              {/* Row 3: Email */}
+              <View className="px-5 py-4 flex-row items-center justify-between">
+                <View className="flex-1 mr-3">
+                  <Text style={{ color: isDark ? '#94a3b8' : '#64748b' }} className="text-xs mb-1">
+                    Email
+                  </Text>
+                  <Text style={{ color: isDark ? '#ffffff' : '#0f172a' }} className="text-base font-semibold">
+                    {editEmail || user?.email || 'cejmart@gmail.com'}
+                  </Text>
+                  <Text className="text-emerald-500 font-semibold text-xs mt-0.5">
+                    Verified
+                  </Text>
+                </View>
+                <Ionicons name="chevron-forward" size={18} color={isDark ? '#94a3b8' : '#cbd5e1'} />
+              </View>
+
+              {/* Inset Divider Line */}
+              <View className="mx-5 h-[1px] bg-slate-200 dark:bg-slate-800" />
+
+              {/* Row 4: Identity (Verification) */}
+              <View className="px-5 py-4 flex-row items-center justify-between">
+                <View className="flex-1 mr-3">
+                  <Text style={{ color: isDark ? '#94a3b8' : '#64748b' }} className="text-xs mb-1">
+                    Identity
+                  </Text>
+                  <Text style={{ color: isDark ? '#ffffff' : '#0f172a' }} className="text-base font-semibold">
+                    {kycStatus === 'verified' ? 'Verified' : 'Not verified'}
+                  </Text>
+                </View>
+
+                {kycStatus === 'verified' ? (
+                  <View className="flex-row items-center bg-emerald-500/15 border border-emerald-500/30 px-3 py-1.5 rounded-full">
+                    <Ionicons name="checkmark-circle" size={16} color="#10b981" style={{ marginRight: 4 }} />
+                    <Text className="text-emerald-500 font-bold text-xs">Verified</Text>
+                  </View>
+                ) : (
                   <TouchableOpacity
-                    key={amt}
-                    onPress={() => setFundAmount(amt.toString())}
-                    style={{
-                      backgroundColor: fundAmount === amt.toString() ? '#10b981' : isDark ? '#121927' : '#f1f5f9',
-                      borderColor: fundAmount === amt.toString() ? '#10b981' : isDark ? '#1e293b' : '#e2e8f0',
-                    }}
-                    className="flex-1 py-2.5 rounded-xl border items-center justify-center"
+                    onPress={handleStartVerification}
+                    className="bg-emerald-600 active:bg-emerald-700 px-5 py-2 rounded-full shadow-sm"
                   >
-                    <Text
-                      style={{ color: fundAmount === amt.toString() ? '#ffffff' : isDark ? '#ffffff' : '#0f172a' }}
-                      className="font-black text-xs"
-                    >
-                      ₦{(amt / 1000).toFixed(0)}k
-                    </Text>
+                    <Text className="text-white font-bold text-sm">Verify</Text>
                   </TouchableOpacity>
+                )}
+              </View>
+            </View>
+          </ScrollView>
+        </SafeAreaView>
+      </Modal>
+
+      {/* =========================================================================
+          MODAL 2: FIELD EDIT DIALOG (FOR NAME & PHONE)
+         ========================================================================= */}
+      <Modal visible={editFieldModalVisible} transparent animationType="fade" onRequestClose={() => setEditFieldModalVisible(false)}>
+        <View className="flex-1 bg-black/60 items-center justify-center px-4">
+          <View
+            style={{
+              backgroundColor: isDark ? '#121927' : '#ffffff',
+              borderColor: isDark ? '#1e293b' : '#e2e8f0',
+            }}
+            className="w-full max-w-sm rounded-3xl p-6 border shadow-2xl"
+          >
+            <Text style={{ color: isDark ? '#ffffff' : '#0f172a' }} className="font-bold text-lg mb-1">
+              {activeEditField === 'name' ? 'Edit Name' : 'Edit Phone Number'}
+            </Text>
+            <Text style={{ color: isDark ? '#94a3b8' : '#64748b' }} className="text-xs mb-4">
+              {activeEditField === 'name' ? 'Enter your legal first and last name.' : 'Enter your verified telephone line.'}
+            </Text>
+
+            <TextInput
+              value={tempFieldValue}
+              onChangeText={setTempFieldValue}
+              keyboardType={activeEditField === 'phone' ? 'phone-pad' : 'default'}
+              placeholder={activeEditField === 'name' ? 'e.g. Cyprian Obidi' : 'e.g. +2348054044980'}
+              placeholderTextColor={isDark ? '#64748b' : '#94a3b8'}
+              style={{
+                backgroundColor: isDark ? '#090d16' : '#f8fafc',
+                borderColor: isDark ? '#1e293b' : '#cbd5e1',
+                color: isDark ? '#ffffff' : '#0f172a',
+              }}
+              className="border rounded-2xl px-4 py-3 text-sm font-semibold mb-5"
+            />
+
+            <View className="flex-row space-x-3">
+              <TouchableOpacity
+                onPress={() => setEditFieldModalVisible(false)}
+                style={{ backgroundColor: isDark ? '#1e293b' : '#f1f5f9' }}
+                className="flex-1 py-3 rounded-xl items-center"
+              >
+                <Text style={{ color: isDark ? '#cbd5e1' : '#475569' }} className="font-bold text-xs uppercase">
+                  Cancel
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={handleSaveField}
+                className="flex-1 py-3 rounded-xl bg-emerald-500 active:bg-emerald-600 items-center shadow-md shadow-emerald-500/20"
+              >
+                <Text className="text-white font-bold text-xs uppercase tracking-wider">
+                  Save
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* =========================================================================
+          MODAL 3: MULTI-STEP IDENTITY VERIFICATION FLOW (SCREENSHOTS 2-5)
+          - Original OgaDriver Nigerian branding (avoiding Bolt replication)
+          - Step 1: Overview (ID + Live Selfie requirement)
+          - Step 2: Country Selection (Nigeria 🇳🇬)
+          - Step 3: Document Type (Driver's License, NIN, Voter's Card, Passport)
+          - Step 4: Photo Capture & Quality check
+          - Step 5: Live Selfie facial capture
+          - Step 6: Verified success!
+         ========================================================================= */}
+      <Modal visible={verifyModalVisible} animationType="slide" onRequestClose={() => setVerifyModalVisible(false)}>
+        <SafeAreaView style={{ flex: 1, backgroundColor: isDark ? '#090d16' : '#ffffff' }}>
+          {/* Header Bar */}
+          <View
+            style={{
+              borderBottomColor: isDark ? '#1e293b' : '#e2e8f0',
+            }}
+            className="flex-row items-center px-4 py-3 border-b"
+          >
+            <TouchableOpacity
+              onPress={() => {
+                if (verifyStep > 1 && verifyStep < 6) {
+                  setVerifyStep((s) => s - 1);
+                } else {
+                  setVerifyModalVisible(false);
+                }
+              }}
+              className="p-1 mr-3"
+            >
+              <Ionicons name="arrow-back" size={24} color={isDark ? '#ffffff' : '#0f172a'} />
+            </TouchableOpacity>
+            <Text style={{ color: isDark ? '#ffffff' : '#0f172a' }} className="font-bold text-lg">
+              {verifyStep === 1
+                ? 'Identity Verification'
+                : verifyStep === 2
+                ? 'Country of Issue'
+                : verifyStep === 3
+                ? 'Select ID Type'
+                : verifyStep === 4
+                ? 'Document Photo'
+                : verifyStep === 5
+                ? 'Facial Selfie'
+                : 'Verification Completed'}
+            </Text>
+          </View>
+
+          {/* STEP 1: OVERVIEW SCREEN (SCREENSHOT 2) */}
+          {verifyStep === 1 && (
+            <View className="flex-1 px-5 pt-8 justify-between pb-8">
+              <View>
+                {/* 3D Shield & ID Icon graphic */}
+                <View className="items-center mb-8">
+                  <View className="w-28 h-28 rounded-3xl bg-emerald-500/15 border-2 border-emerald-500/30 items-center justify-center relative">
+                    <Ionicons name="shield-checkmark" size={54} color="#10b981" />
+                    <View className="absolute -bottom-2 -right-2 bg-emerald-500 rounded-full p-2 border-2 border-white dark:border-slate-900 shadow-md">
+                      <Ionicons name="card" size={18} color="#ffffff" />
+                    </View>
+                  </View>
+                </View>
+
+                <Text style={{ color: isDark ? '#ffffff' : '#0f172a' }} className="font-bold text-2xl tracking-tight mb-2">
+                  Verify your identity
+                </Text>
+                <Text style={{ color: isDark ? '#94a3b8' : '#64748b' }} className="text-sm leading-5 mb-8">
+                  To keep your account and our community safe, we'll need to check your ID. This takes about 1-2 minutes.
+                </Text>
+
+                <Text style={{ color: isDark ? '#ffffff' : '#0f172a' }} className="font-semibold text-sm mb-4">
+                  You'll need:
+                </Text>
+
+                {/* Requirement 1: Government ID */}
+                <View className="flex-row items-start mb-5">
+                  <View className="w-7 h-7 rounded-full bg-emerald-500 items-center justify-center mr-3 mt-0.5">
+                    <Ionicons name="checkmark" size={16} color="#ffffff" />
+                  </View>
+                  <Text style={{ color: isDark ? '#ffffff' : '#0f172a' }} className="text-sm font-medium flex-1 leading-5">
+                    Your FRSC driving licence, NIN card/slip, voter's card, or international passport
+                  </Text>
+                </View>
+
+                {/* Requirement 2: Live Selfie */}
+                <View className="flex-row items-start mb-6">
+                  <View className="w-7 h-7 rounded-full bg-emerald-500 items-center justify-center mr-3 mt-0.5">
+                    <Ionicons name="checkmark" size={16} color="#ffffff" />
+                  </View>
+                  <Text style={{ color: isDark ? '#ffffff' : '#0f172a' }} className="text-sm font-medium flex-1 leading-5">
+                    Your phone camera, to take a live selfie
+                  </Text>
+                </View>
+
+                <Text style={{ color: isDark ? '#64748b' : '#94a3b8' }} className="text-xs leading-4 mt-2">
+                  By continuing, you allow OgaDriver to confirm your selfie matches your ID using encrypted facial validation.
+                </Text>
+              </View>
+
+              <TouchableOpacity
+                onPress={() => setVerifyStep(2)}
+                className="w-full py-4 rounded-full bg-emerald-600 active:bg-emerald-700 items-center shadow-lg shadow-emerald-600/30"
+              >
+                <Text className="text-white font-bold text-base">Continue</Text>
+              </TouchableOpacity>
+            </View>
+          )}
+
+          {/* STEP 2: COUNTRY OF ISSUE (SCREENSHOT 3) */}
+          {verifyStep === 2 && (
+            <View className="flex-1 px-5 pt-8 justify-between pb-8">
+              <View>
+                <Text style={{ color: isDark ? '#ffffff' : '#0f172a' }} className="font-bold text-xl tracking-tight mb-6">
+                  Which country issued your ID?
+                </Text>
+
+                {/* Country Row */}
+                <View
+                  style={{
+                    backgroundColor: isDark ? '#121927' : '#f8fafc',
+                    borderColor: '#10b981',
+                  }}
+                  className="flex-row items-center justify-between p-4 rounded-2xl border-2"
+                >
+                  <View className="flex-row items-center">
+                    <Text className="text-3xl mr-3">🇳🇬</Text>
+                    <Text style={{ color: isDark ? '#ffffff' : '#0f172a' }} className="font-bold text-base">
+                      Nigeria
+                    </Text>
+                  </View>
+                  <View className="flex-row items-center">
+                    <View className="w-6 h-6 rounded-full bg-emerald-500 items-center justify-center">
+                      <Ionicons name="checkmark" size={14} color="#ffffff" />
+                    </View>
+                  </View>
+                </View>
+              </View>
+
+              <TouchableOpacity
+                onPress={() => setVerifyStep(3)}
+                className="w-full py-4 rounded-full bg-emerald-600 active:bg-emerald-700 items-center shadow-lg shadow-emerald-600/30"
+              >
+                <Text className="text-white font-bold text-base">Continue</Text>
+              </TouchableOpacity>
+            </View>
+          )}
+
+          {/* STEP 3: SELECT ID TYPE (SCREENSHOT 4) */}
+          {verifyStep === 3 && (
+            <View className="flex-1 px-5 pt-8 justify-between pb-8">
+              <View>
+                <Text style={{ color: isDark ? '#ffffff' : '#0f172a' }} className="font-bold text-xl tracking-tight mb-2">
+                  Select ID type
+                </Text>
+                <Text style={{ color: isDark ? '#94a3b8' : '#64748b' }} className="text-xs mb-6">
+                  Be prepared to take a photo of the chosen document.
+                </Text>
+
+                {/* Document Type Options with Inset Dividers */}
+                {[
+                  { id: 'license', title: "Driver's license", badge: 'Recommended' },
+                  { id: 'nin', title: 'National ID card (NIN)' },
+                  { id: 'voters', title: "Voter's card (INEC PVC)" },
+                  { id: 'passport', title: 'Passport' },
+                  { id: 'permit', title: 'Residence permit' },
+                ].map((doc, idx) => (
+                  <React.Fragment key={doc.id}>
+                    {idx > 0 && <View className="h-[1px] bg-slate-200 dark:bg-slate-800 my-1" />}
+                    <TouchableOpacity
+                      onPress={() => setSelectedIdType(doc.id)}
+                      activeOpacity={0.7}
+                      className="py-3.5 flex-row items-center justify-between"
+                    >
+                      <View className="flex-1 mr-3">
+                        <Text style={{ color: isDark ? '#ffffff' : '#0f172a' }} className="font-semibold text-base">
+                          {doc.title}
+                        </Text>
+                        {doc.badge && (
+                          <Text style={{ color: isDark ? '#94a3b8' : '#64748b' }} className="text-xs mt-0.5">
+                            {doc.badge}
+                          </Text>
+                        )}
+                      </View>
+
+                      <View
+                        className={`w-6 h-6 rounded-full border-2 items-center justify-center ${
+                          selectedIdType === doc.id
+                            ? 'bg-emerald-500 border-emerald-500'
+                            : 'border-slate-400 dark:border-slate-600'
+                        }`}
+                      >
+                        {selectedIdType === doc.id && (
+                          <Ionicons name="checkmark" size={14} color="#ffffff" />
+                        )}
+                      </View>
+                    </TouchableOpacity>
+                  </React.Fragment>
                 ))}
               </View>
 
-              {/* Custom Amount Input */}
-              <View
-                style={{
-                  backgroundColor: isDark ? '#121927' : '#f8fafc',
-                  borderColor: isDark ? '#1e293b' : '#e2e8f0',
-                }}
-                className="flex-row items-center border rounded-2xl px-4 py-3 mb-4"
+              <TouchableOpacity
+                onPress={() => setVerifyStep(4)}
+                className="w-full py-4 rounded-full bg-emerald-600 active:bg-emerald-700 items-center shadow-lg shadow-emerald-600/30"
               >
-                <Text className="text-emerald-500 font-black text-lg mr-2">₦</Text>
-                <TextInput
-                  keyboardType="numeric"
-                  value={fundAmount}
-                  onChangeText={setFundAmount}
-                  placeholder="Enter deposit amount"
-                  placeholderTextColor={isDark ? '#64748b' : '#94a3b8'}
-                  style={{ color: isDark ? '#ffffff' : '#0f172a' }}
-                  className="flex-1 font-black text-lg"
-                />
-              </View>
-
-              {/* Bank Transfer Details Fallback */}
-              <View
-                style={{
-                  backgroundColor: isDark ? '#121927' : '#f0fdf4',
-                  borderColor: isDark ? '#1e293b' : '#bbf7d0',
-                }}
-                className="p-3.5 rounded-2xl border mb-6"
-              >
-                <Text style={{ color: isDark ? '#34d399' : '#166534' }} className="font-bold text-xs mb-1">
-                  Virtual Dedicated Account:
-                </Text>
-                <Text style={{ color: isDark ? '#ffffff' : '#0f172a' }} className="font-mono text-xs font-bold">
-                  Wema Bank • 9900223344 • OgaDriver - {user?.name || 'Client'}
-                </Text>
-              </View>
-
-              <View className="items-center mt-3 mb-2">
-                <TouchableOpacity
-                  onPress={handleAddFundsConfirm}
-                  style={{ minWidth: 220 }}
-                  className="py-3.5 px-8 rounded-2xl bg-emerald-500 active:bg-emerald-600 items-center justify-center shadow-lg shadow-emerald-500/20"
-                >
-                  <Text className="text-white font-bold text-sm uppercase tracking-wider">
-                    Proceed with Payment
-                  </Text>
-                </TouchableOpacity>
-              </View>
-            </ScrollView>
-          </View>
-        </View>
-      </Modal>
-
-      {/* MODAL 2: EDIT PROFILE INFORMATION */}
-      <Modal visible={editProfileVisible} transparent animationType="slide" onRequestClose={() => setEditProfileVisible(false)}>
-        <View
-          style={{
-            paddingBottom: Platform.OS === 'android' ? Math.max(insets.bottom, 48) + 16 : Math.max(insets.bottom, 16) + 8,
-          }}
-          className="flex-1 bg-black/60 justify-end px-3"
-        >
-          <View
-            style={{
-              backgroundColor: isDark ? '#090d16' : '#ffffff',
-              borderColor: isDark ? '#1e293b' : '#e2e8f0',
-              maxHeight: '85%',
-            }}
-            className="rounded-3xl p-6 border shadow-2xl"
-          >
-            <View className="flex-row items-center justify-between mb-4">
-              <Text style={{ color: isDark ? '#ffffff' : '#0f172a' }} className="text-lg font-normal tracking-tight">
-                Edit Profile
-              </Text>
-              <TouchableOpacity onPress={() => setEditProfileVisible(false)}>
-                <Ionicons name="close-circle" size={26} color="#64748b" />
+                <Text className="text-white font-bold text-base">Take a photo</Text>
               </TouchableOpacity>
             </View>
+          )}
 
-            <ScrollView showsVerticalScrollIndicator={false} className="max-h-[80vh]">
-              {/* Avatar Changer Section */}
-              <View className="items-center mb-5">
+          {/* STEP 4: DOCUMENT PHOTO CAPTURE / QUALITY CHECK (SCREENSHOT 5) */}
+          {verifyStep === 4 && (
+            <View className="flex-1 px-5 pt-8 justify-between pb-8">
+              <View className="items-center">
+                <Text style={{ color: isDark ? '#ffffff' : '#0f172a' }} className="font-bold text-xl tracking-tight mb-2 text-center">
+                  Capture your document
+                </Text>
+                <Text style={{ color: isDark ? '#94a3b8' : '#64748b' }} className="text-xs text-center mb-6 max-w-xs">
+                  Make sure all 4 corners are visible, text is clear, and there is no strong glare.
+                </Text>
+
+                {/* Document Preview Box */}
                 <TouchableOpacity
-                  onPress={handlePickAvatar}
-                  activeOpacity={0.8}
-                  className="relative"
-                >
-                  <View className="w-20 h-20 rounded-full bg-emerald-500/10 border-2 border-emerald-500 items-center justify-center overflow-hidden">
-                    {editAvatar || user?.avatar ? (
-                      <Image
-                        source={{ uri: editAvatar || user.avatar }}
-                        className="w-full h-full"
-                      />
-                    ) : (
-                      <Text className="text-emerald-500 font-black text-3xl">
-                        {(editName || user?.name || 'O')[0].toUpperCase()}
-                      </Text>
-                    )}
-                  </View>
-                  <View className="absolute bottom-0 right-0 w-7 h-7 rounded-full bg-emerald-500 border-2 border-white dark:border-slate-900 items-center justify-center shadow-md">
-                    <Ionicons name="camera" size={14} color="#ffffff" />
-                  </View>
-                </TouchableOpacity>
-
-                <TouchableOpacity onPress={handlePickAvatar} className="mt-2">
-                  <Text className="text-emerald-500 font-bold text-xs">
-                    Change Profile Avatar
-                  </Text>
-                </TouchableOpacity>
-              </View>
-
-              <View className="space-y-3.5 mb-6">
-                {/* 1. Full Name */}
-                <View
+                  onPress={handleCaptureDocumentPhoto}
+                  activeOpacity={0.85}
                   style={{
                     backgroundColor: isDark ? '#121927' : '#f8fafc',
-                    borderColor: isDark ? '#1e293b' : '#e2e8f0',
+                    borderColor: idDocImage ? '#10b981' : isDark ? '#1e293b' : '#cbd5e1',
                   }}
-                  className="border rounded-2xl px-3.5 py-2.5"
+                  className="w-full h-56 rounded-3xl border-2 border-dashed items-center justify-center overflow-hidden mb-5"
                 >
-                  <Text style={{ color: isDark ? '#94a3b8' : '#64748b' }} className="text-[10px] uppercase font-bold mb-0.5">
-                    Full Legal Name / Title *
-                  </Text>
-                  <TextInput
-                    value={editName}
-                    onChangeText={setEditName}
-                    placeholder="e.g. Babatunde Adeyemi"
-                    placeholderTextColor="#94a3b8"
-                    style={{ color: isDark ? '#ffffff' : '#0f172a' }}
-                    className="text-xs font-semibold"
-                  />
-                </View>
-
-                {/* 2. Phone Number with Anti-Duplicate Notice */}
-                <View
-                  style={{
-                    backgroundColor: isDark ? '#121927' : '#f8fafc',
-                    borderColor: isDark ? '#1e293b' : '#e2e8f0',
-                  }}
-                  className="border rounded-2xl px-3.5 py-2.5"
-                >
-                  <View className="flex-row items-center justify-between mb-0.5">
-                    <Text style={{ color: isDark ? '#94a3b8' : '#64748b' }} className="text-[10px] uppercase font-bold">
-                      Phone Number *
-                    </Text>
-                    <View className="bg-emerald-500/15 px-1.5 py-0.2 rounded">
-                      <Text className="text-emerald-500 font-bold text-[9px]">Verified ID</Text>
-                    </View>
-                  </View>
-                  <TextInput
-                    value={editPhone}
-                    onChangeText={setEditPhone}
-                    keyboardType="phone-pad"
-                    placeholder="+234 803 123 4567"
-                    placeholderTextColor="#94a3b8"
-                    style={{ color: isDark ? '#ffffff' : '#0f172a' }}
-                    className="text-xs font-semibold"
-                  />
-                  <Text style={{ color: isDark ? '#64748b' : '#94a3b8' }} className="text-[9px] mt-1 leading-3">
-                    Unique verified phone line. Multiple user account registration with identical phone numbers is prohibited.
-                  </Text>
-                </View>
-
-                {/* 3. Email Address (Locked / Immutable once registered) */}
-                <View
-                  style={{
-                    backgroundColor: isDark ? '#0d131f' : '#f1f5f9',
-                    borderColor: isDark ? '#1e293b' : '#e2e8f0',
-                  }}
-                  className="border rounded-2xl px-3.5 py-2.5 opacity-90"
-                >
-                  <View className="flex-row items-center justify-between mb-0.5">
-                    <Text style={{ color: isDark ? '#94a3b8' : '#64748b' }} className="text-[10px] uppercase font-bold">
-                      Registered Email Address
-                    </Text>
-                    <View className="flex-row items-center bg-slate-200 dark:bg-slate-800 px-1.5 py-0.5 rounded">
-                      <Ionicons name="lock-closed" size={10} color="#64748b" style={{ marginRight: 2 }} />
-                      <Text style={{ color: isDark ? '#94a3b8' : '#64748b' }} className="font-bold text-[8px] uppercase">
-                        Locked
+                  {idDocImage ? (
+                    <Image source={{ uri: idDocImage }} className="w-full h-full" resizeMode="cover" />
+                  ) : (
+                    <View className="items-center px-4">
+                      <View className="w-16 h-16 rounded-full bg-emerald-500/10 items-center justify-center mb-2">
+                        <Ionicons name="camera-outline" size={32} color="#10b981" />
+                      </View>
+                      <Text style={{ color: isDark ? '#ffffff' : '#0f172a' }} className="font-bold text-sm">
+                        Tap to Photograph Document
+                      </Text>
+                      <Text style={{ color: isDark ? '#94a3b8' : '#64748b' }} className="text-xs text-center mt-1">
+                        Use front or back camera
                       </Text>
                     </View>
+                  )}
+                </TouchableOpacity>
+
+                {/* Quality Guidance Illustration */}
+                <View
+                  style={{
+                    backgroundColor: isDark ? '#121927' : '#f1f5f9',
+                    borderColor: isDark ? '#1e293b' : '#e2e8f0',
+                  }}
+                  className="w-full p-4 rounded-2xl border flex-row items-center space-x-3"
+                >
+                  <View className="w-8 h-8 rounded-full bg-emerald-500/15 items-center justify-center">
+                    <Ionicons name="eye-outline" size={18} color="#10b981" />
                   </View>
-                  <TextInput
-                    value={editEmail || user?.email || 'client@ogadriver.ng'}
-                    editable={false}
-                    keyboardType="email-address"
-                    style={{ color: isDark ? '#94a3b8' : '#64748b' }}
-                    className="text-xs font-medium"
-                  />
-                  <Text style={{ color: isDark ? '#64748b' : '#94a3b8' }} className="text-[9px] mt-1 leading-3">
-                    Registered email is bound to your account and cannot be modified after registration.
-                  </Text>
+                  <View className="flex-1">
+                    <Text style={{ color: isDark ? '#ffffff' : '#0f172a' }} className="font-bold text-xs">
+                      Clear & readable photo required
+                    </Text>
+                    <Text style={{ color: isDark ? '#94a3b8' : '#64748b' }} className="text-[11px] mt-0.5">
+                      Ensure your full name, photo, and document number are completely legible.
+                    </Text>
+                  </View>
                 </View>
               </View>
 
-              <View className="items-center mb-4 mt-2">
+              <View className="space-y-3">
+                {idDocImage && (
+                  <TouchableOpacity
+                    onPress={handleCaptureDocumentPhoto}
+                    style={{ backgroundColor: isDark ? '#121927' : '#f1f5f9' }}
+                    className="w-full py-3 rounded-full items-center border border-slate-700/20"
+                  >
+                    <Text style={{ color: isDark ? '#ffffff' : '#0f172a' }} className="font-bold text-sm">
+                      Retake photo
+                    </Text>
+                  </TouchableOpacity>
+                )}
+
                 <TouchableOpacity
-                  onPress={handleSaveProfileChanges}
-                  style={{ minWidth: 200 }}
-                  className="py-3.5 px-8 rounded-2xl bg-emerald-500 active:bg-emerald-600 items-center justify-center shadow-lg"
+                  onPress={() => {
+                    if (!idDocImage) {
+                      Alert.alert('Photo Needed', 'Please tap the preview frame to take a photo of your ID.');
+                      return;
+                    }
+                    setVerifyStep(5);
+                  }}
+                  className="w-full py-4 rounded-full bg-emerald-600 active:bg-emerald-700 items-center shadow-lg shadow-emerald-600/30"
                 >
-                  <Text className="text-white font-bold text-sm uppercase tracking-wider">
-                    Save Profile
+                  <Text className="text-white font-bold text-base">
+                    {idDocImage ? 'Continue to Selfie' : 'Take Document Photo'}
                   </Text>
                 </TouchableOpacity>
               </View>
-            </ScrollView>
-          </View>
-        </View>
+            </View>
+          )}
+
+          {/* STEP 5: LIVE SELFIE CAPTURE */}
+          {verifyStep === 5 && (
+            <View className="flex-1 px-5 pt-8 justify-between pb-8">
+              <View className="items-center">
+                <Text style={{ color: isDark ? '#ffffff' : '#0f172a' }} className="font-bold text-xl tracking-tight mb-2 text-center">
+                  Take a quick selfie
+                </Text>
+                <Text style={{ color: isDark ? '#94a3b8' : '#64748b' }} className="text-xs text-center mb-6 max-w-xs">
+                  Position your face inside the oval frame. Make sure your lighting is bright and even.
+                </Text>
+
+                {/* Oval Selfie Frame */}
+                <TouchableOpacity
+                  onPress={handleCaptureSelfie}
+                  activeOpacity={0.85}
+                  style={{
+                    backgroundColor: isDark ? '#121927' : '#f8fafc',
+                    borderColor: selfieImage ? '#10b981' : isDark ? '#1e293b' : '#cbd5e1',
+                  }}
+                  className="w-56 h-72 rounded-full border-4 border-dashed items-center justify-center overflow-hidden mb-5"
+                >
+                  {selfieImage ? (
+                    <Image source={{ uri: selfieImage }} className="w-full h-full" resizeMode="cover" />
+                  ) : (
+                    <View className="items-center px-4">
+                      <View className="w-16 h-16 rounded-full bg-emerald-500/10 items-center justify-center mb-2">
+                        <Ionicons name="person-outline" size={34} color="#10b981" />
+                      </View>
+                      <Text style={{ color: isDark ? '#ffffff' : '#0f172a' }} className="font-bold text-sm text-center">
+                        Tap to Take Selfie
+                      </Text>
+                      <Text style={{ color: isDark ? '#94a3b8' : '#64748b' }} className="text-[11px] text-center mt-1">
+                        Front camera portrait
+                      </Text>
+                    </View>
+                  )}
+                </TouchableOpacity>
+              </View>
+
+              <View className="space-y-3">
+                {selfieImage && (
+                  <TouchableOpacity
+                    onPress={handleCaptureSelfie}
+                    style={{ backgroundColor: isDark ? '#121927' : '#f1f5f9' }}
+                    className="w-full py-3 rounded-full items-center border border-slate-700/20"
+                  >
+                    <Text style={{ color: isDark ? '#ffffff' : '#0f172a' }} className="font-bold text-sm">
+                      Retake selfie
+                    </Text>
+                  </TouchableOpacity>
+                )}
+
+                <TouchableOpacity
+                  onPress={handleSubmitVerification}
+                  disabled={isVerifying}
+                  className="w-full py-4 rounded-full bg-emerald-600 active:bg-emerald-700 items-center shadow-lg shadow-emerald-600/30 flex-row justify-center"
+                >
+                  {isVerifying ? (
+                    <ActivityIndicator color="#ffffff" />
+                  ) : (
+                    <Text className="text-white font-bold text-base">
+                      {selfieImage ? 'Submit for Verification' : 'Take Selfie'}
+                    </Text>
+                  )}
+                </TouchableOpacity>
+              </View>
+            </View>
+          )}
+
+          {/* STEP 6: VERIFICATION COMPLETED SUCCESS */}
+          {verifyStep === 6 && (
+            <View className="flex-1 px-5 pt-12 items-center justify-between pb-8">
+              <View className="items-center">
+                <View className="w-24 h-24 rounded-full bg-emerald-500/15 border-2 border-emerald-500 items-center justify-center mb-6">
+                  <Ionicons name="checkmark-done" size={48} color="#10b981" />
+                </View>
+                <Text style={{ color: isDark ? '#ffffff' : '#0f172a' }} className="font-bold text-2xl tracking-tight text-center mb-2">
+                  Identity Verified!
+                </Text>
+                <Text style={{ color: isDark ? '#94a3b8' : '#64748b' }} className="text-sm text-center max-w-xs leading-5">
+                  Your government document and biometric selfie have been securely validated. You now enjoy full verified client privileges.
+                </Text>
+              </View>
+
+              <TouchableOpacity
+                onPress={() => {
+                  setVerifyModalVisible(false);
+                }}
+                className="w-full py-4 rounded-full bg-emerald-600 active:bg-emerald-700 items-center shadow-lg shadow-emerald-600/30"
+              >
+                <Text className="text-white font-bold text-base">Done</Text>
+              </TouchableOpacity>
+            </View>
+          )}
+        </SafeAreaView>
       </Modal>
 
-      {/* MODAL 3: 24/7 VIP CLIENT CONCIERGE HOTLINE */}
+      {/* =========================================================================
+          MODAL 4: 24/7 VIP CLIENT CONCIERGE HOTLINE
+         ========================================================================= */}
       <Modal visible={conciergeModalVisible} transparent animationType="slide" onRequestClose={() => setConciergeModalVisible(false)}>
         <View
           style={{
@@ -1233,7 +1403,7 @@ export default function ProfileScreen({ navigation, route }) {
                   <Ionicons name="headset" size={22} color="#10b981" />
                 </View>
                 <View>
-                  <Text style={{ color: isDark ? '#ffffff' : '#0f172a' }} className="text-lg font-normal tracking-tight">
+                  <Text style={{ color: isDark ? '#ffffff' : '#0f172a' }} className="text-lg font-semibold tracking-tight">
                     Client Concierge Desk
                   </Text>
                   <View className="flex-row items-center mt-0.5">
@@ -1253,9 +1423,8 @@ export default function ProfileScreen({ navigation, route }) {
               Dedicated high-priority dispatch, chauffeur assistance, emergency routing, and billing dispute resolution.
             </Text>
 
-            {/* Concierge Channels */}
+            {/* Channels */}
             <View className="space-y-3 mb-6">
-              {/* Channel 1: Direct Toll-Free Phone Call */}
               <TouchableOpacity
                 onPress={() => {
                   setConciergeModalVisible(false);
@@ -1270,14 +1439,13 @@ export default function ProfileScreen({ navigation, route }) {
                     <Ionicons name="call" size={20} color="#ffffff" />
                   </View>
                   <View>
-                    <Text className="text-white font-black text-sm">Direct Phone Hotline</Text>
+                    <Text className="text-white font-bold text-sm">Direct Phone Hotline</Text>
                     <Text className="text-white/90 text-xs font-mono font-bold">+234 800-OGA-HELP (Toll-Free)</Text>
                   </View>
                 </View>
                 <Ionicons name="chevron-forward" size={18} color="#ffffff" />
               </TouchableOpacity>
 
-              {/* Channel 2: WhatsApp VIP Desk */}
               <TouchableOpacity
                 onPress={() => {
                   setConciergeModalVisible(false);
@@ -1302,56 +1470,6 @@ export default function ProfileScreen({ navigation, route }) {
                 </View>
                 <Ionicons name="chevron-forward" size={16} color="#64748b" />
               </TouchableOpacity>
-
-              {/* Channel 3: Live In-App Chat */}
-              <TouchableOpacity
-                onPress={() => {
-                  setConciergeModalVisible(false);
-                  navigation.navigate('Chat', { name: 'VIP Concierge Desk', recipientId: 'concierge_support' });
-                }}
-                style={{
-                  backgroundColor: isDark ? '#121927' : '#f8fafc',
-                  borderColor: isDark ? '#1e293b' : '#e2e8f0',
-                }}
-                className="p-4 rounded-2xl border flex-row items-center justify-between"
-              >
-                <View className="flex-row items-center flex-1 mr-2">
-                  <View className="w-10 h-10 rounded-xl bg-emerald-500/10 items-center justify-center mr-3 border border-emerald-500/20">
-                    <Ionicons name="chatbubbles-outline" size={20} color="#10b981" />
-                  </View>
-                  <View>
-                    <Text style={{ color: isDark ? '#ffffff' : '#0f172a' }} className="font-bold text-sm">Live In-App Support Chat</Text>
-                    <Text style={{ color: isDark ? '#94a3b8' : '#64748b' }} className="text-xs">Encrypted in-app messaging channel</Text>
-                  </View>
-                </View>
-                <Ionicons name="chevron-forward" size={16} color="#64748b" />
-              </TouchableOpacity>
-
-              {/* Channel 4: Priority Email Desk */}
-              <TouchableOpacity
-                onPress={() => {
-                  setConciergeModalVisible(false);
-                  Linking.openURL('mailto:concierge@ogadriver.ng?subject=' + encodeURIComponent('VIP Client Concierge Request')).catch(() =>
-                    Alert.alert('Email Error', 'Could not open email client.')
-                  );
-                }}
-                style={{
-                  backgroundColor: isDark ? '#121927' : '#f8fafc',
-                  borderColor: isDark ? '#1e293b' : '#e2e8f0',
-                }}
-                className="p-4 rounded-2xl border flex-row items-center justify-between"
-              >
-                <View className="flex-row items-center flex-1 mr-2">
-                  <View className="w-10 h-10 rounded-xl bg-emerald-500/10 items-center justify-center mr-3 border border-emerald-500/20">
-                    <Ionicons name="mail-outline" size={20} color="#10b981" />
-                  </View>
-                  <View>
-                    <Text style={{ color: isDark ? '#ffffff' : '#0f172a' }} className="font-bold text-sm">Priority Client Email</Text>
-                    <Text style={{ color: isDark ? '#94a3b8' : '#64748b' }} className="text-xs">concierge@ogadriver.ng</Text>
-                  </View>
-                </View>
-                <Ionicons name="chevron-forward" size={16} color="#64748b" />
-              </TouchableOpacity>
             </View>
 
             <TouchableOpacity
@@ -1368,128 +1486,6 @@ export default function ProfileScreen({ navigation, route }) {
           </View>
         </View>
       </Modal>
-
-      {/* MODAL 5: ADD NEW SAVED PLACE */}
-      <Modal visible={addPlaceModalVisible} transparent animationType="slide" onRequestClose={() => setAddPlaceModalVisible(false)}>
-        <View
-          style={{
-            paddingBottom: Platform.OS === 'android' ? Math.max(insets.bottom, 48) + 16 : Math.max(insets.bottom, 16) + 8,
-          }}
-          className="flex-1 bg-black/70 justify-end px-3"
-        >
-          <View
-            style={{
-              backgroundColor: isDark ? '#090d16' : '#ffffff',
-              borderColor: isDark ? '#1e293b' : '#e2e8f0',
-              maxHeight: '85%',
-            }}
-            className="rounded-3xl p-6 border shadow-2xl"
-          >
-            <View className="flex-row items-center justify-between mb-4">
-              <View className="flex-row items-center">
-                <View className="w-10 h-10 rounded-2xl bg-emerald-500/15 items-center justify-center mr-3 border border-emerald-500/30">
-                  <Ionicons name="location" size={22} color="#10b981" />
-                </View>
-                <View>
-                  <Text style={{ color: isDark ? '#ffffff' : '#0f172a' }} className="text-lg font-normal tracking-tight">
-                    Add New Saved Place
-                  </Text>
-                  <Text style={{ color: isDark ? '#94a3b8' : '#64748b' }} className="text-[11px]">
-                    Quick 1-tap route selection for rides and driver hires
-                  </Text>
-                </View>
-              </View>
-              <TouchableOpacity onPress={() => setAddPlaceModalVisible(false)} className="p-1">
-                <Ionicons name="close-circle" size={26} color="#64748b" />
-              </TouchableOpacity>
-            </View>
-
-            <View className="space-y-3.5 mb-6">
-              {/* Place Name */}
-              <View
-                style={{
-                  backgroundColor: isDark ? '#121927' : '#f8fafc',
-                  borderColor: isDark ? '#1e293b' : '#e2e8f0',
-                }}
-                className="border rounded-2xl px-3.5 py-2.5"
-              >
-                <Text style={{ color: isDark ? '#94a3b8' : '#64748b' }} className="text-[10px] uppercase font-normal mb-0.5">
-                  Place Label / Name *
-                </Text>
-                <TextInput
-                  value={newPlaceName}
-                  onChangeText={setNewPlaceName}
-                  placeholder="e.g. Gym, Parents’ House, Branch Office, Beach Club"
-                  placeholderTextColor="#94a3b8"
-                  style={{ color: isDark ? '#ffffff' : '#0f172a' }}
-                  className="text-xs font-normal"
-                />
-              </View>
-
-              {/* Place Street Address */}
-              <View
-                style={{
-                  backgroundColor: isDark ? '#121927' : '#f8fafc',
-                  borderColor: isDark ? '#1e293b' : '#e2e8f0',
-                }}
-                className="border rounded-2xl px-3.5 py-2.5"
-              >
-                <Text style={{ color: isDark ? '#94a3b8' : '#64748b' }} className="text-[10px] uppercase font-normal mb-0.5">
-                  Street Address / Landmark *
-                </Text>
-                <TextInput
-                  value={newPlaceAddress}
-                  onChangeText={setNewPlaceAddress}
-                  placeholder="e.g. 25 Admiralty Way, Lekki Phase 1, Lagos"
-                  placeholderTextColor="#94a3b8"
-                  multiline
-                  numberOfLines={2}
-                  style={{ color: isDark ? '#ffffff' : '#0f172a' }}
-                  className="text-xs font-normal"
-                />
-              </View>
-            </View>
-
-            <View className="flex-row space-x-3">
-              <TouchableOpacity
-                onPress={() => setAddPlaceModalVisible(false)}
-                style={{
-                  backgroundColor: isDark ? '#1e293b' : '#f1f5f9',
-                }}
-                className="flex-1 py-3.5 rounded-xl items-center"
-              >
-                <Text style={{ color: isDark ? '#cbd5e1' : '#475569' }} className="font-normal text-xs uppercase">
-                  Cancel
-                </Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                onPress={handleAddCustomPlaceConfirm}
-                className="flex-1 py-3.5 rounded-xl bg-emerald-500 active:bg-emerald-600 items-center justify-center shadow-md shadow-emerald-500/20"
-              >
-                <Text className="text-white font-normal text-xs uppercase tracking-wider">
-                  Save Place
-                </Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      </Modal>
-
-      {/* MAP LOCATION PICKER MODAL (HOME / WORK / AIRPORT) */}
-      <MapLocationPickerModal
-        visible={pickerVisible}
-        onClose={() => setPickerVisible(false)}
-        placeType={editingPlaceType}
-        initialAddress={
-          editingPlaceType === 'home'
-            ? homeAddress
-            : editingPlaceType === 'work'
-            ? workAddress
-            : airportAddress
-        }
-        onSave={handleSavePlace}
-      />
     </SafeAreaView>
   );
 }

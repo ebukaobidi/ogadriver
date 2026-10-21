@@ -22,6 +22,8 @@ import loyaltyService from '../../services/loyaltyService';
 import { isGoogleMapsConfigured } from '../../utils/maps';
 import * as Location from 'expo-location';
 import OpenStreetMap from '../../components/OpenStreetMap';
+import * as SecureStore from 'expo-secure-store';
+import MapLocationPickerModal from '../../components/MapLocationPickerModal';
 
 let MapView, Marker, PROVIDER_GOOGLE;
 let DateTimePicker;
@@ -66,6 +68,20 @@ export default function HireBookingScreen({ navigation }) {
   const [engagement, setEngagement] = useState('Daily'); // 'Hourly' | 'Daily' | 'Weekly' | 'Monthly / Full-Time'
   const [hireDuration, setHireDuration] = useState(1);
   const [hireNotes, setHireNotes] = useState('');
+
+  // Saved Places and Map Location Picker
+  const [savedPlaces, setSavedPlaces] = useState(null);
+  const [pickerVisible, setPickerVisible] = useState(false);
+  const [pickerType, setPickerType] = useState('dropoff');
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const str = Platform.OS === 'web' ? localStorage.getItem('saved_places') : await SecureStore.getItemAsync('saved_places');
+        if (str) setSavedPlaces(JSON.parse(str));
+      } catch (e) {}
+    })();
+  }, []);
 
   // Vehicle choices for "Driver + car": Economy, Comfort, Executive VIP (Centred layout)
   const [hireVehicleType, setHireVehicleType] = useState('Economy');
@@ -201,13 +217,7 @@ export default function HireBookingScreen({ navigation }) {
     longitudeDelta: 0.0421,
   };
 
-  const [searchResults, setSearchResults] = useState([
-    { id: '1', title: 'Victoria Island, Lagos, Nigeria', lat: 6.4281, lon: 3.4219 },
-    { id: '2', title: 'Ikoyi Residential Zone, Lagos', lat: 6.4549, lon: 3.4358 },
-    { id: '3', title: 'Maitama Business District, Abuja', lat: 9.0882, lon: 7.4934 },
-    { id: '4', title: 'Wuse 2, Abuja, Nigeria', lat: 9.0765, lon: 7.4753 },
-    { id: '5', title: 'Ikeja GRA, Lagos', lat: 6.5900, lon: 3.3500 },
-  ]);
+  const [searchResults, setSearchResults] = useState([]);
   const [searchLoading, setSearchLoading] = useState(false);
   const searchTimeoutRef = React.useRef(null);
 
@@ -279,11 +289,53 @@ export default function HireBookingScreen({ navigation }) {
     setHireOfferPrice(total);
   }, [hireType, engagement, hireDuration, hireVehicleType]);
 
+  const handleOpenLocationPicker = async (type) => {
+    setPickerType(type);
+    if (type === 'pickup') {
+      try {
+        const { status } = await Location.requestForegroundPermissionsAsync();
+        if (status === 'granted') {
+          const loc = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
+          if (loc?.coords) {
+            const newCoord = { latitude: loc.coords.latitude, longitude: loc.coords.longitude };
+            setPickupCoord(newCoord);
+            if (mapRef.current?.animateToRegion) {
+              mapRef.current.animateToRegion({ ...newCoord, latitudeDelta: 0.02, longitudeDelta: 0.02 }, 800);
+            }
+            const geo = await Location.reverseGeocodeAsync(newCoord);
+            if (geo && geo.length > 0) {
+              const item = geo[0];
+              const parts = [item.street || item.name, item.district || item.subregion, item.city || item.region].filter(Boolean);
+              const formatted = parts.join(', ');
+              if (formatted) {
+                setPickup(formatted);
+                setActiveInput(null);
+                return;
+              }
+            }
+          }
+        }
+      } catch (e) {}
+    }
+    setPickerVisible(true);
+  };
+
+  const handleSavePickedLocation = ({ type, address: chosenAddress, coords: chosenCoords }) => {
+    if (type === 'pickup') {
+      setPickup(chosenAddress);
+      if (chosenCoords) setPickupCoord(chosenCoords);
+    } else {
+      setDropoff(chosenAddress);
+      if (chosenCoords) setDropoffCoord(chosenCoords);
+    }
+    setActiveInput(null);
+  };
+
   // Bolt-style Bottom Sheet Animation & Snapping for Hire
   const { height: screenHeight } = Dimensions.get('window');
   const SNAP_COLLAPSED = 115; // Clean "Where to?" peek pill only
   const SNAP_MIDDLE = Math.round(screenHeight * 0.50); // Halfway (50% screen)
-  const SNAP_EXPANDED = Math.round(screenHeight * 0.88); // Full top screen (88%)
+  const SNAP_EXPANDED = Math.round(screenHeight * 0.72); // Fluid slide keeping map visible at top (72%)
 
   // Default to middle (halfway) on load so Map floats at top and slide starts below it
   const [sheetState, setSheetState] = useState('middle');
@@ -697,35 +749,12 @@ export default function HireBookingScreen({ navigation }) {
                 )}
               </View>
               <View className="flex-row items-center space-x-2">
-                {sheetState === 'middle' ? (
-                  <TouchableOpacity
-                    onPress={() => snapSheetTo('expanded')}
-                    className="flex-row items-center py-1.5 px-3 rounded-full bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-500/20"
-                    activeOpacity={0.7}
-                  >
-                    <Ionicons name="chevron-up" size={16} color="#10b981" style={{ marginRight: 4 }} />
-                    <Text className="text-xs font-semibold text-emerald-600 dark:text-emerald-400">
-                      Full Screen
-                    </Text>
-                  </TouchableOpacity>
-                ) : (
-                  <TouchableOpacity
-                    onPress={() => snapSheetTo('middle')}
-                    className="flex-row items-center py-1.5 px-3 rounded-full bg-slate-100 dark:bg-slate-800"
-                    activeOpacity={0.7}
-                  >
-                    <Ionicons name="chevron-down" size={16} color={isDark ? '#cbd5e1' : '#475569'} style={{ marginRight: 4 }} />
-                    <Text style={{ color: isDark ? '#cbd5e1' : '#475569' }} className="text-xs font-medium">
-                      Half Screen
-                    </Text>
-                  </TouchableOpacity>
-                )}
                 <TouchableOpacity
-                  onPress={() => snapSheetTo('collapsed')}
-                  className="p-1.5 rounded-full bg-slate-100 dark:bg-slate-800"
+                  onPress={() => snapSheetTo(sheetState === 'collapsed' ? 'middle' : 'collapsed')}
+                  className="p-2 rounded-full bg-slate-100 dark:bg-slate-800"
                   activeOpacity={0.7}
                 >
-                  <Ionicons name="remove" size={16} color={isDark ? '#cbd5e1' : '#475569'} />
+                  <Ionicons name={sheetState === 'collapsed' ? 'chevron-up' : 'chevron-down'} size={18} color={isDark ? '#cbd5e1' : '#475569'} />
                 </TouchableOpacity>
               </View>
             </View>
@@ -1419,18 +1448,33 @@ export default function HireBookingScreen({ navigation }) {
 
             {/* PAYMENT METHOD SELECTION */}
             <View className="mb-6">
-              <Text style={{ color: isDark ? '#ffffff' : '#0f172a' }} className="font-normal text-sm tracking-tight mb-2.5 px-1">
-                Payment Option
-              </Text>
+              <View className="flex-row items-center justify-between mb-2.5 px-1">
+                <Text style={{ color: isDark ? '#ffffff' : '#0f172a' }} className="font-normal text-sm tracking-tight">
+                  Payment Method
+                </Text>
+                <TouchableOpacity
+                  onPress={() => navigation.navigate('PaymentCards')}
+                  className="flex-row items-center"
+                >
+                  <Ionicons name="card-outline" size={14} color="#10b981" style={{ marginRight: 3 }} />
+                  <Text className="text-emerald-500 font-bold text-xs">Add Debit/Credit Card</Text>
+                </TouchableOpacity>
+              </View>
               <View className="flex-row space-x-2.5">
                 {[
                   { id: 'Cash', icon: 'cash-outline', label: 'Cash' },
                   { id: 'Bank transfer', icon: 'swap-horizontal-outline', label: 'Transfer' },
                   { id: 'Wallet', icon: 'wallet-outline', label: 'In-App Wallet' },
+                  { id: 'Card', icon: 'card-outline', label: 'Card' },
                 ].map((item) => (
                   <TouchableOpacity
                     key={item.id}
-                    onPress={() => setHirePaymentMethod(item.id)}
+                    onPress={() => {
+                      setHirePaymentMethod(item.id);
+                      if (item.id === 'Card') {
+                        navigation.navigate('PaymentCards');
+                      }
+                    }}
                     style={{
                       backgroundColor: hirePaymentMethod === item.id
                         ? isDark ? 'rgba(16,185,129,0.12)' : '#ecfdf5'
@@ -1442,15 +1486,15 @@ export default function HireBookingScreen({ navigation }) {
                   >
                     <Ionicons
                       name={item.icon}
-                      size={16}
+                      size={15}
                       color={hirePaymentMethod === item.id ? '#10b981' : isDark ? '#94a3b8' : '#64748b'}
-                      style={{ marginRight: 6 }}
+                      style={{ marginRight: 4 }}
                     />
                     <Text
                       style={{
                         color: hirePaymentMethod === item.id ? '#10b981' : isDark ? '#ffffff' : '#0f172a',
                       }}
-                      className="font-bold text-xs"
+                      className="font-bold text-[11px]"
                     >
                       {item.label}
                     </Text>
@@ -1782,6 +1826,14 @@ export default function HireBookingScreen({ navigation }) {
           onChange={onNativeDateChange}
         />
       )}
+      {/* MAP LOCATION PICKER MODAL */}
+      <MapLocationPickerModal
+        visible={pickerVisible}
+        onClose={() => setPickerVisible(false)}
+        placeType={pickerType}
+        initialAddress={pickerType === 'pickup' ? pickup : dropoff}
+        onSave={handleSavePickedLocation}
+      />
     </SafeAreaView>
   );
 }
