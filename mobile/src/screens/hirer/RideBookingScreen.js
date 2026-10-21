@@ -20,6 +20,7 @@ import { bookingService } from '../../api/api';
 import { useTheme } from '../../context/ThemeContext';
 import loyaltyService from '../../services/loyaltyService';
 import { isGoogleMapsConfigured } from '../../utils/maps';
+import OpenStreetMap from '../../components/OpenStreetMap';
 
 let MapView, Marker, Polyline, PROVIDER_GOOGLE;
 let DateTimePicker;
@@ -457,60 +458,16 @@ export default function RideBookingScreen({ navigation }) {
             )}
           </MapView>
         ) : (
-          // Clean Minimalist White Google Maps Canvas
-          <View className="flex-1 w-full bg-[#f8fafc] items-center justify-center relative overflow-hidden">
-            {/* Street Cartography Roads (Crisp White / Light Silver) */}
-            <View className="absolute inset-0">
-              <View className="absolute w-full h-10 bg-white top-1/4 -rotate-12 border-y border-slate-200/80" />
-              <View className="absolute w-full h-12 bg-white top-1/2 rotate-6 border-y border-slate-200/80" />
-              <View className="absolute h-full w-10 bg-white left-1/3 rotate-12 border-x border-slate-200/80" />
-              <View className="absolute h-full w-12 bg-white right-1/4 -rotate-6 border-x border-slate-200/80" />
-              <View className="absolute w-44 h-36 bg-emerald-50/60 rounded-3xl top-16 left-8 border border-emerald-100/70" />
-              <View className="absolute w-52 h-32 bg-sky-50/70 rounded-full top-1/3 right-6 border border-sky-100/70" />
-            </View>
-
-            {/* Simulated Clean Route Line */}
-            <View className="absolute w-48 h-1.5 bg-emerald-600 rounded-full rotate-45 shadow-sm" />
-
-            {/* Clean Floating Route Summary Card */}
-            <View className="flex-row items-center space-x-4 z-10 px-4 py-3 bg-white/95 rounded-2xl border border-slate-200 shadow-md max-w-[90%] mb-20">
-              <View className="items-center">
-                <View className="w-7 h-7 rounded-full bg-emerald-50 border-2 border-emerald-600 items-center justify-center">
-                  <Ionicons name="navigate" size={12} color="#008751" />
-                </View>
-                <Text className="text-slate-800 text-[10px] font-normal mt-0.5 max-w-[85px] text-center" numberOfLines={1}>
-                  {pickup || 'Pickup Point'}
-                </Text>
-              </View>
-
-              <View className="flex-1 items-center px-1">
-                <View className="h-1 w-full bg-emerald-600 rounded-full mb-1" />
-                <View className="flex-row items-center px-2 py-0.5 rounded-full bg-slate-100">
-                  <Ionicons name="time-outline" size={10} color="#64748b" style={{ marginRight: 3 }} />
-                  <Text className="text-slate-700 text-[9px] font-normal">
-                    {tripDurationMin} min • {tripDistanceKm} km
-                  </Text>
-                </View>
-              </View>
-
-              <View className="items-center">
-                <View className="w-7 h-7 rounded-full bg-rose-50 border-2 border-rose-500 items-center justify-center">
-                  <Ionicons name="location" size={13} color="#e11d48" />
-                </View>
-                <Text className="text-slate-800 text-[10px] font-normal mt-0.5 max-w-[85px] text-center" numberOfLines={1}>
-                  {dropoff || 'Destination'}
-                </Text>
-              </View>
-            </View>
-
-            {/* Floating Lagos Metro Badge */}
-            <View className="absolute top-24 left-4 bg-white/90 px-3 py-1.5 rounded-full border border-slate-200 shadow-sm flex-row items-center">
-              <View className="w-2 h-2 rounded-full bg-emerald-500 mr-2" />
-              <Text className="text-slate-700 text-[10px] font-normal">
-                Google Maps Live Tracking
-              </Text>
-            </View>
-          </View>
+          <OpenStreetMap
+            center={pickup ? pickupCoord : region}
+            pickup={pickup}
+            dropoff={dropoff}
+            pickupCoord={pickup ? pickupCoord : null}
+            dropoffCoord={dropoff ? dropoffCoord : null}
+            stops={stops}
+            isDark={isDark}
+            interactive={true}
+          />
         )}
       </View>
 

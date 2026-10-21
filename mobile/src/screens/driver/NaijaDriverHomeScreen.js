@@ -16,6 +16,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { authService, driverService, radioService, extractArray } from '../../api/api';
 import { useTheme } from '../../context/ThemeContext';
 import { isGoogleMapsConfigured } from '../../utils/maps';
+import OpenStreetMap from '../../components/OpenStreetMap';
 
 // Safe MapView imports for native platforms
 let MapView, Marker, PROVIDER_GOOGLE;
@@ -518,32 +519,7 @@ export default function NaijaDriverHomeScreen({ navigation }) {
     <SafeAreaView style={styles.container}>
       {/* 1. FULL-SCREEN MAP BACKGROUND */}
       <View style={StyleSheet.absoluteFillObject}>
-        {Platform.OS === 'web' || !MapView || !isGoogleMapsConfigured() ? (
-          <View style={[styles.webMapContainer, !isDark && { backgroundColor: '#f1f5f9' }]}>
-            {/* Street Grid Background Pattern with White/Slate Cartography in Light Mode */}
-            <View style={[styles.gridOverlay, !isDark && { opacity: 0.35 }]}>
-              <View style={[styles.gridLine, { transform: [{ rotate: '25deg' }] }, !isDark && { borderColor: '#cbd5e1' }]} />
-              <View style={[styles.gridLine, { transform: [{ rotate: '-25deg' }] }, !isDark && { borderColor: '#cbd5e1' }]} />
-              <View style={[styles.gridLineHorizontal, { top: '30%' }, !isDark && { backgroundColor: '#cbd5e1' }]} />
-              <View style={[styles.gridLineHorizontal, { top: '65%' }, !isDark && { backgroundColor: '#cbd5e1' }]} />
-              <View style={[styles.gridLineVertical, { left: '35%' }, !isDark && { backgroundColor: '#cbd5e1' }]} />
-              <View style={[styles.gridLineVertical, { left: '70%' }, !isDark && { backgroundColor: '#cbd5e1' }]} />
-            </View>
-
-            {/* GPS Vehicle Marker */}
-            <View style={styles.markerContainer}>
-              <View style={[styles.markerOuterPulse, !isDark && { backgroundColor: 'rgba(5, 150, 105, 0.2)', borderColor: '#059669' }]}>
-                <View style={[styles.markerInnerDot, !isDark && { backgroundColor: '#059669' }]}>
-                  <Ionicons name="navigate" size={20} color="#ffffff" />
-                </View>
-              </View>
-              <View style={[styles.markerCallout, !isDark && { backgroundColor: '#ffffff', borderColor: '#e2e8f0' }]}>
-                <Text style={[styles.markerCalloutText, !isDark && { color: '#0f172a' }]}>Victoria Island, Lagos</Text>
-              </View>
-            </View>
-
-          </View>
-        ) : (
+        {Platform.OS !== 'web' && MapView && isGoogleMapsConfigured() ? (
           <MapView
             style={StyleSheet.absoluteFillObject}
             customMapStyle={WHITE_GOOGLE_MAP_STYLE}
@@ -562,6 +538,14 @@ export default function NaijaDriverHomeScreen({ navigation }) {
               />
             )}
           </MapView>
+        ) : (
+          <OpenStreetMap
+            center={{ latitude: 6.4281, longitude: 3.4219 }}
+            driverCoord={{ latitude: 6.4281, longitude: 3.4219 }}
+            driverName={user?.name || 'Active Driver Partner'}
+            isDark={isDark}
+            interactive={true}
+          />
         )}
       </View>
 

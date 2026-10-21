@@ -20,6 +20,7 @@ import { bookingService } from '../../api/api';
 import { useTheme } from '../../context/ThemeContext';
 import loyaltyService from '../../services/loyaltyService';
 import { isGoogleMapsConfigured } from '../../utils/maps';
+import OpenStreetMap from '../../components/OpenStreetMap';
 
 let MapView, Marker, PROVIDER_GOOGLE;
 let DateTimePicker;
@@ -111,10 +112,10 @@ export default function HireBookingScreen({ navigation }) {
 
   // Map pick-up point selection
   const handleMapPress = (e) => {
-    const coord = e.nativeEvent.coordinate;
-    if (coord) {
+    const coord = e?.nativeEvent?.coordinate || (e?.latitude ? e : null);
+    if (coord && coord.latitude != null) {
       setPickupCoord(coord);
-      setPickup(`Selected Pin (${coord.latitude.toFixed(4)}, ${coord.longitude.toFixed(4)})`);
+      setPickup(`Selected Pin (${Number(coord.latitude).toFixed(4)}, ${Number(coord.longitude).toFixed(4)})`);
     }
   };
 
@@ -471,46 +472,14 @@ export default function HireBookingScreen({ navigation }) {
             {pickup && <Marker coordinate={pickupCoord} pinColor="#008751" title="Pickup / Reporting Point" />}
           </MapView>
         ) : (
-          // Clean Minimalist White Google Maps Canvas
-          <TouchableOpacity
-            activeOpacity={0.95}
-            onPress={handlePickOnMap}
-            className="flex-1 w-full bg-[#f8fafc] items-center justify-center relative overflow-hidden"
-          >
-            {/* Street Cartography Roads (Crisp White / Light Silver) */}
-            <View className="absolute inset-0">
-              <View className="absolute w-full h-10 bg-white top-1/4 -rotate-12 border-y border-slate-200/80" />
-              <View className="absolute w-full h-12 bg-white top-1/2 rotate-6 border-y border-slate-200/80" />
-              <View className="absolute h-full w-10 bg-white left-1/3 rotate-12 border-x border-slate-200/80" />
-              <View className="absolute h-full w-12 bg-white right-1/4 -rotate-6 border-x border-slate-200/80" />
-              <View className="absolute w-44 h-36 bg-emerald-50/60 rounded-3xl top-16 left-8 border border-emerald-100/70" />
-              <View className="absolute w-52 h-32 bg-sky-50/70 rounded-full top-1/3 right-6 border border-sky-100/70" />
-            </View>
-
-            {/* Center Reporting Spot Graphic (Clean White Card) */}
-            <View className="z-10 items-center bg-white/95 px-6 py-4 rounded-3xl border border-slate-200 shadow-md max-w-[85%] mb-24">
-              <View className="w-12 h-12 rounded-full bg-emerald-50 border-2 border-emerald-600 items-center justify-center shadow-sm mb-2">
-                <Ionicons name="location" size={24} color="#008751" />
-              </View>
-              <Text className="text-slate-800 text-xs font-normal text-center" numberOfLines={2}>
-                {pickup || 'Tap Map to Set Reporting Spot'}
-              </Text>
-              <View className="flex-row items-center mt-1 px-2.5 py-0.5 rounded-full bg-slate-100">
-                <Ionicons name="shield-checkmark" size={11} color="#008751" style={{ marginRight: 4 }} />
-                <Text className="text-slate-600 text-[10px] font-normal">
-                  Chauffeur Service Radius
-                </Text>
-              </View>
-            </View>
-
-            {/* Floating Lagos Metro Badge */}
-            <View className="absolute top-24 left-4 bg-white/90 px-3 py-1.5 rounded-full border border-slate-200 shadow-sm flex-row items-center">
-              <View className="w-2 h-2 rounded-full bg-emerald-500 mr-2" />
-              <Text className="text-slate-700 text-[10px] font-normal">
-                Google Maps Chauffeur Dispatch • Tap map to pick
-              </Text>
-            </View>
-          </TouchableOpacity>
+          <OpenStreetMap
+            center={pickup ? pickupCoord : region}
+            pickup={pickup}
+            pickupCoord={pickup ? pickupCoord : null}
+            onLocationSelect={handleMapPress}
+            isDark={isDark}
+            interactive={true}
+          />
         )}
       </View>
 

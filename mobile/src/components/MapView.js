@@ -3,6 +3,8 @@ import { View, StyleSheet, PermissionsAndroid, Platform, Alert, Text } from 'rea
 import MapView, { Marker, Polyline, Circle, PROVIDER_GOOGLE } from 'react-native-maps';
 import * as Location from 'expo-location';
 import { isGoogleMapsConfigured } from '../utils/maps';
+import { useTheme } from '../context/ThemeContext';
+import OpenStreetMap from './OpenStreetMap';
 
 const WHITE_GOOGLE_MAP_STYLE = [
   { elementType: 'geometry', stylers: [{ color: '#ffffff' }] },
@@ -72,26 +74,30 @@ export default function MapViewComponent({
     }
   };
 
-  if (Platform.OS === 'web' || !isGoogleMapsConfigured()) {
-    return (
-      <View className={`flex-1 bg-slate-100 items-center justify-center relative overflow-hidden ${className}`}>
-        {/* Street Cartography Roads */}
-        <View className="absolute inset-0">
-          <View className="absolute w-full h-10 bg-white top-1/4 -rotate-12 border-y border-slate-200" />
-          <View className="absolute w-full h-12 bg-white top-1/2 rotate-6 border-y border-slate-200" />
-          <View className="absolute h-full w-10 bg-white left-1/3 rotate-12 border-x border-slate-200" />
-          <View className="absolute h-full w-12 bg-white right-1/4 -rotate-6 border-x border-slate-200" />
-        </View>
+  let isDark = false;
+  try {
+    const themeContext = useTheme();
+    isDark = !!themeContext?.isDark;
+  } catch (e) {}
 
-        <View className="z-10 bg-white px-5 py-3 rounded-2xl border border-slate-200 shadow-sm items-center">
-          <View className="w-8 h-8 rounded-full bg-emerald-100 items-center justify-center mb-1">
-            <View className="w-3.5 h-3.5 rounded-full bg-emerald-600" />
-          </View>
-          <Text className="text-slate-800 font-semibold text-xs">OgaDriver Real-Time Navigation</Text>
-          <Text className="text-slate-500 text-[10px] mt-0.5">
-            {location ? `${location.coords.latitude.toFixed(4)}, ${location.coords.longitude.toFixed(4)}` : 'Victoria Island, Lagos'}
-          </Text>
-        </View>
+  if (Platform.OS === 'web' || !isGoogleMapsConfigured()) {
+    const pickupMarker = markers[0]?.coordinate;
+    const dropoffMarker = markers.length > 1 ? markers[markers.length - 1]?.coordinate : null;
+    return (
+      <View style={{ flex: 1 }} className={className}>
+        <OpenStreetMap
+          center={{
+            latitude: region.latitude,
+            longitude: region.longitude,
+          }}
+          pickup={markers[0]?.title}
+          dropoff={markers.length > 1 ? markers[markers.length - 1]?.title : null}
+          pickupCoord={pickupMarker}
+          dropoffCoord={dropoffMarker}
+          driverCoord={location?.coords}
+          interactive={true}
+          isDark={isDark}
+        />
       </View>
     );
   }
