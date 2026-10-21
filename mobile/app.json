@@ -59,12 +59,16 @@
               "pathPrefix": "/app"
             }
           ],
-          "category": ["BROWSABLE", "DEFAULT"]
+          "category": [
+            "BROWSABLE",
+            "DEFAULT"
+          ]
         }
       ]
     },
     "web": {
-      "favicon": "./assets/favicon.png", "bundler": "metro"
+      "favicon": "./assets/favicon.png",
+      "bundler": "metro"
     },
     "plugins": [
       "expo-secure-store",
@@ -77,10 +81,9 @@
     "extra": {
       "apiUrl": "https://ogadriver.ng/api",
       "eas": {
-        "projectId": "286e2712-b412-44eb-820c-3c9f7215d904"
+        "projectId": "620f6923-55e5-4e86-802d-b61bba5939af"
       }
-    }
+    },
+    "owner": "cejmart-island-intl-ltd"
   }
 }
-
-
