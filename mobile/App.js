@@ -6,22 +6,27 @@ import notificationService from './src/services/notifications';
 import AppControlReceiver from './src/components/AppControlReceiver';
 import { CountryProvider } from './src/context/CountryContext';
 import { LanguageProvider } from './src/context/LanguageContext';
+import ErrorBoundary from './src/components/ErrorBoundary';
 
 export default function App() {
   useEffect(() => {
-    notificationService.registerPushToken();
+    try {
+      notificationService.registerPushToken().catch(() => {});
+    } catch (e) {}
   }, []);
 
   return (
-    <View style={{ flex: 1 }}>
-      <StatusBar style="light" />
-      <CountryProvider>
-        <LanguageProvider>
-          <AppControlReceiver>
-            <AppNavigator />
-          </AppControlReceiver>
-        </LanguageProvider>
-      </CountryProvider>
-    </View>
+    <ErrorBoundary>
+      <View style={{ flex: 1 }}>
+        <StatusBar style="light" />
+        <CountryProvider>
+          <LanguageProvider>
+            <AppControlReceiver>
+              <AppNavigator />
+            </AppControlReceiver>
+          </LanguageProvider>
+        </CountryProvider>
+      </View>
+    </ErrorBoundary>
   );
 }

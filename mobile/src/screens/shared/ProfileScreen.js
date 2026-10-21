@@ -505,75 +505,43 @@ export default function ProfileScreen({ navigation, route }) {
           </View>
         </View>
 
-        {/* 2. THE MONEY HUB: CLIENT WALLET & BILLING (FOR THOSE WHO PAY) */}
-        {/* 2. THE MONEY HUB: CLIENT WALLET & BILLING */}
-        <View
-          style={{
-            backgroundColor: isDark ? '#121927' : '#f0fdf4',
-            borderColor: isDark ? '#1e293b' : '#bbf7d0',
-          }}
-          className="border rounded-3xl p-5 mb-5 shadow-sm"
-        >
-          <View className="flex-row items-center justify-between mb-3">
+        {/* 2. THE MONEY HUB: CLIENT WALLET & BILLING (Menu Item Leading to Dedicated Wallet Screen) */}
+        <View className="mb-4">
+          <TouchableOpacity
+            activeOpacity={0.85}
+            onPress={() => navigation.navigate('Wallet')}
+            style={{
+              backgroundColor: isDark ? '#121927' : '#ffffff',
+              borderColor: isDark ? '#1e293b' : '#bbf7d0',
+            }}
+            className="border rounded-2xl p-4 flex-row items-center justify-between shadow-sm"
+          >
+            <View className="flex-row items-center flex-1 mr-3">
+              <View
+                style={{ backgroundColor: isDark ? 'rgba(16, 185, 129, 0.15)' : '#ecfdf5' }}
+                className="w-11 h-11 rounded-2xl items-center justify-center mr-3 border border-emerald-500/20"
+              >
+                <Ionicons name="wallet" size={22} color="#10b981" />
+              </View>
+              <View className="flex-1">
+                <View className="flex-row items-center">
+                  <Text style={{ color: isDark ? '#ffffff' : '#0f172a' }} className="font-bold text-base mr-2">
+                    Wallet
+                  </Text>
+                  <View className="bg-emerald-500/10 border border-emerald-500/30 px-2 py-0.5 rounded-full">
+                    <Text className="text-emerald-500 text-[10px] font-bold">Instant Pay</Text>
+                  </View>
+                </View>
+                <Text style={{ color: isDark ? '#94a3b8' : '#64748b' }} className="text-xs font-medium mt-0.5">
+                  Balance: {formatAmount ? formatAmount(walletBalance) : `${selectedCountry?.symbol || '₦'}${walletBalance.toLocaleString()}`}
+                </Text>
+              </View>
+            </View>
             <View className="flex-row items-center">
-              <Ionicons name="wallet-outline" size={18} color={isDark ? '#10b981' : '#059669'} style={{ marginRight: 6 }} />
-              <Text style={{ color: isDark ? '#94a3b8' : '#166534' }} className="font-semibold text-xs uppercase tracking-wider">
-                Prepaid Wallet
-              </Text>
+              <Text className="text-emerald-500 text-xs font-bold mr-1">Manage</Text>
+              <Ionicons name="chevron-forward" size={18} color="#10b981" />
             </View>
-            <View
-              style={{
-                backgroundColor: isDark ? 'rgba(16, 185, 129, 0.15)' : '#dcfce7',
-                borderColor: isDark ? 'rgba(16, 185, 129, 0.3)' : '#86efac',
-              }}
-              className="px-2 py-0.5 rounded-md border"
-            >
-              <Text style={{ color: isDark ? '#10b981' : '#15803d' }} className="font-bold text-[10px] uppercase">Instant Pay</Text>
-            </View>
-          </View>
-
-          {/* Balance Amount */}
-          <Text style={{ color: isDark ? '#ffffff' : '#0f172a' }} className="font-extrabold text-3xl tracking-tight mb-1">
-            {formatAmount ? formatAmount(walletBalance) : `${selectedCountry?.symbol || '₦'}${walletBalance.toLocaleString()}`}
-          </Text>
-          <Text style={{ color: isDark ? '#94a3b8' : '#64748b' }} className="text-xs mb-4">
-            Spend this month: {formatAmount ? formatAmount(monthlySpend) : `${selectedCountry?.symbol || '₦'}${monthlySpend.toLocaleString()}`}
-          </Text>
-
-          {/* 3 Action Buttons for Wallet */}
-          <View className="flex-row space-x-2.5">
-            <TouchableOpacity
-              onPress={() => setAddFundsVisible(true)}
-              className="flex-1 py-3 rounded-xl bg-emerald-500 active:bg-emerald-600 items-center justify-center flex-row shadow-sm"
-            >
-              <Ionicons name="add-circle" size={16} color="#ffffff" style={{ marginRight: 4 }} />
-              <Text style={{ color: '#ffffff' }} className="font-bold text-xs uppercase">Add Funds</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              onPress={() => navigation.navigate('PaymentCards')}
-              style={{
-                backgroundColor: isDark ? 'rgba(255, 255, 255, 0.08)' : '#ffffff',
-                borderColor: isDark ? 'rgba(255, 255, 255, 0.15)' : '#cbd5e1',
-              }}
-              className="flex-1 py-3 rounded-xl items-center justify-center border flex-row shadow-sm"
-            >
-              <Ionicons name="card-outline" size={16} color={isDark ? '#ffffff' : '#0f172a'} style={{ marginRight: 4 }} />
-              <Text style={{ color: isDark ? '#ffffff' : '#0f172a' }} className="font-semibold text-xs">Cards</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              onPress={() => navigation.navigate('Invoices')}
-              style={{
-                backgroundColor: isDark ? 'rgba(255, 255, 255, 0.08)' : '#ffffff',
-                borderColor: isDark ? 'rgba(255, 255, 255, 0.15)' : '#cbd5e1',
-              }}
-              className="flex-1 py-3 rounded-xl items-center justify-center border flex-row shadow-sm"
-            >
-              <Ionicons name="document-text-outline" size={16} color={isDark ? '#ffffff' : '#0f172a'} style={{ marginRight: 4 }} />
-              <Text style={{ color: isDark ? '#ffffff' : '#0f172a' }} className="font-semibold text-xs">Invoices</Text>
-            </TouchableOpacity>
-          </View>
+          </TouchableOpacity>
         </View>
 
         {/* 3. DEDICATED "MY BOOKINGS" SECTION (Moved from bottom Nav to Account as NEW) */}

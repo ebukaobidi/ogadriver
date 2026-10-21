@@ -1,6 +1,7 @@
 import * as Notifications from 'expo-notifications';
 import * as SecureStore from 'expo-secure-store';
 import { Platform } from 'react-native';
+import Constants from 'expo-constants';
 import api from '../api/api';
 
 // Configure notification handler
@@ -40,8 +41,9 @@ class NotificationService {
       const hasPermission = await this.requestPermissions();
       if (!hasPermission) return null;
 
+      const projectId = Constants?.expoConfig?.extra?.eas?.projectId || Constants?.easConfig?.projectId || '620f6923-55e5-4e86-802d-b61bba5939af';
       const tokenData = await Notifications.getExpoPushTokenAsync({
-        projectId: '286e2712-b412-44eb-820c-3c9f7215d904', // Replace with your Expo project ID
+        projectId,
       });
 
       this.pushToken = tokenData.data;

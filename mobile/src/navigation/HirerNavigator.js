@@ -27,6 +27,7 @@ import InvoicesScreen from '../screens/shared/InvoicesScreen';
 import EmergencySosScreen from '../screens/shared/EmergencySosScreen';
 import KycVerificationScreen from '../screens/shared/KycVerificationScreen';
 import GiftFundsScreen from '../screens/shared/GiftFundsScreen';
+import WalletScreen from '../screens/shared/WalletScreen';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../context/ThemeContext';
 
@@ -53,7 +54,9 @@ function HomeStack() {
       <Stack.Screen name="PostJob" component={PostJobScreen} />
       <Stack.Screen name="MyDrivers" component={SearchDriversScreen} />
       <Stack.Screen name="Negotiate" component={RideBookingScreen} />
-      <Stack.Screen name="Wallet" component={PlacementPaymentScreen} />
+      <Stack.Screen name="HireBooking" component={HireBookingScreen} />
+      <Stack.Screen name="HireBookingMain" component={HireBookingScreen} />
+      <Stack.Screen name="Wallet" component={WalletScreen} />
       <Stack.Screen name="TermsAndPrivacy" component={TermsAndPrivacyScreen} />
       <Stack.Screen name="PaymentCards" component={PaymentCardsScreen} />
       <Stack.Screen name="Invoices" component={InvoicesScreen} />
@@ -86,6 +89,8 @@ function AccountStack({ route }) {
       <Stack.Screen name="PostJob" component={PostJobScreen} />
       <Stack.Screen name="RideBooking" component={RideBookingScreen} />
       <Stack.Screen name="HireBooking" component={HireBookingScreen} />
+      <Stack.Screen name="HireBookingMain" component={HireBookingScreen} />
+      <Stack.Screen name="Wallet" component={WalletScreen} />
     </Stack.Navigator>
   );
 }
@@ -94,6 +99,9 @@ function HireStack() {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }} initialRouteName="HireBookingMain">
       <Stack.Screen name="HireBookingMain" component={HireBookingScreen} />
+      <Stack.Screen name="HireBooking" component={HireBookingScreen} />
+      <Stack.Screen name="RideBooking" component={RideBookingScreen} />
+      <Stack.Screen name="Wallet" component={WalletScreen} />
       <Stack.Screen name="NaijaHirerHome" component={NaijaHirerHomeScreen} />
       <Stack.Screen name="SearchDrivers" component={SearchDriversScreen} />
       <Stack.Screen name="HirerBookings" component={HirerBookingsScreen} />

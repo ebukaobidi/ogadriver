@@ -386,6 +386,9 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/', [WalletController::class, 'index']);
         Route::post('/topup', [WalletController::class, 'topUp']);
         Route::post('/credit', [WalletController::class, 'topUp']);
+        Route::post('/deposit', [WalletController::class, 'topUp']);
+        Route::post('/withdraw', [WalletController::class, 'requestPayout']);
+        Route::post('/payout', [WalletController::class, 'requestPayout']);
         Route::get('/lookup', [WalletController::class, 'lookupRecipient']);
         Route::post('/transfer', [WalletController::class, 'transfer']);
         Route::post('/gift', [WalletController::class, 'transfer']);

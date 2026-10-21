@@ -17,6 +17,7 @@ export default function OpenStreetMap({
   stops = [],
   driverCoord = null,
   driverName = 'Active Driver',
+  nearbyDrivers = [],
   onLocationSelect = null,
   interactive = true,
   isDark = false,
@@ -138,6 +139,17 @@ export default function OpenStreetMap({
     .pin-dropoff { background: #ea4335; }
     .pin-stop { background: #0284c7; }
     .pin-driver { background: #008751; animation: pulse 2s infinite; }
+    .pin-car {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: #090d16;
+      border: 2.5px solid #10b981;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 12px rgba(16, 185, 129, 0.45);
+    }
     @keyframes pulse {
       0% { box-shadow: 0 0 0 0 rgba(0, 135, 81, 0.7); }
       70% { box-shadow: 0 0 0 14px rgba(0, 135, 81, 0); }
@@ -292,23 +304,41 @@ export default function OpenStreetMap({
         boundsPoints.push([s.lat, s.lng]);
       });
 
-      // Driver Vehicle Marker
+      // Driver Vehicle Marker (With OgaDriver Brand Color Car Image)
       ${
         drCoord
           ? `
+        var driverCarSvg = '<div class=\"pin-car\"><svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"#10b981\"><path d=\"M18.92 6.01C18.72 5.42 18.16 5 17.5 5h-11c-.66 0-1.21.42-1.42 1.01L3 12v8c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h12v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-8l-2.08-5.99zM6.5 16c-.83 0-1.5-.67-1.5-1.5S5.67 13 6.5 13s1.5.67 1.5 1.5S7.33 16 6.5 16zm11 0c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zM5 11l1.5-4.5h11L19 11H5z\"/></svg></div>';
         var driverIcon = L.divIcon({
           className: 'custom-pin',
-          html: '<div class=\"pin-bubble pin-driver\"><svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"white\" stroke-width=\"2.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><polygon points=\"12 2 19 21 12 17 5 21 12 2\"/></svg></div>',
-          iconSize: [32, 32],
-          iconAnchor: [16, 16]
+          html: driverCarSvg,
+          iconSize: [36, 36],
+          iconAnchor: [18, 18]
         });
         L.marker([${drCoord.latitude}, ${drCoord.longitude}], { icon: driverIcon, zIndexOffset: 950 })
           .addTo(map)
-          .bindPopup('<b>${escapeHtml(driverName)}</b>');
+          .bindPopup('<b>${escapeHtml(driverName)} (Active Driver)</b>');
         boundsPoints.push([${drCoord.latitude}, ${drCoord.longitude}]);
       `
           : ''
       }
+
+      // Nearby Active Drivers with Branded Car Markers
+      var nearbyDriversList = ${JSON.stringify(nearbyDrivers || [])};
+      nearbyDriversList.forEach(function(dr, drIdx) {
+        if (dr && dr.latitude && dr.longitude) {
+          var carSvgHtml = '<div class=\"pin-car\"><svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"#10b981\"><path d=\"M18.92 6.01C18.72 5.42 18.16 5 17.5 5h-11c-.66 0-1.21.42-1.42 1.01L3 12v8c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h12v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-8l-2.08-5.99zM6.5 16c-.83 0-1.5-.67-1.5-1.5S5.67 13 6.5 13s1.5.67 1.5 1.5S7.33 16 6.5 16zm11 0c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zM5 11l1.5-4.5h11L19 11H5z\"/></svg></div>';
+          var nbIcon = L.divIcon({
+            className: 'custom-pin',
+            html: carSvgHtml,
+            iconSize: [36, 36],
+            iconAnchor: [18, 18]
+          });
+          L.marker([dr.latitude, dr.longitude], { icon: nbIcon, zIndexOffset: 900 })
+            .addTo(map)
+            .bindPopup('<b>' + (dr.name || 'Verified Driver') + '</b><br/>' + (dr.vehicle || 'Active Chauffeur'));
+        }
+      });
 
       // Draw Route Polyline if both Pickup and Dropoff exist
       ${
@@ -392,6 +422,7 @@ export default function OpenStreetMap({
     driverCoord?.latitude,
     driverCoord?.longitude,
     driverName,
+    nearbyDrivers,
     stops,
     interactive,
     isDark,

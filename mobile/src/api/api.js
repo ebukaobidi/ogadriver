@@ -334,6 +334,11 @@ export const walletService = {
     return res.data;
   },
 
+  topUp: async (amount) => {
+    const res = await api.post('/wallet/topup', { amount });
+    return res.data;
+  },
+
   deposit: async (data) => {
     const res = await api.post('/wallet/deposit', data);
     return res.data;
@@ -344,8 +349,23 @@ export const walletService = {
     return res.data;
   },
 
+  transfer: async (data) => {
+    const res = await api.post('/wallet/transfer', data);
+    return res.data;
+  },
+
+  lookupRecipient: async (query) => {
+    const res = await api.get('/wallet/lookup', { params: { query } });
+    return res.data;
+  },
+
   getTransactions: async () => {
-    const res = await api.get('/wallet/transactions');
+    const res = await api.get('/wallet');
+    return res.data?.transactions || [];
+  },
+
+  verifyPayment: async (reference) => {
+    const res = await api.post('/payments/verify', { reference });
     return res.data;
   },
 };

@@ -61,11 +61,11 @@ export default function NaijaHirerHomeScreen({ navigation }) {
   const [liveDrivers, setLiveDrivers] = useState([]);
   const [userProfile, setUserProfile] = useState(null);
 
-  // Auto-detect device location
+  // Auto-detect device location with total error protection
   const detectDeviceLocation = async () => {
     try {
       setLocLoading(true);
-      const { status } = await Location.requestForegroundPermissionsAsync();
+      const { status } = await Location.requestForegroundPermissionsAsync().catch(() => ({ status: 'denied' }));
       if (status !== 'granted') {
         setUserLocation('Victoria Island, Lagos (Default)');
         setTypedLocation('Victoria Island, Lagos');
@@ -73,12 +73,18 @@ export default function NaijaHirerHomeScreen({ navigation }) {
         return;
       }
 
-      const position = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
+      const position = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced }).catch(() => null);
       if (position?.coords) {
+        setMapCoords({
+          latitude: position.coords.latitude,
+          longitude: position.coords.longitude,
+          latitudeDelta: 0.05,
+          longitudeDelta: 0.05,
+        });
         const reverse = await Location.reverseGeocodeAsync({
           latitude: position.coords.latitude,
           longitude: position.coords.longitude,
-        });
+        }).catch(() => null);
 
         if (reverse && reverse.length > 0) {
           const item = reverse[0];
@@ -611,25 +617,37 @@ export default function NaijaHirerHomeScreen({ navigation }) {
                     </View>
                   </View>
 
-                  {/* Available Fleet Models */}
-                  {Array.isArray(fleetItem.fleet) && fleetItem.fleet.length > 0 && (
-                    <View className="flex-row flex-wrap gap-1.5 mb-3">
-                      {fleetItem.fleet.slice(0, 3).map((carName, cIdx) => (
-                        <View
-                          key={cIdx}
-                          style={{
-                            backgroundColor: isDark ? '#1a2333' : '#f8fafc',
-                            borderColor: isDark ? '#1e293b' : '#e2e8f0',
-                          }}
-                          className="px-2 py-0.5 rounded-md border mr-1"
-                        >
-                          <Text style={{ color: isDark ? '#94a3b8' : '#64748b' }} className="text-[10px] font-normal">
-                            🚗 {carName}
-                          </Text>
-                        </View>
-                      ))}
-                    </View>
-                  )}
+                  {/* Available Fleet Models (Safe Rendering for string or object items) */}
+                  {(() => {
+                    const fleetList = Array.isArray(fleetItem.fleet)
+                      ? fleetItem.fleet
+                      : (fleetItem.fleet && typeof fleetItem.fleet === 'object' ? Object.values(fleetItem.fleet) : []);
+                    if (!fleetList || fleetList.length === 0) return null;
+
+                    return (
+                      <View className="flex-row flex-wrap gap-1.5 mb-3">
+                        {fleetList.slice(0, 3).map((carItem, cIdx) => {
+                          const label = typeof carItem === 'string'
+                            ? carItem
+                            : (carItem?.model || carItem?.name || carItem?.title || 'Executive Vehicle');
+                          return (
+                            <View
+                              key={cIdx}
+                              style={{
+                                backgroundColor: isDark ? '#1a2333' : '#f8fafc',
+                                borderColor: isDark ? '#1e293b' : '#e2e8f0',
+                              }}
+                              className="px-2 py-0.5 rounded-md border mr-1"
+                            >
+                              <Text style={{ color: isDark ? '#94a3b8' : '#64748b' }} className="text-[10px] font-normal">
+                                🚗 {label}
+                              </Text>
+                            </View>
+                          );
+                        })}
+                      </View>
+                    );
+                  })()}
 
                   {/* Action Buttons */}
                   <View className="flex-row space-x-2 pt-1 border-t border-slate-100 dark:border-slate-800/80">
