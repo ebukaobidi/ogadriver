@@ -119,8 +119,54 @@ export default function EarningsScreen({ navigation }) {
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: themeStyles.screenBg }}>
-      {/* Top Header Bar */}
-      <HeaderBar navigation={navigation} />
+      {/* Clean Top Navigation Bar (No bulky banner, no back arrow) */}
+      <View className="px-4 pt-3 pb-2 flex-row justify-between items-center">
+        <View className="flex-1 mr-3">
+          <Text style={{ color: themeStyles.titleText, fontSize: 24, fontWeight: '700' }} numberOfLines={1}>
+            Earnings
+          </Text>
+          <Text style={{ color: themeStyles.subText, fontSize: 12, marginTop: 1 }} numberOfLines={1}>
+            Weekly payout & commission-free income
+          </Text>
+        </View>
+
+        <View className="flex-row items-center">
+          <TouchableOpacity
+            onPress={handleCashoutPress}
+            style={{ 
+              backgroundColor: themeStyles.heroCardBg, 
+              paddingHorizontal: 12,
+              height: 36,
+              borderRadius: 12,
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'center',
+              marginRight: 8
+            }}
+            accessibilityLabel="Wallet"
+          >
+            <Ionicons name="wallet-outline" size={16} color={themeStyles.heroTextColor} style={{ marginRight: 4 }} />
+            <Text style={{ color: themeStyles.heroTextColor, fontSize: 12, fontWeight: '600' }}>Wallet</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            onPress={() => navigation?.navigate('Conversations')}
+            style={{ 
+              backgroundColor: themeStyles.cardBg, 
+              borderColor: themeStyles.cardBorder,
+              borderWidth: 1,
+              width: 36,
+              height: 36,
+              borderRadius: 12,
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}
+            accessibilityLabel="Notifications"
+          >
+            <Ionicons name="notifications-outline" size={16} color={themeStyles.brandGreen} />
+          </TouchableOpacity>
+        </View>
+      </View>
 
       <ScrollView
         className="flex-1 px-4 pt-3"
@@ -128,13 +174,6 @@ export default function EarningsScreen({ navigation }) {
         showsVerticalScrollIndicator={false}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={themeStyles.heroCardBg} />}
       >
-        {/* Screen Title */}
-        <View className="mb-4">
-          <Text style={{ color: themeStyles.titleText }} className="font-normal text-3xl">
-            Earnings
-          </Text>
-        </View>
-
         {/* Hero Card — Weekly Earnings */}
         <View 
           style={{ backgroundColor: themeStyles.heroCardBg }} 
@@ -204,7 +243,7 @@ export default function EarningsScreen({ navigation }) {
           className="rounded-3xl p-4 flex-row justify-between items-center mb-4 shadow-sm"
           onPress={handleCashoutPress}
         >
-          <View>
+          <View className="flex-1 mr-2">
             <Text style={{ color: themeStyles.primaryText }} className="font-normal text-base">
               Cash out to bank
             </Text>
@@ -212,8 +251,8 @@ export default function EarningsScreen({ navigation }) {
               Instant 24/7 transfer in {globalCountry?.name || 'Nigeria'}
             </Text>
           </View>
-          <View className="flex-row items-center">
-            <Text style={{ color: themeStyles.subText }} className="text-sm font-normal mr-1">
+          <View className="flex-row items-center max-w-[45%]">
+            <Text style={{ color: themeStyles.subText }} className="text-sm font-normal mr-1" numberOfLines={1} ellipsizeMode="tail">
               {savedBankDisplay}
             </Text>
             <Ionicons name="chevron-forward" size={16} color={themeStyles.subText} />

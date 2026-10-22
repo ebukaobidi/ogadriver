@@ -76,6 +76,11 @@ Route::get('/health', function () {
 
 // App Config (Mobile Force Update & Maintenance)
 Route::prefix('v1')->group(function () {
+// Bank Account Resolution & Bank List (Available for Hirer and Driver Payments)
+Route::get('/bank/banks', [\App\Http\Controllers\Api\DriverPayoutController::class, 'getBanks']);
+Route::post('/bank/resolve', [\App\Http\Controllers\Api\DriverPayoutController::class, 'resolveAccount']);
+Route::get('/banks', [\App\Http\Controllers\Api\DriverPayoutController::class, 'getBanks']);
+
     Route::get('/app-config', [\App\Http\Controllers\Api\AppConfigController::class, 'index']);
 });
 
@@ -688,6 +693,11 @@ Route::middleware(['auth:sanctum'])->prefix('headless')->group(function () {
 
 // Verification APIs (NIN / NIMC & NUBAN Bank Account Resolution)
 Route::prefix('v1')->group(function () {
+// Bank Account Resolution & Bank List (Available for Hirer and Driver Payments)
+Route::get('/bank/banks', [\App\Http\Controllers\Api\DriverPayoutController::class, 'getBanks']);
+Route::post('/bank/resolve', [\App\Http\Controllers\Api\DriverPayoutController::class, 'resolveAccount']);
+Route::get('/banks', [\App\Http\Controllers\Api\DriverPayoutController::class, 'getBanks']);
+
     Route::post('/verify/nin', [DriverVerificationController::class, 'verifyNIN']);
     Route::post('/verify/bank-account', [DriverVerificationController::class, 'verifyBankAccount']);
 });
@@ -706,3 +716,9 @@ Route::middleware('auth:sanctum')->group(function () {
 
 
 Route::post('/webhooks/termii/sms', [\App\Http\Controllers\Api\SmsWebhookController::class, 'handleIncoming']);
+
+
+// Bank Account Resolution & Bank List (Available for Hirer and Driver Payments)
+Route::get('/bank/banks', [\App\Http\Controllers\Api\DriverPayoutController::class, 'getBanks']);
+Route::post('/bank/resolve', [\App\Http\Controllers\Api\DriverPayoutController::class, 'resolveAccount']);
+Route::get('/banks', [\App\Http\Controllers\Api\DriverPayoutController::class, 'getBanks']);

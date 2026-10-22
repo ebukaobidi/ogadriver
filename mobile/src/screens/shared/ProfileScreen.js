@@ -452,135 +452,172 @@ export default function ProfileScreen({ navigation, route }) {
           </View>
         </View>
 
-        {/* 2. WALLET (Dedicated Menu Item Leading to Wallet Screen) */}
+        {/* 2. Sleek Two-Line Menu Rows (Custom design: two lines up & down that do not reach ends) */}
         <View className="mb-4">
-          <TouchableOpacity
-            activeOpacity={0.85}
-            onPress={() => navigation.navigate('Wallet')}
-            style={{
-              backgroundColor: isDark ? '#121927' : '#ffffff',
-              borderColor: isDark ? '#1e293b' : '#bbf7d0',
-            }}
-            className="border rounded-2xl p-4 flex-row items-center justify-between shadow-sm"
-          >
-            <View className="flex-row items-center flex-1 mr-3">
-              <View
-                style={{ backgroundColor: isDark ? 'rgba(16, 185, 129, 0.15)' : '#ecfdf5' }}
-                className="w-11 h-11 rounded-2xl items-center justify-center mr-3 border border-emerald-500/20"
-              >
-                <Ionicons name="wallet" size={22} color="#10b981" />
-              </View>
-              <View className="flex-1">
-                <View className="flex-row items-center">
-                  <Text style={{ color: isDark ? '#ffffff' : '#0f172a' }} className="font-bold text-base mr-2">
-                    Wallet
-                  </Text>
-                  <View className="bg-emerald-500/10 border border-emerald-500/30 px-2 py-0.5 rounded-full">
-                    <Text className="text-emerald-500 text-[10px] font-bold">Instant Pay</Text>
-                  </View>
+          {/* Wallet Menu */}
+          <View className="my-1.5">
+            <View style={{ marginHorizontal: 20, height: 1, backgroundColor: isDark ? 'rgba(51, 65, 85, 0.4)' : 'rgba(226, 232, 240, 0.8)' }} />
+            <TouchableOpacity
+              activeOpacity={0.7}
+              onPress={() => navigation.navigate('Wallet')}
+              className="px-5 py-3.5 flex-row items-center justify-between"
+            >
+              <View className="flex-row items-center flex-1 mr-3">
+                <View 
+                  style={{ 
+                    width: 42, 
+                    height: 42, 
+                    borderRadius: 12, 
+                    backgroundColor: isDark ? 'rgba(16, 185, 129, 0.12)' : '#ecfdf5', 
+                    borderWidth: 1, 
+                    borderColor: isDark ? 'rgba(16, 185, 129, 0.25)' : '#a7f3d0',
+                    alignItems: 'center', 
+                    justifyContent: 'center', 
+                    marginRight: 14 
+                  }}
+                >
+                  <Ionicons name="wallet" size={20} color="#10b981" />
                 </View>
-                <Text style={{ color: isDark ? '#94a3b8' : '#64748b' }} className="text-xs font-medium mt-0.5">
-                  Balance: {formatAmount ? formatAmount(walletBalance) : `${selectedCountry?.symbol || '₦'}${walletBalance.toLocaleString()}`}
-                </Text>
-              </View>
-            </View>
-            <View className="flex-row items-center">
-              <Text className="text-emerald-500 text-xs font-bold mr-1">Manage</Text>
-              <Ionicons name="chevron-forward" size={18} color="#10b981" />
-            </View>
-          </TouchableOpacity>
-        </View>
-
-        {/* 3. SAVED PLACES MENU ITEM (Clean dedicated screen transition) */}
-        <View className="mb-4">
-          <TouchableOpacity
-            activeOpacity={0.85}
-            onPress={() => navigation.navigate('SavedPlaces')}
-            style={{
-              backgroundColor: isDark ? '#121927' : '#ffffff',
-              borderColor: isDark ? '#1e293b' : '#e2e8f0',
-            }}
-            className="border rounded-2xl p-4 flex-row items-center justify-between shadow-sm"
-          >
-            <View className="flex-row items-center flex-1 mr-3">
-              <View
-                style={{ backgroundColor: isDark ? 'rgba(16, 185, 129, 0.15)' : '#ecfdf5' }}
-                className="w-11 h-11 rounded-2xl items-center justify-center mr-3 border border-emerald-500/20"
-              >
-                <Ionicons name="bookmark" size={22} color="#10b981" />
-              </View>
-              <View className="flex-1">
-                <Text style={{ color: isDark ? '#ffffff' : '#0f172a' }} className="font-bold text-base">
-                  Saved Places
-                </Text>
-                <Text style={{ color: isDark ? '#94a3b8' : '#64748b' }} className="text-xs font-medium mt-0.5">
-                  Home, Work, Airport & Custom Spots
-                </Text>
-              </View>
-            </View>
-            <Ionicons name="chevron-forward" size={18} color={isDark ? '#94a3b8' : '#64748b'} />
-          </TouchableOpacity>
-        </View>
-
-        {/* 4. MY BOOKINGS SECTION */}
-        <View className="mb-4">
-          <TouchableOpacity
-            activeOpacity={0.85}
-            onPress={() => navigation.navigate('HirerBookings')}
-            style={{
-              backgroundColor: isDark ? '#121927' : '#ffffff',
-              borderColor: isDark ? '#1e293b' : '#e2e8f0',
-            }}
-            className="border rounded-2xl p-4 flex-row items-center justify-between shadow-sm"
-          >
-            <View className="flex-row items-center flex-1 mr-3">
-              <View className="w-11 h-11 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 items-center justify-center mr-3">
-                <Ionicons name="calendar" size={22} color="#10b981" />
-              </View>
-              <View className="flex-1">
-                <View className="flex-row items-center">
-                  <Text style={{ color: isDark ? '#ffffff' : '#0f172a' }} className="font-bold text-base mr-2">
-                    My Bookings
-                  </Text>
-                  <View className="px-2 py-0.5 rounded-full bg-emerald-500/15 border border-emerald-500/30">
-                    <Text className="text-[9px] font-bold uppercase text-emerald-500">Active</Text>
+                <View className="flex-1">
+                  <View className="flex-row items-center">
+                    <Text style={{ color: isDark ? '#ffffff' : '#0f172a', fontSize: 15, fontWeight: '700' }}>
+                      Wallet
+                    </Text>
+                    <View style={{ backgroundColor: 'rgba(16, 185, 129, 0.15)', borderWidth: 1, borderColor: 'rgba(16, 185, 129, 0.3)', paddingHorizontal: 7, paddingVertical: 1, borderRadius: 999, marginLeft: 8 }}>
+                      <Text style={{ color: '#10b981', fontSize: 9, fontWeight: '700' }}>INSTANT PAY</Text>
+                    </View>
                   </View>
+                  <Text style={{ color: isDark ? '#94a3b8' : '#64748b', fontSize: 12, marginTop: 2 }}>
+                    Balance: {formatAmount ? formatAmount(walletBalance) : `₦${walletBalance.toLocaleString()}`}
+                  </Text>
                 </View>
-                <Text style={{ color: isDark ? '#94a3b8' : '#64748b' }} className="text-xs font-medium mt-0.5">
-                  Past trips, chauffeurs & invoices
-                </Text>
               </View>
-            </View>
-            <Ionicons name="chevron-forward" size={18} color={isDark ? '#94a3b8' : '#64748b'} />
-          </TouchableOpacity>
-        </View>
+              <View className="flex-row items-center">
+                <Text style={{ color: '#10b981', fontSize: 12, fontWeight: '600', marginRight: 4 }}>Manage</Text>
+                <Ionicons name="chevron-forward" size={17} color={isDark ? '#64748b' : '#94a3b8'} />
+              </View>
+            </TouchableOpacity>
+            <View style={{ marginHorizontal: 20, height: 1, backgroundColor: isDark ? 'rgba(51, 65, 85, 0.4)' : 'rgba(226, 232, 240, 0.8)' }} />
+          </View>
 
-        {/* 5. PAYMENT METHODS MENU ROW */}
-        <View className="mb-4">
-          <TouchableOpacity
-            activeOpacity={0.85}
-            onPress={() => navigation.navigate('PaymentCards')}
-            style={{
-              backgroundColor: isDark ? '#121927' : '#ffffff',
-              borderColor: isDark ? '#1e293b' : '#e2e8f0',
-            }}
-            className="border rounded-2xl p-4 flex-row items-center justify-between shadow-sm"
-          >
-            <View className="flex-row items-center flex-1 mr-3">
-              <View className="w-11 h-11 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 items-center justify-center mr-3">
-                <Ionicons name="card" size={22} color="#10b981" />
+          {/* Saved Places Menu */}
+          <View className="my-1.5">
+            <View style={{ marginHorizontal: 20, height: 1, backgroundColor: isDark ? 'rgba(51, 65, 85, 0.4)' : 'rgba(226, 232, 240, 0.8)' }} />
+            <TouchableOpacity
+              activeOpacity={0.7}
+              onPress={() => navigation.navigate('SavedPlaces')}
+              className="px-5 py-3.5 flex-row items-center justify-between"
+            >
+              <View className="flex-row items-center flex-1 mr-3">
+                <View 
+                  style={{ 
+                    width: 42, 
+                    height: 42, 
+                    borderRadius: 12, 
+                    backgroundColor: isDark ? 'rgba(16, 185, 129, 0.12)' : '#ecfdf5', 
+                    borderWidth: 1, 
+                    borderColor: isDark ? 'rgba(16, 185, 129, 0.25)' : '#a7f3d0',
+                    alignItems: 'center', 
+                    justifyContent: 'center', 
+                    marginRight: 14 
+                  }}
+                >
+                  <Ionicons name="bookmark" size={20} color="#10b981" />
+                </View>
+                <View className="flex-1">
+                  <Text style={{ color: isDark ? '#ffffff' : '#0f172a', fontSize: 15, fontWeight: '700' }}>
+                    Saved Places
+                  </Text>
+                  <Text style={{ color: isDark ? '#94a3b8' : '#64748b', fontSize: 12, marginTop: 2 }}>
+                    Home, Work, Airport & Custom Spots
+                  </Text>
+                </View>
               </View>
-              <View className="flex-1">
-                <Text style={{ color: isDark ? '#ffffff' : '#0f172a' }} className="font-bold text-base">
-                  Payment Methods
-                </Text>
-                <Text style={{ color: isDark ? '#94a3b8' : '#64748b' }} className="text-xs font-medium mt-0.5">
-                  Add Debit/Credit Card & default billing
-                </Text>
+              <Ionicons name="chevron-forward" size={17} color={isDark ? '#64748b' : '#94a3b8'} />
+            </TouchableOpacity>
+            <View style={{ marginHorizontal: 20, height: 1, backgroundColor: isDark ? 'rgba(51, 65, 85, 0.4)' : 'rgba(226, 232, 240, 0.8)' }} />
+          </View>
+
+          {/* My Bookings Menu */}
+          <View className="my-1.5">
+            <View style={{ marginHorizontal: 20, height: 1, backgroundColor: isDark ? 'rgba(51, 65, 85, 0.4)' : 'rgba(226, 232, 240, 0.8)' }} />
+            <TouchableOpacity
+              activeOpacity={0.7}
+              onPress={() => navigation.navigate('HirerBookings')}
+              className="px-5 py-3.5 flex-row items-center justify-between"
+            >
+              <View className="flex-row items-center flex-1 mr-3">
+                <View 
+                  style={{ 
+                    width: 42, 
+                    height: 42, 
+                    borderRadius: 12, 
+                    backgroundColor: isDark ? 'rgba(16, 185, 129, 0.12)' : '#ecfdf5', 
+                    borderWidth: 1, 
+                    borderColor: isDark ? 'rgba(16, 185, 129, 0.25)' : '#a7f3d0',
+                    alignItems: 'center', 
+                    justifyContent: 'center', 
+                    marginRight: 14 
+                  }}
+                >
+                  <Ionicons name="calendar" size={20} color="#10b981" />
+                </View>
+                <View className="flex-1">
+                  <View className="flex-row items-center">
+                    <Text style={{ color: isDark ? '#ffffff' : '#0f172a', fontSize: 15, fontWeight: '700' }}>
+                      My Bookings
+                    </Text>
+                    <View style={{ backgroundColor: 'rgba(16, 185, 129, 0.15)', borderWidth: 1, borderColor: 'rgba(16, 185, 129, 0.3)', paddingHorizontal: 7, paddingVertical: 1, borderRadius: 999, marginLeft: 8 }}>
+                      <Text style={{ color: '#10b981', fontSize: 9, fontWeight: '700' }}>ACTIVE</Text>
+                    </View>
+                  </View>
+                  <Text style={{ color: isDark ? '#94a3b8' : '#64748b', fontSize: 12, marginTop: 2 }}>
+                    Past trips, chauffeurs & invoices
+                  </Text>
+                </View>
               </View>
-            </View>
-            <Ionicons name="chevron-forward" size={18} color={isDark ? '#94a3b8' : '#64748b'} />
-          </TouchableOpacity>
+              <Ionicons name="chevron-forward" size={17} color={isDark ? '#64748b' : '#94a3b8'} />
+            </TouchableOpacity>
+            <View style={{ marginHorizontal: 20, height: 1, backgroundColor: isDark ? 'rgba(51, 65, 85, 0.4)' : 'rgba(226, 232, 240, 0.8)' }} />
+          </View>
+
+          {/* Payment Methods Menu */}
+          <View className="my-1.5">
+            <View style={{ marginHorizontal: 20, height: 1, backgroundColor: isDark ? 'rgba(51, 65, 85, 0.4)' : 'rgba(226, 232, 240, 0.8)' }} />
+            <TouchableOpacity
+              activeOpacity={0.7}
+              onPress={() => navigation.navigate('PaymentCards')}
+              className="px-5 py-3.5 flex-row items-center justify-between"
+            >
+              <View className="flex-row items-center flex-1 mr-3">
+                <View 
+                  style={{ 
+                    width: 42, 
+                    height: 42, 
+                    borderRadius: 12, 
+                    backgroundColor: isDark ? 'rgba(16, 185, 129, 0.12)' : '#ecfdf5', 
+                    borderWidth: 1, 
+                    borderColor: isDark ? 'rgba(16, 185, 129, 0.25)' : '#a7f3d0',
+                    alignItems: 'center', 
+                    justifyContent: 'center', 
+                    marginRight: 14 
+                  }}
+                >
+                  <Ionicons name="card" size={20} color="#10b981" />
+                </View>
+                <View className="flex-1">
+                  <Text style={{ color: isDark ? '#ffffff' : '#0f172a', fontSize: 15, fontWeight: '700' }}>
+                    Payment Methods
+                  </Text>
+                  <Text style={{ color: isDark ? '#94a3b8' : '#64748b', fontSize: 12, marginTop: 2 }}>
+                    Bank accounts, Debit/Credit Cards & verified NUBAN
+                  </Text>
+                </View>
+              </View>
+              <Ionicons name="chevron-forward" size={17} color={isDark ? '#64748b' : '#94a3b8'} />
+            </TouchableOpacity>
+            <View style={{ marginHorizontal: 20, height: 1, backgroundColor: isDark ? 'rgba(51, 65, 85, 0.4)' : 'rgba(226, 232, 240, 0.8)' }} />
+          </View>
         </View>
 
         {/* Secondary Account Shortcuts (Browse Drivers, Gift Funds, Loyalty) */}

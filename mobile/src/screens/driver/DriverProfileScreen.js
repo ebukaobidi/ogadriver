@@ -577,177 +577,278 @@ export default function DriverProfileScreen({ navigation, route }) {
         </View>
 
 
-        {/* 3. Top Action Card Menu Group (Boost & Referrals & Simulation) */}
-        <View 
-          style={{ 
-            backgroundColor: themeStyles.cardBg, 
-            borderColor: themeStyles.cardBorder, 
-            borderWidth: 1 
-          }} 
-          className="rounded-3xl mb-4 overflow-hidden shadow-lg"
-        >
-          {/* Driver Membership & Subscription Pass (300 NGN Daily) */}
-          <TouchableOpacity
-            style={{ borderBottomColor: themeStyles.borderDivider, borderBottomWidth: 1 }}
-            className="p-4 flex-row justify-between items-center"
-            onPress={() => navigation.navigate('DriverSubscription')}
-          >
-            <View className="flex-row items-center flex-1 mr-2">
-              <Ionicons name="card-outline" size={18} color={themeStyles.accentGreen} className="mr-3" />
-              <View>
-                <Text style={{ color: themeStyles.primaryText }} className="font-normal text-sm ml-2">
-                  Driver Subscription Pass
-                </Text>
+        {/* 3. Sleek Two-Line Menu Items (Custom luxury design: two lines up & down not reaching ends) */}
+        <View className="mb-4">
+          {/* Driver Subscription Pass */}
+          <View className="my-1.5">
+            <View style={{ marginHorizontal: 20, height: 1, backgroundColor: isDark ? 'rgba(51, 65, 85, 0.4)' : 'rgba(226, 232, 240, 0.8)' }} />
+            <TouchableOpacity
+              activeOpacity={0.7}
+              onPress={() => navigation.navigate('DriverSubscription')}
+              className="px-5 py-3.5 flex-row items-center justify-between"
+            >
+              <View className="flex-row items-center flex-1 mr-3">
+                <View 
+                  style={{ 
+                    width: 42, 
+                    height: 42, 
+                    borderRadius: 12, 
+                    backgroundColor: isDark ? 'rgba(16, 185, 129, 0.12)' : '#ecfdf5', 
+                    borderWidth: 1, 
+                    borderColor: isDark ? 'rgba(16, 185, 129, 0.25)' : '#a7f3d0',
+                    alignItems: 'center', 
+                    justifyContent: 'center', 
+                    marginRight: 14 
+                  }}
+                >
+                  <Ionicons name="card-outline" size={20} color="#10b981" />
+                </View>
+                <View className="flex-1">
+                  <View className="flex-row items-center">
+                    <Text style={{ color: isDark ? '#ffffff' : '#0f172a', fontSize: 15, fontWeight: '700' }}>
+                      Driver Subscription Pass
+                    </Text>
+                    <View style={{ backgroundColor: 'rgba(16, 185, 129, 0.15)', borderWidth: 1, borderColor: 'rgba(16, 185, 129, 0.3)', paddingHorizontal: 7, paddingVertical: 1, borderRadius: 999, marginLeft: 8 }}>
+                      <Text style={{ color: '#10b981', fontSize: 9, fontWeight: '700' }}>ACTIVE</Text>
+                    </View>
+                  </View>
+                  <Text style={{ color: isDark ? '#94a3b8' : '#64748b', fontSize: 12, marginTop: 2 }}>
+                    Daily ₦300 unlimited commission-free pass
+                  </Text>
+                </View>
               </View>
-            </View>
-            <View className="flex-row items-center">
-              <View className="px-2 py-0.5 rounded-md bg-emerald-500/20 border border-emerald-500/40 mr-1.5">
-                <Text className="text-emerald-500 font-normal text-[10px]">Active</Text>
-              </View>
-              <Ionicons name="chevron-forward" size={18} color={themeStyles.subText} />
-            </View>
-          </TouchableOpacity>
+              <Ionicons name="chevron-forward" size={17} color={isDark ? '#64748b' : '#94a3b8'} />
+            </TouchableOpacity>
+            <View style={{ marginHorizontal: 20, height: 1, backgroundColor: isDark ? 'rgba(51, 65, 85, 0.4)' : 'rgba(226, 232, 240, 0.8)' }} />
+          </View>
 
           {/* Boost My Profile */}
-          <TouchableOpacity
-            style={{ borderBottomColor: themeStyles.borderDivider, borderBottomWidth: 1 }}
-            className="p-4 flex-row justify-between items-center"
-            onPress={() => navigation.navigate('BoostProfile')}
-          >
-            <View className="flex-row items-center">
-              <Ionicons name="flash" size={18} color={themeStyles.accentGreen} className="mr-3" />
-              <Text style={{ color: themeStyles.primaryText }} className="font-normal text-sm ml-2">
-                Boost my profile
-              </Text>
-            </View>
-            <Ionicons name="chevron-forward" size={18} color={themeStyles.subText} />
-          </TouchableOpacity>
-
-          {/* Road Safety & Driving Simulator Game Menu */}
-          <TouchableOpacity
-            style={{ borderBottomColor: themeStyles.borderDivider, borderBottomWidth: 1 }}
-            className="p-4 flex-row justify-between items-center"
-            onPress={() => navigation.navigate('DriverAssessment')}
-          >
-            <View className="flex-row items-center">
-              <Ionicons name="game-controller" size={18} color={themeStyles.accentGreen} className="mr-3" />
-              <Text style={{ color: themeStyles.primaryText }} className="font-normal text-sm ml-2">
-                Driver Simulator Game
-              </Text>
-            </View>
-            <Ionicons name="chevron-forward" size={18} color={themeStyles.subText} />
-          </TouchableOpacity>
-
-          {/* Referral Earnings */}
-          <TouchableOpacity
-            className="p-4 flex-row justify-between items-center"
-            onPress={() => navigation.navigate('Referrals')}
-          >
-            <View className="flex-row items-center">
-              <Ionicons name="gift" size={18} color={themeStyles.accentGreen} className="mr-3" />
-              <Text style={{ color: themeStyles.primaryText }} className="font-normal text-sm ml-2">
-                Referral earnings
-              </Text>
-            </View>
-            <Ionicons name="chevron-forward" size={18} color={themeStyles.subText} />
-          </TouchableOpacity>
-        </View>
-
-        {/* 4. Main Details & Preferences Menu Group */}
-        <View 
-          style={{ 
-            backgroundColor: themeStyles.cardBg, 
-            borderColor: themeStyles.cardBorder, 
-            borderWidth: 1 
-          }} 
-          className="rounded-3xl mb-5 overflow-hidden shadow-lg"
-        >
-          {/* Instant Fuel Loan Menu */}
-          <TouchableOpacity
-            style={{ borderBottomColor: themeStyles.borderDivider, borderBottomWidth: 1 }}
-            className="p-4 flex-row justify-between items-center"
-            onPress={() => navigation.navigate('InstantFuelLoan')}
-          >
-            <View className="flex-row items-center flex-1 mr-2">
-              <Ionicons name="speedometer-outline" size={18} color={themeStyles.accentGreen} style={{ marginRight: 8 }} />
-              <View>
-                <Text style={{ color: themeStyles.primaryText }} className="font-normal text-sm">
-                  Instant Fuel Loan (0% Advance)
-                </Text>
+          <View className="my-1.5">
+            <View style={{ marginHorizontal: 20, height: 1, backgroundColor: isDark ? 'rgba(51, 65, 85, 0.4)' : 'rgba(226, 232, 240, 0.8)' }} />
+            <TouchableOpacity
+              activeOpacity={0.7}
+              onPress={() => navigation.navigate('BoostProfile')}
+              className="px-5 py-3.5 flex-row items-center justify-between"
+            >
+              <View className="flex-row items-center flex-1 mr-3">
+                <View 
+                  style={{ 
+                    width: 42, 
+                    height: 42, 
+                    borderRadius: 12, 
+                    backgroundColor: isDark ? 'rgba(16, 185, 129, 0.12)' : '#ecfdf5', 
+                    borderWidth: 1, 
+                    borderColor: isDark ? 'rgba(16, 185, 129, 0.25)' : '#a7f3d0',
+                    alignItems: 'center', 
+                    justifyContent: 'center', 
+                    marginRight: 14 
+                  }}
+                >
+                  <Ionicons name="flash" size={20} color="#10b981" />
+                </View>
+                <View className="flex-1">
+                  <Text style={{ color: isDark ? '#ffffff' : '#0f172a', fontSize: 15, fontWeight: '700' }}>
+                    Boost My Profile
+                  </Text>
+                  <Text style={{ color: isDark ? '#94a3b8' : '#64748b', fontSize: 12, marginTop: 2 }}>
+                    Appear top of hirer radar & get more direct offers
+                  </Text>
+                </View>
               </View>
-            </View>
-            <View className="flex-row items-center">
-              <View className="px-2 py-0.5 rounded-md bg-emerald-500/10 border border-emerald-500/30 mr-1.5">
-                <Text className="text-emerald-500 font-normal text-[10px]">★ Performance</Text>
+              <Ionicons name="chevron-forward" size={17} color={isDark ? '#64748b' : '#94a3b8'} />
+            </TouchableOpacity>
+            <View style={{ marginHorizontal: 20, height: 1, backgroundColor: isDark ? 'rgba(51, 65, 85, 0.4)' : 'rgba(226, 232, 240, 0.8)' }} />
+          </View>
+
+          {/* Driver Simulator Game */}
+          <View className="my-1.5">
+            <View style={{ marginHorizontal: 20, height: 1, backgroundColor: isDark ? 'rgba(51, 65, 85, 0.4)' : 'rgba(226, 232, 240, 0.8)' }} />
+            <TouchableOpacity
+              activeOpacity={0.7}
+              onPress={() => navigation.navigate('DriverAssessment')}
+              className="px-5 py-3.5 flex-row items-center justify-between"
+            >
+              <View className="flex-row items-center flex-1 mr-3">
+                <View 
+                  style={{ 
+                    width: 42, 
+                    height: 42, 
+                    borderRadius: 12, 
+                    backgroundColor: isDark ? 'rgba(16, 185, 129, 0.12)' : '#ecfdf5', 
+                    borderWidth: 1, 
+                    borderColor: isDark ? 'rgba(16, 185, 129, 0.25)' : '#a7f3d0',
+                    alignItems: 'center', 
+                    justifyContent: 'center', 
+                    marginRight: 14 
+                  }}
+                >
+                  <Ionicons name="game-controller" size={20} color="#10b981" />
+                </View>
+                <View className="flex-1">
+                  <Text style={{ color: isDark ? '#ffffff' : '#0f172a', fontSize: 15, fontWeight: '700' }}>
+                    Road Safety Simulator Game
+                  </Text>
+                  <Text style={{ color: isDark ? '#94a3b8' : '#64748b', fontSize: 12, marginTop: 2 }}>
+                    Earn high safety scores & verified driver badges
+                  </Text>
+                </View>
               </View>
-              <Ionicons name="chevron-forward" size={18} color={themeStyles.subText} />
-            </View>
-          </TouchableOpacity>
+              <Ionicons name="chevron-forward" size={17} color={isDark ? '#64748b' : '#94a3b8'} />
+            </TouchableOpacity>
+            <View style={{ marginHorizontal: 20, height: 1, backgroundColor: isDark ? 'rgba(51, 65, 85, 0.4)' : 'rgba(226, 232, 240, 0.8)' }} />
+          </View>
 
-          {/* My Destination Menu */}
-          <TouchableOpacity
-            style={{ borderBottomColor: themeStyles.borderDivider, borderBottomWidth: 1 }}
-            className="p-4 flex-row justify-between items-center"
-            onPress={() => navigation.navigate('MyDestination')}
-          >
-            <View className="flex-row items-center">
-              <Ionicons name="compass-outline" size={18} color={themeStyles.accentGreen} style={{ marginRight: 8 }} />
-              <Text style={{ color: themeStyles.primaryText }} className="font-normal text-sm">
-                My Destination (Commute Filter)
-              </Text>
-            </View>
-            <Ionicons name="chevron-forward" size={18} color={themeStyles.subText} />
-          </TouchableOpacity>
-
-          {/* Documents & licence */}
-          <TouchableOpacity
-            style={{ borderBottomColor: themeStyles.borderDivider, borderBottomWidth: 1 }}
-            className="p-4 flex-row justify-between items-center"
-            onPress={() => navigation.navigate('DriverDocuments')}
-          >
-            <Text style={{ color: themeStyles.primaryText }} className="font-normal text-sm">
-              Documents & licence
-            </Text>
-            <Ionicons name="chevron-forward" size={18} color={themeStyles.subText} />
-          </TouchableOpacity>
+          {/* Documents & Licence */}
+          <View className="my-1.5">
+            <View style={{ marginHorizontal: 20, height: 1, backgroundColor: isDark ? 'rgba(51, 65, 85, 0.4)' : 'rgba(226, 232, 240, 0.8)' }} />
+            <TouchableOpacity
+              activeOpacity={0.7}
+              onPress={() => navigation.navigate('DriverDocuments')}
+              className="px-5 py-3.5 flex-row items-center justify-between"
+            >
+              <View className="flex-row items-center flex-1 mr-3">
+                <View 
+                  style={{ 
+                    width: 42, 
+                    height: 42, 
+                    borderRadius: 12, 
+                    backgroundColor: isDark ? 'rgba(16, 185, 129, 0.12)' : '#ecfdf5', 
+                    borderWidth: 1, 
+                    borderColor: isDark ? 'rgba(16, 185, 129, 0.25)' : '#a7f3d0',
+                    alignItems: 'center', 
+                    justifyContent: 'center', 
+                    marginRight: 14 
+                  }}
+                >
+                  <Ionicons name="document-text" size={20} color="#10b981" />
+                </View>
+                <View className="flex-1">
+                  <Text style={{ color: isDark ? '#ffffff' : '#0f172a', fontSize: 15, fontWeight: '700' }}>
+                    Documents & Licence
+                  </Text>
+                  <Text style={{ color: isDark ? '#94a3b8' : '#64748b', fontSize: 12, marginTop: 2 }}>
+                    NIN, Driver Licence & Identity Verification
+                  </Text>
+                </View>
+              </View>
+              <Ionicons name="chevron-forward" size={17} color={isDark ? '#64748b' : '#94a3b8'} />
+            </TouchableOpacity>
+            <View style={{ marginHorizontal: 20, height: 1, backgroundColor: isDark ? 'rgba(51, 65, 85, 0.4)' : 'rgba(226, 232, 240, 0.8)' }} />
+          </View>
 
           {/* Vehicle & Rates */}
-          <TouchableOpacity
-            style={{ borderBottomColor: themeStyles.borderDivider, borderBottomWidth: 1 }}
-            className="p-4 flex-row justify-between items-center"
-            onPress={() => navigation.navigate('VehicleInspection')}
-          >
-            <Text style={{ color: themeStyles.primaryText }} className="font-normal text-sm">
-              Vehicle & Rates
-            </Text>
-            <Ionicons name="chevron-forward" size={18} color={themeStyles.subText} />
-          </TouchableOpacity>
-
-          {/* Hire Availability */}
-          <TouchableOpacity
-            style={{ borderBottomColor: themeStyles.borderDivider, borderBottomWidth: 1 }}
-            className="p-4 flex-row justify-between items-center"
-            onPress={() => navigation.navigate('Schedule')}
-          >
-            <Text style={{ color: themeStyles.primaryText }} className="font-normal text-sm">
-              Hire availability
-            </Text>
-            <Ionicons name="chevron-forward" size={18} color={themeStyles.subText} />
-          </TouchableOpacity>
+          <View className="my-1.5">
+            <View style={{ marginHorizontal: 20, height: 1, backgroundColor: isDark ? 'rgba(51, 65, 85, 0.4)' : 'rgba(226, 232, 240, 0.8)' }} />
+            <TouchableOpacity
+              activeOpacity={0.7}
+              onPress={() => navigation.navigate('VehicleInspection')}
+              className="px-5 py-3.5 flex-row items-center justify-between"
+            >
+              <View className="flex-row items-center flex-1 mr-3">
+                <View 
+                  style={{ 
+                    width: 42, 
+                    height: 42, 
+                    borderRadius: 12, 
+                    backgroundColor: isDark ? 'rgba(16, 185, 129, 0.12)' : '#ecfdf5', 
+                    borderWidth: 1, 
+                    borderColor: isDark ? 'rgba(16, 185, 129, 0.25)' : '#a7f3d0',
+                    alignItems: 'center', 
+                    justifyContent: 'center', 
+                    marginRight: 14 
+                  }}
+                >
+                  <Ionicons name="car" size={20} color="#10b981" />
+                </View>
+                <View className="flex-1">
+                  <Text style={{ color: isDark ? '#ffffff' : '#0f172a', fontSize: 15, fontWeight: '700' }}>
+                    Vehicle & Rates
+                  </Text>
+                  <Text style={{ color: isDark ? '#94a3b8' : '#64748b', fontSize: 12, marginTop: 2 }}>
+                    Manage car details, inspection & pricing
+                  </Text>
+                </View>
+              </View>
+              <Ionicons name="chevron-forward" size={17} color={isDark ? '#64748b' : '#94a3b8'} />
+            </TouchableOpacity>
+            <View style={{ marginHorizontal: 20, height: 1, backgroundColor: isDark ? 'rgba(51, 65, 85, 0.4)' : 'rgba(226, 232, 240, 0.8)' }} />
+          </View>
 
           {/* Driver Wallet & Bank Account */}
-          <TouchableOpacity
-            style={{ borderBottomColor: themeStyles.borderDivider, borderBottomWidth: 1 }}
-            className="p-4 flex-row justify-between items-center"
-            onPress={() => navigation.navigate('DriverWallet')}
-          >
-            <View>
-              <Text style={{ color: themeStyles.primaryText }} className="font-normal text-sm">
-                Driver Wallet & Bank Account
-              </Text>
-            </View>
-            <Ionicons name="chevron-forward" size={18} color={themeStyles.subText} />
-          </TouchableOpacity>
+          <View className="my-1.5">
+            <View style={{ marginHorizontal: 20, height: 1, backgroundColor: isDark ? 'rgba(51, 65, 85, 0.4)' : 'rgba(226, 232, 240, 0.8)' }} />
+            <TouchableOpacity
+              activeOpacity={0.7}
+              onPress={() => navigation.navigate('DriverWallet')}
+              className="px-5 py-3.5 flex-row items-center justify-between"
+            >
+              <View className="flex-row items-center flex-1 mr-3">
+                <View 
+                  style={{ 
+                    width: 42, 
+                    height: 42, 
+                    borderRadius: 12, 
+                    backgroundColor: isDark ? 'rgba(16, 185, 129, 0.12)' : '#ecfdf5', 
+                    borderWidth: 1, 
+                    borderColor: isDark ? 'rgba(16, 185, 129, 0.25)' : '#a7f3d0',
+                    alignItems: 'center', 
+                    justifyContent: 'center', 
+                    marginRight: 14 
+                  }}
+                >
+                  <Ionicons name="business" size={20} color="#10b981" />
+                </View>
+                <View className="flex-1">
+                  <Text style={{ color: isDark ? '#ffffff' : '#0f172a', fontSize: 15, fontWeight: '700' }}>
+                    Driver Wallet & Bank Account
+                  </Text>
+                  <Text style={{ color: isDark ? '#94a3b8' : '#64748b', fontSize: 12, marginTop: 2 }}>
+                    Verified bank cashouts & transaction history
+                  </Text>
+                </View>
+              </View>
+              <Ionicons name="chevron-forward" size={17} color={isDark ? '#64748b' : '#94a3b8'} />
+            </TouchableOpacity>
+            <View style={{ marginHorizontal: 20, height: 1, backgroundColor: isDark ? 'rgba(51, 65, 85, 0.4)' : 'rgba(226, 232, 240, 0.8)' }} />
+          </View>
+
+          {/* Referral Earnings */}
+          <View className="my-1.5">
+            <View style={{ marginHorizontal: 20, height: 1, backgroundColor: isDark ? 'rgba(51, 65, 85, 0.4)' : 'rgba(226, 232, 240, 0.8)' }} />
+            <TouchableOpacity
+              activeOpacity={0.7}
+              onPress={() => navigation.navigate('Referrals')}
+              className="px-5 py-3.5 flex-row items-center justify-between"
+            >
+              <View className="flex-row items-center flex-1 mr-3">
+                <View 
+                  style={{ 
+                    width: 42, 
+                    height: 42, 
+                    borderRadius: 12, 
+                    backgroundColor: isDark ? 'rgba(16, 185, 129, 0.12)' : '#ecfdf5', 
+                    borderWidth: 1, 
+                    borderColor: isDark ? 'rgba(16, 185, 129, 0.25)' : '#a7f3d0',
+                    alignItems: 'center', 
+                    justifyContent: 'center', 
+                    marginRight: 14 
+                  }}
+                >
+                  <Ionicons name="gift" size={20} color="#10b981" />
+                </View>
+                <View className="flex-1">
+                  <Text style={{ color: isDark ? '#ffffff' : '#0f172a', fontSize: 15, fontWeight: '700' }}>
+                    Referral Earnings
+                  </Text>
+                  <Text style={{ color: isDark ? '#94a3b8' : '#64748b', fontSize: 12, marginTop: 2 }}>
+                    Earn passive income per invited driver
+                  </Text>
+                </View>
+              </View>
+              <Ionicons name="chevron-forward" size={17} color={isDark ? '#64748b' : '#94a3b8'} />
+            </TouchableOpacity>
+            <View style={{ marginHorizontal: 20, height: 1, backgroundColor: isDark ? 'rgba(51, 65, 85, 0.4)' : 'rgba(226, 232, 240, 0.8)' }} />
+          </View>
         </View>
 
         {/* 5. Partner Support Button */}

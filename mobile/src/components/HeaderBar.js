@@ -16,8 +16,9 @@ export default function HeaderBar({
 }) {
   const { isDark, updateThemeMode } = useTheme();
 
-  // Show back button if explicitly requested OR if navigation has a back history
-  const shouldShowBack = Boolean(showBack !== undefined ? showBack : (navigation?.canGoBack && navigation.canGoBack()));
+  // Only show back button if explicitly requested with showBack={true}
+  // Main screens do NOT show back button
+  const shouldShowBack = Boolean(showBack === true);
 
   const handleBack = () => {
     if (onBack) {
@@ -90,16 +91,7 @@ export default function HeaderBar({
               </Text>
             ) : null}
           </View>
-        ) : (
-          <View className="flex-row items-baseline">
-            <Text style={{ color: brandGreen }} className="font-bold text-sm tracking-wider uppercase">
-              OGADRIVER
-            </Text>
-            <Text style={{ color: partnerTextColor }} className="font-bold text-sm tracking-wider uppercase ml-1">
-              PARTNERS
-            </Text>
-          </View>
-        )}
+        ) : null}
       </View>
 
       {/* Right Section: Theme Toggle & Notification Bell or Custom Component */}

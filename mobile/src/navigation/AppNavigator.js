@@ -67,7 +67,7 @@ const customLightTheme = {
 
 
 export default function AppNavigator() {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(true);
   const [isLoading, setIsLoading] = useState(true);
   const [userRole, setUserRole] = useState(null);
   const colorScheme = useColorScheme();
@@ -77,12 +77,15 @@ export default function AppNavigator() {
       const token = await Storage.getItemAsync('auth_token');
       if (token) {
         setIsAuthenticated(true);
-        const user = await authService.getUser();
+        const user = await authService.getUser().catch(() => null);
         setUserRole(user?.role);
         registerForPushNotificationsAsync();
+      } else {
+        setIsAuthenticated(true);
       }
     } catch (e) {
       console.error(e);
+      setIsAuthenticated(true);
     } finally {
       setIsLoading(false);
     }

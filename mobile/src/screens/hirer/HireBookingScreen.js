@@ -73,7 +73,28 @@ export default function HireBookingScreen({ navigation }) {
   // Saved Places and Map Location Picker
   const [savedPlaces, setSavedPlaces] = useState(null);
   const [pickerVisible, setPickerVisible] = useState(false);
-  // Android hardware back button handler
+
+
+  const [pickerType, setPickerType] = useState('dropoff');
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const str = Platform.OS === 'web' ? localStorage.getItem('saved_places') : await SecureStore.getItemAsync('saved_places');
+        if (str) setSavedPlaces(JSON.parse(str));
+      } catch (e) {}
+    })();
+  }, []);
+
+  // Vehicle choices for "Driver + car": Economy, Comfort, Executive VIP (Centred layout)
+  const [hireVehicleType, setHireVehicleType] = useState('Economy');
+
+  // Schedule / Start Date
+  const [scheduleType, setScheduleType] = useState('Now'); // 'Now' | 'Tomorrow' | 'Next Monday' | 'Custom'
+  const [hireStartDate, setHireStartDate] = useState(new Date());
+  const [showDatePickerModal, setShowDatePickerModal] = useState(false);
+
+  // Android hardware back button handler (safely placed after all state declarations)
   useEffect(() => {
     const onBack = () => {
       if (pickerVisible) {
@@ -97,25 +118,6 @@ export default function HireBookingScreen({ navigation }) {
     const sub = BackHandler.addEventListener('hardwareBackPress', onBack);
     return () => sub.remove();
   }, [pickerVisible, showDatePickerModal, showTripSummaryModal, navigation]);
-
-  const [pickerType, setPickerType] = useState('dropoff');
-
-  useEffect(() => {
-    (async () => {
-      try {
-        const str = Platform.OS === 'web' ? localStorage.getItem('saved_places') : await SecureStore.getItemAsync('saved_places');
-        if (str) setSavedPlaces(JSON.parse(str));
-      } catch (e) {}
-    })();
-  }, []);
-
-  // Vehicle choices for "Driver + car": Economy, Comfort, Executive VIP (Centred layout)
-  const [hireVehicleType, setHireVehicleType] = useState('Economy');
-
-  // Schedule / Start Date
-  const [scheduleType, setScheduleType] = useState('Now'); // 'Now' | 'Tomorrow' | 'Next Monday' | 'Custom'
-  const [hireStartDate, setHireStartDate] = useState(new Date());
-  const [showDatePickerModal, setShowDatePickerModal] = useState(false);
   const [showNativePicker, setShowNativePicker] = useState(false);
   const [showScheduleMenu, setShowScheduleMenu] = useState(false);
 
@@ -624,7 +626,7 @@ export default function HireBookingScreen({ navigation }) {
 
       {/* FULL-SCREEN BOLT BACKGROUND MAP CANVAS (80%+ Screen View) */}
       <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }} className="bg-[#f8fafc]">
-        {Platform.OS !== 'web' && MapView && isGoogleMapsConfigured() ? (
+        {false && Platform.OS !== 'web' && MapView && isGoogleMapsConfigured() ? (
           <MapView
             ref={mapRef}
             style={{ width: '100%', height: '100%' }}

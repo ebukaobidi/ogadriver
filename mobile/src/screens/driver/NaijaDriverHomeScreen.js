@@ -194,6 +194,23 @@ export default function NaijaDriverHomeScreen({ navigation }) {
   // Incoming Live Ride / Hire Request (Dynamic & tailored to vehicle, subscription & boost)
   const [activeRequest, setActiveRequest] = useState(null);
 
+  // Android hardware back button handler (safely placed after state declarations)
+  useEffect(() => {
+    const onHardwareBack = () => {
+      if (radioModalVisible) {
+        setRadioModalVisible(false);
+        return true;
+      }
+      if (activeRequest) {
+        setActiveRequest(null);
+        return true;
+      }
+      return false;
+    };
+    const sub = BackHandler.addEventListener('hardwareBackPress', onHardwareBack);
+    return () => sub.remove();
+  }, [radioModalVisible, activeRequest]);
+
   useEffect(() => {
     loadProfile();
     radioService.getChannels()
@@ -659,7 +676,7 @@ export default function NaijaDriverHomeScreen({ navigation }) {
     <SafeAreaView style={styles.container}>
       {/* 1. FULL-SCREEN MAP BACKGROUND */}
       <View style={StyleSheet.absoluteFillObject}>
-        {Platform.OS !== 'web' && MapView && isGoogleMapsConfigured() ? (
+        {false && Platform.OS !== 'web' && MapView && isGoogleMapsConfigured() ? (
           <MapView
             ref={mapRef}
             style={StyleSheet.absoluteFillObject}

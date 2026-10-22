@@ -217,14 +217,53 @@ export default function DriverJobsScreen({ navigation }) {
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: themeStyles.screenBg }}>
-      {/* Top App Header */}
-      <HeaderBar navigation={navigation} />
-
-      {/* Screen Sub-Header Title */}
+      {/* Clean Top Navigation Bar (No bulky banner, no back arrow, clean floating controls) */}
       <View className="px-4 pt-3 pb-2 flex-row justify-between items-center">
-        <Text style={{ color: themeStyles.titleText }} className="font-normal text-2xl">
-          Available jobs
-        </Text>
+        <View className="flex-1 mr-3">
+          <Text style={{ color: themeStyles.titleText, fontSize: 24, fontWeight: '700' }} numberOfLines={1}>
+            Jobs
+          </Text>
+          <Text style={{ color: themeStyles.subText, fontSize: 12, marginTop: 1 }} numberOfLines={1}>
+            Available transport & hire opportunities
+          </Text>
+        </View>
+
+        <View className="flex-row items-center">
+          <TouchableOpacity
+            onPress={onRefresh}
+            style={{ 
+              backgroundColor: themeStyles.tabInactiveBg, 
+              borderColor: themeStyles.tabBarBorder,
+              borderWidth: 1,
+              width: 38,
+              height: 38,
+              borderRadius: 12,
+              alignItems: 'center',
+              justifyContent: 'center',
+              marginRight: 8
+            }}
+            accessibilityLabel="Refresh jobs"
+          >
+            <Ionicons name="refresh" size={18} color={themeStyles.brandGreen} />
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            onPress={() => navigation?.navigate('Conversations')}
+            style={{ 
+              backgroundColor: themeStyles.tabInactiveBg, 
+              borderColor: themeStyles.tabBarBorder,
+              borderWidth: 1,
+              width: 38,
+              height: 38,
+              borderRadius: 12,
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}
+            accessibilityLabel="Notifications"
+          >
+            <Ionicons name="notifications-outline" size={18} color={themeStyles.brandGreen} />
+          </TouchableOpacity>
+        </View>
       </View>
 
       {/* Main Top Navigation Tabs (Job Market | Direct Offers | My Contracts) */}

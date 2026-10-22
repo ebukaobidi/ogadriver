@@ -69,34 +69,7 @@ export default function RideBookingScreen({ navigation }) {
   // Saved Places and Map Location Picker
   const [savedPlaces, setSavedPlaces] = useState(null);
   const [pickerVisible, setPickerVisible] = useState(false);
-  // Android hardware back button handler
-  useEffect(() => {
-    const onBack = () => {
-      if (pickerVisible) {
-        setPickerVisible(false);
-        return true;
-      }
-      if (showDatePickerModal) {
-        setShowDatePickerModal(false);
-        return true;
-      }
-      if (showTripSummaryModal) {
-        setShowTripSummaryModal(false);
-        return true;
-      }
-      if (showWhenMenu) {
-        setShowWhenMenu(false);
-        return true;
-      }
-      if (navigation?.canGoBack && navigation.canGoBack()) {
-        navigation.goBack();
-        return true;
-      }
-      return false;
-    };
-    const sub = BackHandler.addEventListener('hardwareBackPress', onBack);
-    return () => sub.remove();
-  }, [pickerVisible, showDatePickerModal, showTripSummaryModal, showWhenMenu, navigation]);
+
 
   const [pickerType, setPickerType] = useState('dropoff');
 
@@ -156,6 +129,35 @@ export default function RideBookingScreen({ navigation }) {
 
   // Payment methods
   const [paymentMethod, setPaymentMethod] = useState('Cash');
+
+  // Android hardware back button handler (safely placed after all state declarations)
+  useEffect(() => {
+    const onBack = () => {
+      if (pickerVisible) {
+        setPickerVisible(false);
+        return true;
+      }
+      if (showDatePickerModal) {
+        setShowDatePickerModal(false);
+        return true;
+      }
+      if (showTripSummaryModal) {
+        setShowTripSummaryModal(false);
+        return true;
+      }
+      if (showWhenMenu) {
+        setShowWhenMenu(false);
+        return true;
+      }
+      if (navigation?.canGoBack && navigation.canGoBack()) {
+        navigation.goBack();
+        return true;
+      }
+      return false;
+    };
+    const sub = BackHandler.addEventListener('hardwareBackPress', onBack);
+    return () => sub.remove();
+  }, [pickerVisible, showDatePickerModal, showTripSummaryModal, showWhenMenu, navigation]);
 
   const [pickupCoord, setPickupCoord] = useState({ latitude: 9.1066, longitude: 7.4111 });
   const [dropoffCoord, setDropoffCoord] = useState({ latitude: 9.0765, longitude: 7.4753 });
@@ -714,7 +716,7 @@ export default function RideBookingScreen({ navigation }) {
     <SafeAreaView style={{ flex: 1, backgroundColor: isDark ? '#090d16' : '#ffffff' }}>
       {/* FULL-SCREEN BOLT BACKGROUND MAP CANVAS (80%+ Screen View) */}
       <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }} className="bg-[#f8fafc]">
-        {Platform.OS !== 'web' && MapView && isGoogleMapsConfigured() ? (
+        {false && Platform.OS !== 'web' && MapView && isGoogleMapsConfigured() ? (
           <MapView
             ref={mapRef}
             style={{ width: '100%', height: '100%' }}

@@ -73,6 +73,32 @@ export default function WalletScreen({ navigation, route }) {
   const [paystackRef, setPaystackRef] = useState(null);
   const [showPaystackWebView, setShowPaystackWebView] = useState(false);
 
+  // Android hardware back handler (safely placed after all state declarations)
+  useEffect(() => {
+    const onBack = () => {
+      if (showPaystackWebView) {
+        setShowPaystackWebView(false);
+        setPaystackUrl(null);
+        return true;
+      }
+      if (topupModalVisible) {
+        setTopupModalVisible(false);
+        return true;
+      }
+      if (transferModalVisible) {
+        setTransferModalVisible(false);
+        return true;
+      }
+      if (navigation?.canGoBack && navigation.canGoBack()) {
+        navigation.goBack();
+        return true;
+      }
+      return false;
+    };
+    const sub = BackHandler.addEventListener('hardwareBackPress', onBack);
+    return () => sub.remove();
+  }, [showPaystackWebView, topupModalVisible, transferModalVisible, navigation]);
+
   // Transfer / Gift State
   const [transferModalVisible, setTransferModalVisible] = useState(false);
   const [transferRecipient, setTransferRecipient] = useState('');
