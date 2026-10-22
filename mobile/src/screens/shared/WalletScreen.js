@@ -15,7 +15,12 @@ import {
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import * as Clipboard from 'expo-clipboard';
+let Clipboard = null;
+try {
+  Clipboard = require('expo-clipboard');
+} catch (e) {
+  Clipboard = null;
+}
 import { walletService, authService, extractArray } from '../../api/api';
 import { useTheme } from '../../context/ThemeContext';
 import { useCountry } from '../../context/CountryContext';
