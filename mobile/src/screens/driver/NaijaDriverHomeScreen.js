@@ -166,24 +166,6 @@ export default function NaijaDriverHomeScreen({ navigation }) {
     }
   }, [driverCoord.latitude, driverCoord.longitude]);
 
-  // Android Hardware Back button listener
-  useEffect(() => {
-    const onHardwareBack = () => {
-      if (radioModalVisible) {
-        setRadioModalVisible(false);
-        return true;
-      }
-      if (activeRequest) {
-        setActiveRequest(null);
-        return true;
-      }
-      return false;
-    };
-    const sub = BackHandler.addEventListener('hardwareBackPress', onHardwareBack);
-    return () => sub.remove();
-  }, [radioModalVisible, activeRequest]);
-
-
   // Pulse & Audio Waveform animations
   const pulseAnim = useRef(new Animated.Value(1)).current;
   const waveAnim1 = useRef(new Animated.Value(6)).current;
