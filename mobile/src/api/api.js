@@ -1,6 +1,6 @@
 import axios from 'axios';
 import * as SecureStore from 'expo-secure-store';
-import { Platform } from 'react-native';
+import { Platform, Alert } from 'react-native';
 
 const Storage = {
   getItemAsync: async (key) => {
@@ -268,6 +268,17 @@ export const driverService = {
     return res.data;
   },
 
+  getNearbyActivities: async (lat, lng, radius = 25) => {
+    try {
+      const res = await api.get('/drivers/nearby-activities', {
+        params: { lat, lng, radius_km: radius }
+      });
+      return res.data;
+    } catch (e) {
+      return { success: false, activities: [] };
+    }
+  },
+
   getJobs: async (filters = {}) => {
     const res = await api.get('/jobs', { params: filters });
     return res.data;

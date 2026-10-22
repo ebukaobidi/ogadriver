@@ -3,8 +3,8 @@ import { View, StyleSheet, Platform, ActivityIndicator } from 'react-native';
 import { WebView } from 'react-native-webview';
 
 /**
- * OpenStreetMap interactive map component powered by Leaflet & OSM tiles.
- * 100% Free with zero API key dependencies, zero Play Services dependencies, and zero watermarks.
+ * OpenStreetMap interactive map component powered by Leaflet & high-speed CartoDB Voyager tiles.
+ * 100% Free with zero API key dependencies, zero Play Services dependencies, and instantaneous rendering.
  */
 export default function OpenStreetMap({
   center = { latitude: 6.5244, longitude: 3.3792 }, // Default to Lagos, Nigeria
@@ -18,6 +18,8 @@ export default function OpenStreetMap({
   driverCoord = null,
   driverName = 'Active Driver',
   nearbyDrivers = [],
+  nearbyJobs = [],
+  onJobSelect = null,
   onLocationSelect = null,
   interactive = true,
   isDark = false,
@@ -37,13 +39,15 @@ export default function OpenStreetMap({
               latitude: Number(data.latitude),
               longitude: Number(data.longitude),
             });
+          } else if (data && data.type === 'JOB_SELECTED' && onJobSelect) {
+            onJobSelect(data.job);
           }
         } catch (e) {}
       };
       window.addEventListener('message', onWebMessage);
       return () => window.removeEventListener('message', onWebMessage);
     }
-  }, [onLocationSelect]);
+  }, [onLocationSelect, onJobSelect]);
 
   // Generate the standalone Leaflet HTML document
   const leafletHtml = useMemo(() => {
@@ -67,8 +71,8 @@ export default function OpenStreetMap({
       longitude: Number(driverCoord.longitude)
     } : null;
 
-    const initialLat = pCoord?.latitude || uCoord?.latitude || drCoord?.latitude || (center?.latitude ? Number(center.latitude) : 6.5244);
-    const initialLng = pCoord?.longitude || uCoord?.longitude || drCoord?.longitude || (center?.longitude ? Number(center.longitude) : 3.3792);
+    const initialLat = uCoord?.latitude || drCoord?.latitude || pCoord?.latitude || (center?.latitude ? Number(center.latitude) : 6.5244);
+    const initialLng = uCoord?.longitude || drCoord?.longitude || pCoord?.longitude || (center?.longitude ? Number(center.longitude) : 3.3792);
 
     const stopsData = (stops || [])
       .filter((s) => s.lat != null && s.lon != null)
@@ -79,21 +83,24 @@ export default function OpenStreetMap({
         idx: idx + 1,
       }));
 
+    const cleanJobs = (nearbyJobs || []).filter(j => j && j.latitude && j.longitude);
+
     const bgColor = isDark ? '#090d16' : '#f8fafc';
-    const popupBg = isDark ? '#1e293b' : '#ffffff';
-    const popupText = isDark ? '#f8fafc' : '#0f172a';
-    const popupBorder = isDark ? '#334155' : '#e2e8f0';
+    const tileUrl = isDark 
+      ? 'https://a.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}@2x.png' 
+      : 'https://a.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}@2x.png';
 
     return `<!DOCTYPE html>
 <html>
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
   <script>
     if (typeof L === 'undefined') {
-      document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"><\\/script>');
+      document.write('<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />');
+      document.write('<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"><\\/script>');
     }
   </script>
   <style>
@@ -108,15 +115,6 @@ export default function OpenStreetMap({
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     }
     .leaflet-control-attribution { display: none !important; }
-    ${
-      isDark
-        ? `
-    .leaflet-tile-pane {
-      filter: brightness(0.68) invert(1) contrast(3) hue-rotate(200deg) saturate(0.3) brightness(0.78);
-    }
-    `
-        : ''
-    }
     .custom-pin {
       display: flex;
       align-items: center;
@@ -138,35 +136,35 @@ export default function OpenStreetMap({
     .pin-pickup { background: #008751; }
     .pin-dropoff { background: #ea4335; }
     .pin-stop { background: #0284c7; }
-    .pin-driver { background: #008751; animation: pulse 2s infinite; }
     .pin-car {
-      width: 36px;
-      height: 36px;
+      width: 38px;
+      height: 38px;
       border-radius: 50%;
       background: #090d16;
       border: 2.5px solid #10b981;
       display: flex;
       align-items: center;
       justify-content: center;
-      box-shadow: 0 4px 12px rgba(16, 185, 129, 0.45);
+      box-shadow: 0 4px 14px rgba(16, 185, 129, 0.55);
+      animation: pulse-car 2.5s infinite;
     }
-    @keyframes pulse {
-      0% { box-shadow: 0 0 0 0 rgba(0, 135, 81, 0.7); }
-      70% { box-shadow: 0 0 0 14px rgba(0, 135, 81, 0); }
-      100% { box-shadow: 0 0 0 0 rgba(0, 135, 81, 0); }
+    @keyframes pulse-car {
+      0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+      70% { box-shadow: 0 0 0 16px rgba(16, 185, 129, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
     }
     /* User Current GPS Location Pulsing Marker */
     .pin-user-location {
-      width: 24px;
-      height: 24px;
+      width: 26px;
+      height: 26px;
       border-radius: 50%;
       background: rgba(16, 185, 129, 0.25);
-      border: 2px solid #10b981;
+      border: 2.5px solid #10b981;
       display: flex;
       align-items: center;
       justify-content: center;
-      box-shadow: 0 0 12px rgba(16, 185, 129, 0.5);
-      animation: pulse-user 2.2s infinite;
+      box-shadow: 0 0 14px rgba(16, 185, 129, 0.6);
+      animation: pulse-user 2s infinite;
     }
     .user-inner-dot {
       width: 10px;
@@ -176,21 +174,43 @@ export default function OpenStreetMap({
       border: 2px solid #ffffff;
     }
     @keyframes pulse-user {
-      0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
-      70% { box-shadow: 0 0 0 16px rgba(16, 185, 129, 0); }
+      0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.75); }
+      70% { box-shadow: 0 0 0 18px rgba(16, 185, 129, 0); }
       100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
     }
-    .leaflet-popup-content-wrapper {
-      background: ${popupBg};
-      color: ${popupText};
-      border-radius: 12px;
-      border: 1px solid ${popupBorder};
-      box-shadow: 0 6px 18px rgba(0,0,0,0.25);
-      font-size: 12px;
-      padding: 4px;
+
+    /* Interactive Job Pins Around Driver Location */
+    .pin-job-badge {
+      display: flex;
+      align-items: center;
+      background: #0f172a;
+      border-radius: 20px;
+      padding: 4px 8px;
+      border: 2px solid #10b981;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.35);
+      white-space: nowrap;
+      cursor: pointer;
     }
-    .leaflet-popup-tip {
-      background: ${popupBg};
+    .pin-job-ride { border-color: #10b981; background: #064e3b; }
+    .pin-job-contract { border-color: #3b82f6; background: #1e3a8a; }
+    .pin-job-hotspot { border-color: #f59e0b; background: #78350f; }
+    .pin-job-text {
+      color: #ffffff;
+      font-size: 11px;
+      font-weight: 700;
+      margin-left: 4px;
+    }
+    .job-popup-btn {
+      display: inline-block;
+      margin-top: 6px;
+      padding: 6px 12px;
+      background: #008751;
+      color: #ffffff;
+      text-decoration: none;
+      border-radius: 6px;
+      font-weight: 700;
+      font-size: 12px;
+      text-align: center;
     }
   </style>
 </head>
@@ -207,10 +227,10 @@ export default function OpenStreetMap({
         doubleClickZoom: ${interactive ? 'true' : 'false'}
       }).setView([${initialLat}, ${initialLng}], ${zoom});
 
-      // High-availability Humanitarian OpenStreetMap Team Tiles (100% Free, High Contrast, Zero Watermarks)
-      var tileLayer = L.tileLayer('https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png', {
+      // Ultra-fast CartoDB Voyager raster tiles (Global CDN, 100% uptime, zero watermarks)
+      var tileLayer = L.tileLayer('${tileUrl}', {
         maxZoom: 19,
-        subdomains: ['a', 'b'],
+        subdomains: ['a', 'b', 'c', 'd'],
         attribution: ''
       });
       tileLayer.on('tileerror', function(error) {
@@ -230,8 +250,8 @@ export default function OpenStreetMap({
       tileLayer.addTo(map);
 
       // Invalidate layout after rendering to guarantee map tiles paint fully in WebView
-      setTimeout(function() { if (map) map.invalidateSize(); }, 150);
-      setTimeout(function() { if (map) map.invalidateSize(); }, 600);
+      setTimeout(function() { if (map) map.invalidateSize(); }, 100);
+      setTimeout(function() { if (map) map.invalidateSize(); }, 400);
 
       var boundsPoints = [];
 
@@ -241,9 +261,9 @@ export default function OpenStreetMap({
           ? `
         var userIcon = L.divIcon({
           className: 'custom-pin',
-          html: '<div class=\"pin-user-location\"><div class=\"user-inner-dot\"></div></div>',
-          iconSize: [24, 24],
-          iconAnchor: [12, 12]
+          html: '<div class="pin-user-location"><div class="user-inner-dot"></div></div>',
+          iconSize: [26, 26],
+          iconAnchor: [13, 13]
         });
         L.marker([${uCoord.latitude}, ${uCoord.longitude}], { icon: userIcon, zIndexOffset: 1000 })
           .addTo(map)
@@ -259,7 +279,7 @@ export default function OpenStreetMap({
           ? `
         var pickupIcon = L.divIcon({
           className: 'custom-pin',
-          html: '<div class=\"pin-bubble pin-pickup\"><svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"white\" stroke-width=\"3\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><circle cx=\"12\" cy=\"12\" r=\"4\"/></svg></div>',
+          html: '<div class="pin-bubble pin-pickup"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/></svg></div>',
           iconSize: [32, 32],
           iconAnchor: [16, 16]
         });
@@ -277,7 +297,7 @@ export default function OpenStreetMap({
           ? `
         var dropoffIcon = L.divIcon({
           className: 'custom-pin',
-          html: '<div class=\"pin-bubble pin-dropoff\"><svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"white\" stroke-width=\"2.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z\"/><circle cx=\"12\" cy=\"10\" r=\"3\"/></svg></div>',
+          html: '<div class="pin-bubble pin-dropoff"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg></div>',
           iconSize: [32, 32],
           iconAnchor: [16, 16]
         });
@@ -294,7 +314,7 @@ export default function OpenStreetMap({
       stopsList.forEach(function(s) {
         var stopIcon = L.divIcon({
           className: 'custom-pin',
-          html: '<div class=\"pin-bubble pin-stop\">' + s.idx + '</div>',
+          html: '<div class="pin-bubble pin-stop">' + s.idx + '</div>',
           iconSize: [32, 32],
           iconAnchor: [16, 16]
         });
@@ -308,12 +328,12 @@ export default function OpenStreetMap({
       ${
         drCoord
           ? `
-        var driverCarSvg = '<div class=\"pin-car\"><svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"#10b981\"><path d=\"M18.92 6.01C18.72 5.42 18.16 5 17.5 5h-11c-.66 0-1.21.42-1.42 1.01L3 12v8c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h12v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-8l-2.08-5.99zM6.5 16c-.83 0-1.5-.67-1.5-1.5S5.67 13 6.5 13s1.5.67 1.5 1.5S7.33 16 6.5 16zm11 0c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zM5 11l1.5-4.5h11L19 11H5z\"/></svg></div>';
+        var driverCarSvg = '<div class="pin-car"><svg width="22" height="22" viewBox="0 0 24 24" fill="#10b981"><path d="M18.92 6.01C18.72 5.42 18.16 5 17.5 5h-11c-.66 0-1.21.42-1.42 1.01L3 12v8c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h12v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-8l-2.08-5.99zM6.5 16c-.83 0-1.5-.67-1.5-1.5S5.67 13 6.5 13s1.5.67 1.5 1.5S7.33 16 6.5 16zm11 0c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zM5 11l1.5-4.5h11L19 11H5z"/></svg></div>';
         var driverIcon = L.divIcon({
           className: 'custom-pin',
           html: driverCarSvg,
-          iconSize: [36, 36],
-          iconAnchor: [18, 18]
+          iconSize: [38, 38],
+          iconAnchor: [19, 19]
         });
         L.marker([${drCoord.latitude}, ${drCoord.longitude}], { icon: driverIcon, zIndexOffset: 950 })
           .addTo(map)
@@ -323,11 +343,54 @@ export default function OpenStreetMap({
           : ''
       }
 
+      // Nearby Opportunities & Location Activities (Jobs, Rides, Hotspots)
+      var nearbyJobsList = ${JSON.stringify(cleanJobs)};
+      nearbyJobsList.forEach(function(job) {
+        if (job && job.latitude && job.longitude) {
+          var isRide = job.type === 'ride';
+          var isHotspot = job.type === 'hotspot';
+          var badgeClass = isRide ? 'pin-job-ride' : (isHotspot ? 'pin-job-hotspot' : 'pin-job-contract');
+          var iconEmoji = isRide ? '🚖' : (isHotspot ? '⚡' : '💼');
+          var priceLabel = job.fare || job.price || job.salary || (isHotspot ? '+25%' : 'Available');
+
+          var jobBadgeHtml = '<div class="pin-job-badge ' + badgeClass + '">' +
+            '<span>' + iconEmoji + '</span>' +
+            '<span class="pin-job-text">' + priceLabel + '</span>' +
+            '</div>';
+
+          var jobIcon = L.divIcon({
+            className: 'custom-pin',
+            html: jobBadgeHtml,
+            iconSize: [80, 28],
+            iconAnchor: [40, 14]
+          });
+
+          var marker = L.marker([job.latitude, job.longitude], { icon: jobIcon, zIndexOffset: 920 }).addTo(map);
+
+          var popupContent = '<div style="min-width:160px;font-family:sans-serif;">' +
+            '<div style="font-weight:bold;font-size:13px;color:#0f172a;">' + (job.title || 'Nearby Opportunity') + '</div>' +
+            '<div style="font-size:11px;color:#64748b;margin-top:2px;">📍 ' + (job.pickup || job.location || 'Within 3 km') + '</div>' +
+            '<div style="font-size:12px;font-weight:bold;color:#059669;margin-top:3px;">💰 ' + priceLabel + '</div>' +
+            '<div style="font-size:11px;color:#2563eb;margin-top:2px;">📏 ' + (job.distance_km ? job.distance_km + ' km away' : 'Nearby') + '</div>' +
+            '</div>';
+
+          marker.bindPopup(popupContent);
+          marker.on('click', function() {
+            var payload = JSON.stringify({ type: 'JOB_SELECTED', job: job });
+            if (window.ReactNativeWebView && window.ReactNativeWebView.postMessage) {
+              window.ReactNativeWebView.postMessage(payload);
+            } else if (window.parent && window.parent.postMessage) {
+              window.parent.postMessage(payload, '*');
+            }
+          });
+        }
+      });
+
       // Nearby Active Drivers with Branded Car Markers
       var nearbyDriversList = ${JSON.stringify(nearbyDrivers || [])};
-      nearbyDriversList.forEach(function(dr, drIdx) {
+      nearbyDriversList.forEach(function(dr) {
         if (dr && dr.latitude && dr.longitude) {
-          var carSvgHtml = '<div class=\"pin-car\"><svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"#10b981\"><path d=\"M18.92 6.01C18.72 5.42 18.16 5 17.5 5h-11c-.66 0-1.21.42-1.42 1.01L3 12v8c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h12v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-8l-2.08-5.99zM6.5 16c-.83 0-1.5-.67-1.5-1.5S5.67 13 6.5 13s1.5.67 1.5 1.5S7.33 16 6.5 16zm11 0c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zM5 11l1.5-4.5h11L19 11H5z\"/></svg></div>';
+          var carSvgHtml = '<div class="pin-car"><svg width="20" height="20" viewBox="0 0 24 24" fill="#10b981"><path d="M18.92 6.01C18.72 5.42 18.16 5 17.5 5h-11c-.66 0-1.21.42-1.42 1.01L3 12v8c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h12v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-8l-2.08-5.99zM6.5 16c-.83 0-1.5-.67-1.5-1.5S5.67 13 6.5 13s1.5.67 1.5 1.5S7.33 16 6.5 16zm11 0c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zM5 11l1.5-4.5h11L19 11H5z"/></svg></div>';
           var nbIcon = L.divIcon({
             className: 'custom-pin',
             html: carSvgHtml,
@@ -357,7 +420,6 @@ export default function OpenStreetMap({
           lineJoin: 'round'
         }).addTo(map);
 
-        // Asynchronously fetch realistic road curves from OSRM
         try {
           var osrmUrl = 'https://router.project-osrm.org/route/v1/driving/' +
             ${pCoord.longitude} + ',' + ${pCoord.latitude} + ';' +
@@ -381,14 +443,12 @@ export default function OpenStreetMap({
           : ''
       }
 
-      // Automatically Fit Bounds to show all route points
-      if (boundsPoints.length > 1) {
-        map.fitBounds(boundsPoints, { paddingTopLeft: [50, 50], paddingBottomRight: [50, 110], maxZoom: 16 });
-      } else if (boundsPoints.length === 1) {
-        map.setView(boundsPoints[0], 15);
+      // Auto-fit bounds if multiple coordinate points exist
+      if (boundsPoints.length >= 2) {
+        map.fitBounds(boundsPoints, { padding: [50, 50], maxZoom: 16 });
       }
 
-      // Tap on map listener (Sends coordinate to app)
+      // Click to pick location
       map.on('click', function(e) {
         var payload = JSON.stringify({
           type: 'LOCATION_SELECTED',
@@ -423,6 +483,7 @@ export default function OpenStreetMap({
     driverCoord?.longitude,
     driverName,
     nearbyDrivers,
+    nearbyJobs,
     stops,
     interactive,
     isDark,
@@ -436,6 +497,8 @@ export default function OpenStreetMap({
           latitude: Number(data.latitude),
           longitude: Number(data.longitude),
         });
+      } else if (data.type === 'JOB_SELECTED' && onJobSelect) {
+        onJobSelect(data.job);
       }
     } catch (e) {}
   };
@@ -457,7 +520,7 @@ export default function OpenStreetMap({
       <WebView
         ref={webViewRef}
         originWhitelist={['*']}
-        source={{ html: leafletHtml, baseUrl: 'https://unpkg.com' }}
+        source={{ html: leafletHtml, baseUrl: 'https://cartocdn.com' }}
         style={[styles.webView, { width: '100%', height: '100%', backgroundColor: isDark ? '#090d16' : '#f8fafc' }]}
         javaScriptEnabled={true}
         domStorageEnabled={true}

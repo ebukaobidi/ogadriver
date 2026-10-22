@@ -179,6 +179,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/emergency/covert-alert', [\App\Http\Controllers\Api\EmergencySosController::class, 'covertAlert']);
     
     Route::get('/drivers/copilot/demand-radar', [\App\Http\Controllers\Api\OgaCopilotController::class, 'getDemandRadar']);
+    Route::get('/drivers/nearby-activities', [\App\Http\Controllers\Api\DriverActivitiesController::class, 'getActivities']);
+    Route::get('/driver/nearby-activities', [\App\Http\Controllers\Api\DriverActivitiesController::class, 'getActivities']);
 
     Route::get('/drivers/sprints/active', [\App\Http\Controllers\Api\WeeklySprintController::class, 'getActiveSprint']);
     Route::post('/drivers/sprints/claim', [\App\Http\Controllers\Api\WeeklySprintController::class, 'claimPrize']);

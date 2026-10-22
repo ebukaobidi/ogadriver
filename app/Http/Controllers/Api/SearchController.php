@@ -95,7 +95,7 @@ class SearchController extends Controller
     public function searchJobs(Request $request): JsonResponse
     {
         $request->validate([
-            'driver_id' => 'required|exists:drivers,id',
+            'driver_id' => 'nullable|exists:drivers,id',
             'latitude' => 'nullable|numeric',
             'longitude' => 'nullable|numeric',
             'radius_km' => 'nullable|integer|min:1|max:500',

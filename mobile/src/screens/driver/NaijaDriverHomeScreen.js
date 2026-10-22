@@ -71,6 +71,9 @@ export default function NaijaDriverHomeScreen({ navigation }) {
   const [driver, setDriver] = useState(null);
   const [driverCoord, setDriverCoord] = useState({ latitude: 6.4281, longitude: 3.4219 });
   const [driverLocationName, setDriverLocationName] = useState('Lagos, Nigeria');
+  const [nearbyActivities, setNearbyActivities] = useState([]);
+  const [selectedActivity, setSelectedActivity] = useState(null);
+  const [isScanningActivities, setIsScanningActivities] = useState(false);
 
   // Request & Fetch real GPS location on mount for Driver
   useEffect(() => {
@@ -1852,6 +1855,123 @@ const styles = StyleSheet.create({
     fontSize: 8,
     fontWeight: 'normal',
     textAlign: 'center',
+  },
+  floatingRadarPill: {
+    position: 'absolute',
+    left: 125,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#0f172a',
+    borderRadius: 22,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderWidth: 1,
+    borderColor: '#1e293b',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.25,
+    shadowRadius: 8,
+    elevation: 6,
+    zIndex: 998,
+  },
+  floatingRadarText: {
+    color: '#f8fafc',
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  selectedActivityCard: {
+    position: 'absolute',
+    left: 16,
+    right: 16,
+    backgroundColor: '#0f172a',
+    borderRadius: 20,
+    padding: 16,
+    borderWidth: 1.5,
+    borderColor: '#1e293b',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.35,
+    shadowRadius: 12,
+    elevation: 10,
+    zIndex: 999,
+  },
+  activityHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  activityBadgePill: {
+    paddingHorizontal: 10,
+    paddingVertical: 3,
+    borderRadius: 12,
+    borderWidth: 1,
+  },
+  activityBadgeText: {
+    color: '#ffffff',
+    fontSize: 10,
+    fontWeight: '800',
+    letterSpacing: 0.5,
+  },
+  activityCloseBtn: {
+    padding: 4,
+  },
+  activityTitle: {
+    fontSize: 16,
+    fontWeight: '800',
+    color: '#ffffff',
+    marginBottom: 10,
+  },
+  activityMetaRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    backgroundColor: 'rgba(255,255,255,0.04)',
+    borderRadius: 10,
+    padding: 10,
+    marginBottom: 10,
+  },
+  activityMetaCol: {
+    flex: 1,
+  },
+  activityMetaLabel: {
+    fontSize: 9,
+    fontWeight: '700',
+    color: '#94a3b8',
+    letterSpacing: 0.5,
+  },
+  activityMetaValue: {
+    fontSize: 15,
+    fontWeight: '800',
+    color: '#10b981',
+    marginTop: 2,
+  },
+  activityLocationRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  activityLocationText: {
+    fontSize: 12,
+    color: '#cbd5e1',
+    flex: 1,
+  },
+  activityActionRow: {
+    flexDirection: 'row',
+  },
+  activityAcceptBtn: {
+    flex: 1,
+    backgroundColor: '#008751',
+    borderRadius: 12,
+    paddingVertical: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  activityAcceptBtnText: {
+    color: '#ffffff',
+    fontSize: 13,
+    fontWeight: '800',
+    letterSpacing: 0.3,
   },
   ogaRadioLabel: {
     fontWeight: '700',
