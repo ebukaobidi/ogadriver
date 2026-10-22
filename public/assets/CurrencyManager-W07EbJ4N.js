@@ -1,1 +1,0 @@
-var e={NG:{symbol:`₦`,code:`NGN`,name:`Naira`},GH:{symbol:`GH₵`,code:`GHS`,name:`Cedi`},KE:{symbol:`KSh`,code:`KES`,name:`Shilling`},ZA:{symbol:`R`,code:`ZAR`,name:`Rand`},US:{symbol:`$`,code:`USD`,name:`Dollar`}},t=(t=`NG`)=>e[t.toUpperCase()]?.symbol||`₦`,n=(e,n=`NG`)=>t(n)+(parseFloat(e)||0).toLocaleString();export{n as t};
