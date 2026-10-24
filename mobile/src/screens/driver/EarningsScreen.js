@@ -259,10 +259,20 @@ export default function EarningsScreen({ navigation }) {
           </View>
         </TouchableOpacity>
 
-        {/* Subscription Footnote */}
-        <Text style={{ color: themeStyles.subText }} className="text-xs text-center mt-2 px-3 leading-relaxed">
-          You keep 100% of your earnings — OgaDriver charges a subscription, never commission.
-        </Text>
+        {/* Subscription Info Card */}
+        <View 
+          style={{ 
+            backgroundColor: isDark ? 'rgba(0, 229, 136, 0.08)' : 'rgba(5, 150, 105, 0.08)',
+            borderColor: isDark ? 'rgba(0, 229, 136, 0.25)' : 'rgba(5, 150, 105, 0.25)',
+            borderWidth: 1 
+          }}
+          className="rounded-2xl p-3.5 flex-row items-center justify-center mt-2 mb-6"
+        >
+          <Ionicons name="shield-checkmark" size={16} color={themeStyles.heroCardBg} style={{ marginRight: 8 }} />
+          <Text style={{ color: themeStyles.primaryText }} className="text-xs text-center font-normal flex-1">
+            You keep 100% of your earnings — OgaDriver charges a subscription, never commission.
+          </Text>
+        </View>
       </ScrollView>
     </SafeAreaView>
   );

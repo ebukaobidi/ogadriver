@@ -694,7 +694,7 @@ export default function DriverJobsScreen({ navigation }) {
                       <Text style={{ color: themeStyles.primaryText }} className="font-normal text-sm leading-snug" numberOfLines={1}>
                         {item.title}
                       </Text>
-                      <Text style={{ color: themeStyles.subText }} className="text-xs mt-0.5">{item.subtitle}</Text>
+                      <Text style={{ color: themeStyles.subText }} className="text-xs mt-0.5" numberOfLines={1} ellipsizeMode="tail">{item.subtitle}</Text>
                     </View>
                   </View>
 

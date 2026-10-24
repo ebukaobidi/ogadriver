@@ -19,6 +19,7 @@ class Driver extends Model
         'total_jobs',
         'is_verified',
         'is_online',
+        'hire_points',
         'status',
         'subscription_tier',
         'subscription_expires_at',
@@ -136,6 +137,11 @@ class Driver extends Model
     public function user()
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function hirePointTransactions()
+    {
+        return $this->hasMany(HirePointTransaction::class);
     }
 
     public function vehicle()

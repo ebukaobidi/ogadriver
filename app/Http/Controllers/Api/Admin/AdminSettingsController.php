@@ -21,9 +21,16 @@ class AdminSettingsController extends Controller
     public function index()
     {
         $dbSettings = ApiSetting::getByCategory('general');
-        $defaultSettings = config('site');
+        $defaultSettings = config('site') ?: [];
         
         $settings = array_merge($defaultSettings, $dbSettings->toArray());
+        $settings['hire_monetization_mode'] = ApiSetting::getValue('hire_monetization_mode', 'driver_points');
+        $settings['points_per_hire_application'] = (int) ApiSetting::getValue('points_per_hire_application', 2);
+        $settings['cost_per_hire_point'] = (float) ApiSetting::getValue('cost_per_hire_point', 150.0);
+        $settings['require_active_subscription_for_hire'] = (bool) ApiSetting::getValue('require_active_subscription_for_hire', true);
+        $settings['min_wallet_credit_ngn'] = 5000.0;
+        $settings['min_wallet_credit_usd'] = 50.0;
+        $settings['min_wallet_credit_international_usd'] = 5.0;
 
         return response()->json([
             'status' => 'success',

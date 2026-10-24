@@ -55,15 +55,55 @@ class WalletController extends Controller
     }
 
     /**
-     * Initialize a real Paystack checkout for wallet top-up.
+     * Determine minimum credit amount based on country/currency.
+     * Nigeria (NGN): 5,000 NGN
+     * US (USD) & UK (GBP): 50 USD / 50 GBP
+     * Other international: 5 USD equivalent
+     */
+    protected function getMinimumCreditRequirement(User $user, ?string $currency = null): array
+    {
+        $curr = strtoupper($currency ?: ($user->wallet?->currency ?: 'NGN'));
+        $countryCode = strtoupper($user->country_code ?: ($user->driver?->country_code ?: 'NG'));
+
+        if ($curr === 'NGN' || $countryCode === 'NG') {
+            return [
+                'min_amount' => 5000.0,
+                'currency' => 'NGN',
+                'symbol' => '₦',
+                'label' => '₦5,000',
+            ];
+        }
+
+        if (in_array($curr, ['USD', 'GBP']) || in_array($countryCode, ['US', 'USA', 'GB', 'UK'])) {
+            return [
+                'min_amount' => 50.0,
+                'currency' => $curr === 'GBP' ? 'GBP' : 'USD',
+                'symbol' => $curr === 'GBP' ? '£' : '$',
+                'label' => $curr === 'GBP' ? '£50' : '$50',
+            ];
+        }
+
+        return [
+            'min_amount' => 5.0,
+            'currency' => $curr ?: 'USD',
+            'symbol' => '$',
+            'label' => '$5',
+        ];
+    }
+
+    /**
+     * Initialize a real Paystack / Gateway checkout for wallet top-up.
      */
     public function topUp(Request $request)
     {
-        $request->validate([
-            'amount' => 'required|numeric|min:100|max:5000000',
-        ]);
-
         $user = Auth::user();
+        $minReq = $this->getMinimumCreditRequirement($user, $request->input('currency'));
+
+        $request->validate([
+            'amount' => 'required|numeric|min:' . $minReq['min_amount'] . '|max:5000000',
+        ], [
+            'amount.min' => "The minimum account credit amount is {$minReq['label']} for {$minReq['currency']}.",
+        ]);
 
         try {
             $payment = $this->paymentService->initialize(
@@ -335,6 +375,112 @@ class WalletController extends Controller
                 'message' => $e->getMessage()
             ], 422);
         }
+    }
+
+    /**
+     * Purchase Hire Points using wallet balance.
+     * Rate: e.g. ₦150 per point (2 points = ₦300), or configured cost.
+     */
+    public function purchaseHirePoints(Request $request)
+    {
+        $request->validate([
+            'points' => 'required|integer|min:1|max:100',
+        ]);
+
+        $user = Auth::user();
+        $driver = $user->driver;
+
+        if (!$driver) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Only registered drivers can purchase Hire Points.',
+            ], 403);
+        }
+
+        $points = (int) $request->input('points');
+        $costPerPoint = (float) \App\Models\ApiSetting::getValue('cost_per_hire_point', 150.0); // ₦150 per point, so 2 points = ₦300
+        $totalCost = $points * $costPerPoint;
+
+        $wallet = $user->wallet;
+        if (!$wallet || $wallet->available_balance < $totalCost) {
+            return response()->json([
+                'success' => false,
+                'insufficient_balance' => true,
+                'required_amount' => $totalCost,
+                'available_balance' => (float) ($wallet?->available_balance ?? 0),
+                'cost_per_point' => $costPerPoint,
+                'message' => "Insufficient wallet balance. You need ₦" . number_format($totalCost, 2) . " to buy {$points} Hire Points. Please credit your wallet.",
+            ], 422);
+        }
+
+        return DB::transaction(function () use ($wallet, $driver, $points, $totalCost, $costPerPoint) {
+            // Deduct from wallet
+            $wallet->debit(
+                $totalCost,
+                'debit',
+                'hire_points',
+                "Purchased {$points} Hire Point(s) for job applications"
+            );
+
+            // Credit driver's hire points
+            $balanceBefore = (int) ($driver->hire_points ?? 0);
+            $balanceAfter = $balanceBefore + $points;
+            $driver->hire_points = $balanceAfter;
+            $driver->save();
+
+            // Record transaction
+            \App\Models\HirePointTransaction::create([
+                'driver_id' => $driver->id,
+                'type' => 'credit',
+                'points' => $points,
+                'balance_before' => $balanceBefore,
+                'balance_after' => $balanceAfter,
+                'reason' => 'wallet_purchase',
+                'cost_amount' => $totalCost,
+                'currency' => $wallet->currency ?: 'NGN',
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => "Successfully purchased {$points} Hire Point(s)! Total points balance: {$balanceAfter}",
+                'hire_points' => $balanceAfter,
+                'points_added' => $points,
+                'cost' => $totalCost,
+                'wallet_balance' => (float) $wallet->fresh()->available_balance,
+            ]);
+        });
+    }
+
+    /**
+     * Get Driver's Hire Points status and point history.
+     */
+    public function getHirePointsStatus(Request $request)
+    {
+        $user = Auth::user();
+        $driver = $user->driver;
+
+        if (!$driver) {
+            return response()->json(['success' => false, 'message' => 'Driver profile not found'], 404);
+        }
+
+        $hireModel = \App\Models\ApiSetting::getValue('hire_monetization_mode', 'driver_points');
+        $pointsPerApp = (int) \App\Models\ApiSetting::getValue('points_per_hire_application', 2);
+        $costPerPoint = (float) \App\Models\ApiSetting::getValue('cost_per_hire_point', 150.0);
+
+        $transactions = \App\Models\HirePointTransaction::where('driver_id', $driver->id)
+            ->orderBy('created_at', 'desc')
+            ->take(20)
+            ->get();
+
+        return response()->json([
+            'success' => true,
+            'hire_points' => (int) ($driver->hire_points ?? 0),
+            'points_per_application' => $pointsPerApp,
+            'cost_per_point' => $costPerPoint,
+            'cost_for_application' => $pointsPerApp * $costPerPoint, // e.g. ₦300
+            'monetization_mode' => $hireModel,
+            'transactions' => $transactions,
+        ]);
     }
 }
 

@@ -155,7 +155,7 @@ class JobController extends Controller
             $user->load('hirer');
         }
 
-        // Normalize portal job-posting modal fields → core job schema
+        // Normalize portal job-posting modal fields â†’ core job schema
         if (!$request->filled('hirer_id') && $user?->hirer) {
             $request->merge(['hirer_id' => $user->hirer->id]);
         }
@@ -448,20 +448,86 @@ class JobController extends Controller
             ], 403);
         }
 
-        $application = JobApplication::create([
-            'job_id' => $job->id,
-            'driver_id' => $driver->id,
-            'status' => 'pending',
-            'proposed_amount' => $request->proposed_amount,
-            'cover_letter' => $request->cover_letter,
-            'applied_at' => now(),
-        ]);
+        // =========================================================================
+        // Upwork-Style Point & Active Subscription Verification for Hire Jobs
+        // =========================================================================
+        $monetizationMode = \App\Models\ApiSetting::getValue('hire_monetization_mode', 'driver_points');
+        $pointsRequired = (int) \App\Models\ApiSetting::getValue('points_per_hire_application', 2); // Default: 2 points
+        $costPerPoint = (float) \App\Models\ApiSetting::getValue('cost_per_hire_point', 150.0); // ₦150 per point (2 pts = ₦300)
 
-        return response()->json([
-            'success' => true,
-            'data' => $application->load('driver.user'),
-            'message' => 'Application submitted successfully',
-        ], 201);
+        // If Model C (Driver Points) or Hybrid is active, require Hire Points
+        if (in_array($monetizationMode, ['driver_points', 'hybrid'])) {
+            $driverPoints = (int) ($driver->hire_points ?? 0);
+
+            if ($driverPoints < $pointsRequired) {
+                return response()->json([
+                    'success' => false,
+                    'requires_hire_points' => true,
+                    'current_points' => $driverPoints,
+                    'points_required' => $pointsRequired,
+                    'cost_to_credit' => $pointsRequired * $costPerPoint,
+                    'message' => "You need {$pointsRequired} Hire Points to apply for this job. Your current balance is {$driverPoints} points. Top up with as low as ₦" . number_format($pointsRequired * $costPerPoint, 0) . ".",
+                ], 402);
+            }
+        }
+
+        // Must be on active subscription or have an active daily/monthly pass
+        $requireActiveSub = \App\Models\ApiSetting::getValue('require_active_subscription_for_hire', true);
+        if ($requireActiveSub) {
+            $hasActiveSub = $driver->subscription_expires_at && $driver->subscription_expires_at > now();
+            if (!$hasActiveSub && class_exists('\App\Models\Subscription')) {
+                $hasActiveSub = \App\Models\Subscription::where('user_id', $user->id)
+                    ->where('status', 'active')
+                    ->where('ends_at', '>', now())
+                    ->exists();
+            }
+
+            if (!$hasActiveSub) {
+                return response()->json([
+                    'success' => false,
+                    'requires_subscription' => true,
+                    'message' => 'Drivers must have an active hailing or daily driver subscription to apply for Hire jobs. Please activate your subscription or daily pass.',
+                ], 403);
+            }
+        }
+
+        return DB::transaction(function () use ($job, $driver, $request, $monetizationMode, $pointsRequired, $costPerPoint) {
+            // Deduct Hire Points if applicable
+            if (in_array($monetizationMode, ['driver_points', 'hybrid']) && $pointsRequired > 0) {
+                $balanceBefore = (int) ($driver->hire_points ?? 0);
+                $balanceAfter = max(0, $balanceBefore - $pointsRequired);
+                $driver->hire_points = $balanceAfter;
+                $driver->save();
+
+                \App\Models\HirePointTransaction::create([
+                    'driver_id' => $driver->id,
+                    'type' => 'debit',
+                    'points' => $pointsRequired,
+                    'balance_before' => $balanceBefore,
+                    'balance_after' => $balanceAfter,
+                    'reason' => 'job_apply',
+                    'job_id' => $job->id,
+                    'cost_amount' => $pointsRequired * $costPerPoint,
+                    'currency' => 'NGN',
+                ]);
+            }
+
+            $application = JobApplication::create([
+                'job_id' => $job->id,
+                'driver_id' => $driver->id,
+                'status' => 'pending',
+                'proposed_amount' => $request->proposed_amount,
+                'cover_letter' => $request->cover_letter,
+                'applied_at' => now(),
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'data' => $application->load('driver.user'),
+                'remaining_hire_points' => (int) ($driver->hire_points ?? 0),
+                'message' => 'Application submitted successfully! ' . ($pointsRequired > 0 ? "({$pointsRequired} Hire Points used)" : ''),
+            ], 201);
+        });
     }
 
     /**

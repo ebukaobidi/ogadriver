@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 380 150" width="100%" height="100%">
+  <defs>
+    <!-- Vibrant, Friendly Energy Gradient -->
+    <linearGradient id="friendlyGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#10B981" />
+      <stop offset="100%" stop-color="#34D399" />
+    </linearGradient>
+  </defs>
+
+  <!-- THE USER-FRIENDLY ICON (Sleek O + Happy Driver Silhouette + Shield Frame) -->
+  <g transform="translate(25, 25)">
+    <!-- Main Friendly Ring Frame (The O) -->
+    <circle cx="50" cy="50" r="44" fill="none" stroke="url(#friendlyGrad)" stroke-width="6" />
+    
+    <!-- Smooth Driver Head Node -->
+    <circle cx="50" cy="38" r="11" fill="#FFFFFF" />
+    
+    <!-- Curved, Cultured Driver Shoulder Line -->
+    <path d="M26 74 C26 58, 34 54, 50 54 C66 54, 74 58, 74 74" fill="none" stroke="#FFFFFF" stroke-width="6" stroke-linecap="round" />
+    
+    <!-- Safe Steering Smile Arc (Clever Negative Space Sub-layer) -->
+    <path d="M38 78 Q50 88 62 78" fill="none" stroke="url(#friendlyGrad)" stroke-width="4" stroke-linecap="round" />
+  </g>
+
+  <!-- TYPOGRAPHY: SMOOTH MODERN LOGOTYPE -->
+  <g transform="translate(145, 84)">
+    <!-- OGA: Clean, Smooth, Premium Sans-Serif -->
+    <text font-family="'Plus Jakarta Sans', 'Inter', sans-serif" 
+          font-size="52" 
+          font-weight="800" 
+          fill="#FFFFFF" 
+          letter-spacing="0.5">Oga</text>
+          
+    <!-- DRIVER: Bright Soft Emerald Weight -->
+    <text x="100" 
+          font-family="'Plus Jakarta Sans', 'Inter', sans-serif" 
+          font-size="52" 
+          font-weight="400" 
+          fill="url(#friendlyGrad)" 
+          letter-spacing="0.5">Driver</text>
+  </g>
+</svg>

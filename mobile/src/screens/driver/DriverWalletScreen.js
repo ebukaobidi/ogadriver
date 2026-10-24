@@ -248,10 +248,23 @@ export default function DriverWalletScreen({ navigation, route }) {
     Alert.alert('Account Linked & Saved', `${selectedBank.name} (${newAcc.accountNumber}) has been saved for easy 1-tap withdrawals.`);
   };
 
+  const getMinCreditAmount = () => {
+    const curr = (globalCountry?.currency || 'NGN').toUpperCase();
+    const cCode = (globalCountry?.code || 'NG').toUpperCase();
+    if (curr === 'NGN' || cCode === 'NG') {
+      return { min: 5000, label: '₦5,000' };
+    }
+    if (curr === 'USD' || curr === 'GBP' || cCode === 'US' || cCode === 'GB') {
+      return { min: 50, label: curr === 'GBP' ? '£50' : '' };
+    }
+    return { min: 5, label: '' };
+  };
+
   const handleProcessDeposit = async () => {
     const amt = parseFloat(depositAmount) || 0;
-    if (amt < 100) {
-      Alert.alert('Minimum Deposit', 'The minimum wallet deposit is ₦100.');
+    const minRule = getMinCreditAmount();
+    if (amt < minRule.min) {
+      Alert.alert('Minimum Account Credit', 'The minimum account credit is ' + minRule.label + '.');
       return;
     }
 

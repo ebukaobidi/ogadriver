@@ -716,7 +716,7 @@ export default function RideBookingScreen({ navigation }) {
     <SafeAreaView style={{ flex: 1, backgroundColor: isDark ? '#090d16' : '#ffffff' }}>
       {/* FULL-SCREEN BOLT BACKGROUND MAP CANVAS (80%+ Screen View) */}
       <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }} className="bg-[#f8fafc]">
-        {false && Platform.OS !== 'web' && MapView && isGoogleMapsConfigured() ? (
+        {Platform.OS !== 'web' && MapView && isGoogleMapsConfigured() ? (
           <MapView
             ref={mapRef}
             style={{ width: '100%', height: '100%' }}

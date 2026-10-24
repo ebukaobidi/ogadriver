@@ -54,6 +54,12 @@
       "favicon": "./assets/favicon.png",
       "bundler": "metro"
     },
-    "owner": "ebukaobidi"
+    "owner": "ebukaobidi1",
+    "extra": {
+      "apiUrl": "https://ogadriver.ng/api",
+      "eas": {
+        "projectId": "8c9121b7-0284-4299-821e-c6187b8c0163"
+      }
+    }
   }
 }

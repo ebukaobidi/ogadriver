@@ -399,6 +399,8 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/lookup', [WalletController::class, 'lookupRecipient']);
         Route::post('/transfer', [WalletController::class, 'transfer']);
         Route::post('/gift', [WalletController::class, 'transfer']);
+        Route::get('/hire-points', [WalletController::class, 'getHirePointsStatus']);
+        Route::post('/hire-points/buy', [WalletController::class, 'purchaseHirePoints']);
     });
 
     // System Health
@@ -410,7 +412,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/plans', [SubscriptionController::class, 'plans']);
         Route::post('/subscribe', [SubscriptionController::class, 'subscribe']);
         Route::post('/renew', [SubscriptionController::class, 'renew']);
-        // New routes for Shield add‑on and checkout
+        // New routes for Shield addâ€‘on and checkout
         Route::post('/shield', [SubscriptionController::class, 'toggleShield']);
         Route::post('/recurring-charge', [SubscriptionController::class, 'chargeRecurringSubscription']);
     });
